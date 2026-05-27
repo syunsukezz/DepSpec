@@ -1,0 +1,133 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+#app {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  padding: 40px;
+  max-width: 700px;
+  width: 100%;
+}
+
+button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 14px 32px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+#target {
+  background: #f8f9ff;
+  border-left: 4px solid #667eea;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 30px;
+  font-size: 18px;
+  line-height: 1.8;
+  font-weight: 500;
+  color: #333;
+  min-height: 80px;
+  display: flex;
+  align-items: center;
+}
+
+#sentence {
+  background: #fff9e6;
+  border: 2px solid #ffd700;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-family: "Courier New", monospace;
+  font-size: 20px;
+  line-height: 1.8;
+  min-height: 90px;
+  letter-spacing: 0.05em;
+  word-break: break-all;
+}
+
+#sentence span[style*="color:black"] {
+  font-weight: bold;
+  color: #000 !important;
+}
+
+#sentence span[style*="color:gray"] {
+  color: #ccc !important;
+}
+
+#sentence br {
+  display: block;
+  margin: 8px 0;
+}
+
+#name {
+  text-align: right;
+  font-size: 14px;
+  color: #666;
+  font-style: italic;
+  padding-top: 10px;
+  border-top: 1px solid #eee;
+}
+
+/* ゲーム統計情報 */
+.game-info {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+  font-size: 14px;
+  color: #666;
+}
+
+/* 小画面対応 */
+@media (max-width: 600px) {
+  #app {
+    padding: 20px;
+  }
+
+  #target {
+    font-size: 16px;
+    min-height: 60px;
+  }
+
+  #sentence {
+    font-size: 18px;
+    min-height: 80px;
+  }
+
+  button {
+    padding: 12px 24px;
+    font-size: 14px;
+  }
+}

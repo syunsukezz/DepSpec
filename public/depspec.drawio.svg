@@ -1,0 +1,17 @@
+<svg host="65bd71144e" xmlns="http://www.w3.org/2000/svg" style="background: transparent; background-color: transparent;" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="161px" height="162px" viewBox="-0.5 -0.5 161 162" content="&lt;mxfile&gt;&lt;diagram id=&quot;vxpv_pU7GoSPrCwbfyjk&quot; name=&quot;Page-1&quot;&gt;3ZXBbqMwEIafhmtkcHDhmmzZXiqtlMOeHZiAtYZBzmQhffo1xQRYqNJKOfWC7H9mYs/3D8Tj+7L9aWRdvGIG2gtY1nr8hxcEIXuyz0649gKPWS/kRmW95I/CQb2BE4e0i8rgPEskRE2qnospVhWkNNOkMdjM006o56fWMoeFcEilXqq/VUaFU30Rj4EXUHnhjo4C13Aph2TXybmQGTYTiT97fG8QqV+V7R50x27g0tclH0RvFzNQ0WcKwr7gr9QX15u7F12HZg1eqgy6fN/ju6ZQBIdapl20se5araBSu/BJab1Hjea9lkcsSRiz+pkM/oFJRKQRHE824i4AhqD9sAn/hsaOFGAJZK42xRVsB5punPzI7ZuJOcJpxcSXmyjdQOS33x6Z2YXDto5w+wmEBZbHy/nL+GwnfmKvsUNboahrL2LfgVlwn5l9M+puSRYSvGFXuavBKHsWmKn+axTv421h+Jys4E4SN63/4V4MbyaOIhQPMmI7NyLYrhgRrBjxCB/4fR/IKFnl3e4eXYMkSWFltzFboxuxNbqPYCieNuGcIhMb31+AFOGSY8w3UfxllHY7fqXfY5O/Ov78Dw==&lt;/diagram&gt;&lt;/mxfile&gt;">
+    <defs/>
+    <g>
+        <g>
+            <rect x="0" y="0" width="160" height="160" rx="24" ry="24" fill="#80ff00" stroke="#6c8ebf" pointer-events="all" style="fill: light-dark(rgb(128, 255, 0), rgb(0, 96, 0)); stroke: light-dark(rgb(108, 142, 191), rgb(92, 121, 163));"/>
+        </g>
+        <g>
+            <path d="M 80 0 L 160 80 L 80 160 L 0 80 Z" fill-opacity="0.8" fill="#2181ff" stroke="#000000" stroke-opacity="0.8" stroke-miterlimit="10" pointer-events="all" style="fill: light-dark(rgb(33, 129, 255), rgb(63, 146, 254)); stroke: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));"/>
+        </g>
+        <g>
+            <path d="M 20 120 L 40 60 L 120 60 L 140 120 Z" fill-opacity="0.8" fill="#ffff00" stroke="#d6b656" stroke-opacity="0.8" stroke-miterlimit="10" pointer-events="all" style="fill: light-dark(rgb(255, 255, 0), rgb(50, 50, 0)); stroke: light-dark(rgb(214, 182, 86), rgb(109, 81, 0));"/>
+        </g>
+        <g>
+            <path d="M 47.5 26.11 L 112.5 73.06 L 47.5 120 Z" fill-opacity="0.8" fill="#ff8000" stroke="#000000" stroke-opacity="0.8" stroke-miterlimit="10" transform="rotate(90,80,73.06)" pointer-events="all" style="fill: light-dark(rgb(255, 128, 0), rgb(206, 97, 0)); stroke: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));"/>
+        </g>
+    </g>
+</svg>
