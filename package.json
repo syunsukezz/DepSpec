@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@types/kuromoji": "^0.1.3",
-    "kuromoji": "^0.1.2"
+    "kuromoji": "^0.1.2",
+    "random-word-wikipedia": "^1.1.0"
   }
 }

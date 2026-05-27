@@ -1,5 +1,7 @@
 
 import "./style.css";
+
+import depspec from "../public/depspec.png";
 const _kuromojiModule = await import("./kuromoji");
 let kuromoji: any = (_kuromojiModule && (_kuromojiModule as any).default) ? (_kuromojiModule as any).default : _kuromojiModule;
 // Additional fallbacks for different bundling/UMD shapes
@@ -18,6 +20,7 @@ import type { OnPressedKeyData } from "./analogSenseReader";
 import {keygraph} from "./keygraph";
 import "./analogsense";
 import {katakanaToHiragana} from "./textUtil";
+let randomWords = ["コンピュータ", "プログラミング", "キーボード", "マウス", "ディスプレイ", "インターネット", "ソフトウェア", "ハードウェア", "アルゴリズム", "データベース"];
 
 const meigenapi = "/api/json.php";
 //[{"meigen":"幸福であろうと思えば、「こうでさえあったらなあ」という言葉をやめて、その代わり、「今度こそは」という言葉に変えなさい。","auther":"スマイリー・ブラントン"}]
@@ -57,9 +60,10 @@ interface meigen {
     reading: string;
     name: string;
 }
-
+let tango = true;
 async function kuromojiMeigen(): Promise<meigen> {
-    const meigenData = await getMeigen();
+    const meigenData = !tango ? await getMeigen() : { meigen: randomWords[Math.floor(Math.random() * randomWords.length)], auther: " " };
+    
     return new Promise((resolve, reject) => {
         const dicPath = "/dict";
         console.log("Loading kuromoji with dicPath:", dicPath);
@@ -86,6 +90,10 @@ if(!app){
 
 
 function Start(): void {
+    let title = document.createElement("img");
+    title.src = depspec; // Replace with the actual path to your image
+    title.alt = "DepSpec Typing Game";
+    app.appendChild(title);
     let StartButton = document.createElement("button");
     StartButton.textContent = "Start";
     StartButton.onclick = async () => {
@@ -112,30 +120,40 @@ function Game() {
     app.appendChild(targetdiv);
     const sentencediv = document.createElement("div");
     sentencediv.id = "sentence";
+    sentencediv.style.lineHeight = "1em";
     app.appendChild(sentencediv);  
     const namediv = document.createElement("div");
     namediv.id = "name";
     app.appendChild(namediv);
     
+    
 
     StartAnalogSenseReader((pressedKeyData: OnPressedKeyData) => {
         typingLogic(pressedKeyData);
     },(_receivedData:{scancode: number,value: number}) => {
-        
+        const inputing = document.getElementById("inputing")!;
+        inputing.style.fontSize = `${_receivedData.value }em`;
+        inputing.style.width = `${_receivedData.value }em`;
+        inputing.style.height = `${_receivedData.value }em`;
     },true);
     loadSentence();
 }
 
     
 let roundCount = 0;
+let nextWeight = 1;
+const maxWeight = 1;
+const minWeight = 0.3;
 function typingLogic(pressedKeyData: OnPressedKeyData) {
     let sentenceElement = document.getElementById("sentence")!;
     if(roundCount >= round){
         console.log("Game Over");
         return;
     }
+    
     if(keygraph.next(pressedKeyData.key.toLowerCase())){
-        sentenceElement.innerHTML =`<span style="color:black">${keygraph.seq_done()}</span><span style="color:gray">${keygraph.seq_candidates()}</span><br><span style="color:black">${keygraph.key_done()}</span><span style="color:gray">${keygraph.key_candidate()}</span><br>`;
+        nextWeight = Math.random() * (maxWeight - minWeight) + minWeight;
+        sentenceElement.innerHTML =`<span style="color:black">${keygraph.seq_done()}</span><span style="color:gray">${keygraph.seq_candidates()}</span><br><span style="color:black">${keygraph.key_done()}</span><span id="next_key" style="color:red; position: relative; display: inline-block;font-size:${nextWeight}em">${keygraph.key_candidate()[0]}<div id= "inputing" style = "position: absolute; left: 0; bottom: 0.25rem;  background-color: pink;" >&nbsp;</div></span><span style="color:gray">${keygraph.key_candidate().slice(1)}</span><br>`;
         if(keygraph.is_finished()){
             roundCount++;
             loadSentence();
@@ -149,7 +167,7 @@ function loadSentence(): void {
         targetdiv.textContent = data.text;
         if(keygraph.build(katakanaToHiragana(data.reading))){
             const sentencediv = document.getElementById("sentence")!;
-            sentencediv.innerHTML =`<span style="color:black">${keygraph.seq_done()}</span><span style="color:gray">${keygraph.seq_candidates()}</span><br><span style="color:black">${keygraph.key_done()}</span><span style="color:gray">${keygraph.key_candidate()}</span><br>`;
+            sentencediv.innerHTML =`<span style="color:black">${keygraph.seq_done()}</span><span style="color:gray">${keygraph.seq_candidates()}</span><br><span style="color:black">${keygraph.key_done()}</span><span id="next_key" style="color:red; position: relative; display: inline-block;font-size:${nextWeight}em">${keygraph.key_candidate()[0]}<div id= "inputing" style = "position: absolute; left: 0; bottom: 0.25rem;  background-color: pink;" >&nbsp;</div></span><span style="color:gray">${keygraph.key_candidate().slice(1)}</span><br>`;
         }
         else{            
             console.error("Failed to build keygraph for the sentence.");
