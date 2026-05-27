@@ -153,7 +153,7 @@ function typingLogic(pressedKeyData: OnPressedKeyData) {
     
     if(keygraph.next(pressedKeyData.key.toLowerCase())){
         nextWeight = Math.random() * (maxWeight - minWeight) + minWeight;
-        sentenceElement.innerHTML =`<span style="color:black">${keygraph.seq_done()}</span><span style="color:gray">${keygraph.seq_candidates()}</span><br><span style="color:black">${keygraph.key_done()}</span><span id="next_key" style="color:red; position: relative; display: inline-block;font-size:${nextWeight}em">${keygraph.key_candidate()[0]}<div id= "inputing" style = "position: absolute; left: 0; bottom: 0.25rem;  background-color: pink;" >&nbsp;</div></span><span style="color:gray">${keygraph.key_candidate().slice(1)}</span><br>`;
+        sentenceElement.innerHTML =`<span style="color:black">${keygraph.seq_done()}</span><span style="color:gray">${keygraph.seq_candidates()}</span><br><span style="color:black">${keygraph.key_done()}</span><span id="next_key" style="color:red; position: relative; display: inline-block;font-size:${nextWeight}em">${keygraph.key_candidate()[0]}<div id= "inputing" style = "position: absolute; left: 0; bottom: 0.25rem;  border: 2px solid #ff0000;" >&nbsp;</div></span><span style="color:gray">${keygraph.key_candidate().slice(1)}</span><br>`;
         if(keygraph.is_finished()){
             roundCount++;
             loadSentence();
