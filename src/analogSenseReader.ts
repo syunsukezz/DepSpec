@@ -98,10 +98,11 @@ export interface OnPressedKeyData {
 let keymap: Record<string, OnPressedKeyData> = {};
 let plessingKeys: Set<string> = new Set();//現在押されているキーのスキャンコードを保持するセット
 const lowthreshold = 0.1;//キーが押されたとみなす深さの閾値
+const reverseThreshold = 0.05;//キーが離されたとみなす閾値（押下量の最大値からの差）
 function keyPressLogic(input: { scancode: number; value: number }, onKeyPressed: (data: OnPressedKeyData, depth: number) => void, depth: boolean) {
     const currentTime = performance.now();
-    
-    if(input.value==1||(input.value<keymap[input.scancode]?.data[keymap[input.scancode].data.length-1].depth)&&!plessingKeys.has(input.scancode.toString())&&depth)
+    const maxdepth = keymap[input.scancode]?.data.reduce((max, data) => Math.max(max, data.depth), 0) || 0;
+    if(input.value==1||input.value < maxdepth - reverseThreshold&&!plessingKeys.has(input.scancode.toString())&&depth)
     {
         if(plessingKeys.has(input.scancode.toString()))
         {            

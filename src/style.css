@@ -55,23 +55,24 @@ button:disabled {
 }
 
 #target {
-  background: #f8f9ff;
-  border-left: 4px solid #667eea;
+  background: black;
+  
   padding: 20px;
   border-radius: 8px;
   margin-bottom: 30px;
-  font-size: 18px;
+  font-size: 2em;
   line-height: 1.8;
   font-weight: 500;
-  color: #333;
+  color: #fff;
   min-height: 80px;
   display: flex;
   align-items: center;
 }
 
 #sentence {
-  background: #fff9e6;
-  border: 2px solid #ffd700;
+  
+  background: black;
+  border: none;
   padding: 20px;
   border-radius: 8px;
   margin-bottom: 20px;
@@ -83,19 +84,7 @@ button:disabled {
   word-break: break-all;
 }
 
-#sentence span[style*="color:black"] {
-  font-weight: bold;
-  color: #000 !important;
-}
 
-#sentence span[style*="color:gray"] {
-  color: #ccc !important;
-}
-
-#sentence br {
-  display: block;
-  margin: 8px 0;
-}
 
 #name {
   text-align: right;
