@@ -133,6 +133,7 @@ function Game() {
     },(_receivedData:{scancode: number,value: number}) => {
         const inputing = document.getElementById("inputing")!;
         inputing.style.fontSize = `${_receivedData.value }rem`;
+        inputing.textContent = window.analogsense.scancodeToString(_receivedData.scancode).toLowerCase();
         
     },true);
     loadSentence();

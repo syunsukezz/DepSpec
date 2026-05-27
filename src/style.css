@@ -43,8 +43,8 @@ button {
   border: none;
   padding: 14px 32px;
   font-size: 1em;
-  font-weight: 600;
-  
+  font-weight: 10;
+  font-family: "Audiowide", sans-serif;
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
   width: 100%;
