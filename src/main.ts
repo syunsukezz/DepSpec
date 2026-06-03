@@ -148,6 +148,7 @@ let roundCount = 0;
 let nextWeight = 1;
 const maxWeight = 1;
 const minWeight = 0.3;
+let done = document.createElement("div");
 function typingLogic(pressedKeyData: OnPressedKeyData) {
     let sentenceElement = document.getElementById("sentence")!;
     if(roundCount >= round){
@@ -156,8 +157,13 @@ function typingLogic(pressedKeyData: OnPressedKeyData) {
     }
     
     if(keygraph.next(pressedKeyData.key.toLowerCase())){
+        const text = document.createElement("span");
+        text.textContent = pressedKeyData.key.toLowerCase();
+        const maxDepth = Math.max(...pressedKeyData.data.map(d => d.depth));
+        text.style.fontSize = `${ Math.pow(maxDepth, 5)}rem`;
+        done.appendChild(text);
         nextWeight = Math.random() * (maxWeight - minWeight) + minWeight;
-        sentenceElement.innerHTML =`<span style="color:white">${keygraph.seq_done()}</span><span style="color:gray">${keygraph.seq_candidates()}</span><br><span style="color:white">${keygraph.key_done()}</span><span id="next_key" style="color:red; position: relative; display: inline-block;font-size:${nextWeight}rem">${keygraph.key_candidate()[0]||""}<div id= "inputing" style = "position: absolute; left: 0; bottom: 0; color: rgba(255, 255, 255, 0.5);" >${keygraph.key_candidate()[0]||""}</div></span><span style="color:gray">${keygraph.key_candidate().slice(1)}</span><br>`;
+        sentenceElement.innerHTML =`<span style="color:white">${keygraph.seq_done()}</span><span style="color:gray">${keygraph.seq_candidates()}</span><br><span style="color:white">${done.innerHTML}</span><span id="next_key" style="color:red; position: relative; display: inline-block;font-size:${nextWeight}rem">${keygraph.key_candidate()[0]||""}<div id= "inputing" style = "position: absolute; left: 0; bottom: 0; color: rgba(255, 255, 255, 0.5);" >${keygraph.key_candidate()[0]||""}</div></span><span style="color:gray">${keygraph.key_candidate().slice(1)}</span><br>`;
         if(keygraph.is_finished()){
             roundCount++;
             loadSentence();
@@ -172,6 +178,7 @@ function loadSentence(): void {
         if(keygraph.build(katakanaToHiragana(data.reading))){
             const sentencediv = document.getElementById("sentence")!;
             sentencediv.innerHTML =`<span style="color:white">${keygraph.seq_done()}</span><span style="color:gray">${keygraph.seq_candidates()}</span><br><span style="color:white">${keygraph.key_done()}</span><span id="next_key" style="color:red; position: relative; display: inline-block;font-size:${nextWeight}rem">${keygraph.key_candidate()[0]||""}<div id= "inputing" style = "position: absolute; left: 0; bottom: 0; font-size: 0 ;color: rgba(255, 255, 255, 0.5);" >${keygraph.key_candidate()[0]||""}</div></span><span style="color:gray">${keygraph.key_candidate().slice(1)}</span><br>`;
+            done.innerHTML = "";
         }
         else{            
             console.error("Failed to build keygraph for the sentence.");
