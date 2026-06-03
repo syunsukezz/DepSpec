@@ -43,7 +43,7 @@ button {
   border: none;
   padding: 14px 32px;
   font-size: 1em;
-  font-weight: 10;
+  font-weight: 100;
   font-family: "Audiowide", sans-serif;
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
@@ -99,8 +99,7 @@ button:disabled {
   font-size: 14px;
   color: #666;
   font-style: italic;
-  padding-top: 10px;
-  
+  padding-top: 10px; 
 }
 
 /* ゲーム統計情報 */

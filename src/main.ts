@@ -1,6 +1,6 @@
 
 import "./style.css";
-
+import {Keyboard,highlightKey} from "./keyboard";
 import depspec from "../public/depspec.png";
 const _kuromojiModule = await import("./kuromoji");
 let kuromoji: any = (_kuromojiModule && (_kuromojiModule as any).default) ? (_kuromojiModule as any).default : _kuromojiModule;
@@ -125,19 +125,23 @@ function Game() {
     const namediv = document.createElement("div");
     namediv.id = "name";
     app.appendChild(namediv);
-    
-    
+   
+    app.appendChild(Keyboard());
+
 
     StartAnalogSenseReader((pressedKeyData: OnPressedKeyData) => {
         typingLogic(pressedKeyData);
     },(_receivedData:{scancode: number,value: number}) => {
+        const value =  Math.pow(_receivedData.value, 5);
         const inputing = document.getElementById("inputing")!;
-        inputing.style.fontSize = `${_receivedData.value }rem`;
+        inputing.style.fontSize = `${value}rem`;
         inputing.textContent = window.analogsense.scancodeToString(_receivedData.scancode).toLowerCase();
+        highlightKey(window.analogsense.scancodeToString(_receivedData.scancode).toLowerCase(), value);
         
     },true);
     loadSentence();
 }
+
 
     
 let roundCount = 0;
