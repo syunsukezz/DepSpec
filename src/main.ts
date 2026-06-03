@@ -100,7 +100,7 @@ function Start(): void {
         StartButton.disabled = true;
         const deviceAvailable = await requestDevice();
         if (deviceAvailable) {
-         Game();
+         Game(GameOver);
         }
         else 
         {
@@ -111,10 +111,19 @@ function Start(): void {
     app.appendChild(StartButton);
 }
 const round = 10;
-
-function Game() {
+let score = 0;
+function Game(onGameOver?: (score: number) => void): void {
 
     app.innerHTML = "";
+    const scoreDiv = document.createElement("div");
+    scoreDiv.id = "score";
+    scoreDiv.textContent = `score: 0`;
+    scoreDiv.style.position = "absolute";
+    scoreDiv.style.top = "10px";
+    scoreDiv.style.right = "10px";
+    scoreDiv.style.fontSize = "100px";
+    scoreDiv.style.color = "rgba(255, 255, 255, 0.5)";
+    app.appendChild(scoreDiv);
     const targetdiv = document.createElement("div");
     targetdiv.id = "target";
     app.appendChild(targetdiv);
@@ -130,7 +139,7 @@ function Game() {
 
 
     StartAnalogSenseReader((pressedKeyData: OnPressedKeyData) => {
-        typingLogic(pressedKeyData);
+        typingLogic(pressedKeyData, onGameOver);
     },(_receivedData:{scancode: number,value: number}) => {
         const value =  Math.pow(_receivedData.value, 5);
         const inputing = document.getElementById("inputing")!;
@@ -149,17 +158,21 @@ let nextWeight = 1;
 const maxWeight = 1;
 const minWeight = 0.3;
 let done = document.createElement("div");
-function typingLogic(pressedKeyData: OnPressedKeyData) {
+function typingLogic(pressedKeyData: OnPressedKeyData ,onGameOver?: (score: number) => void): void {
     let sentenceElement = document.getElementById("sentence")!;
     if(roundCount >= round){
         console.log("Game Over");
+        onGameOver?.(score);
         return;
     }
-    
     if(keygraph.next(pressedKeyData.key.toLowerCase())){
         const text = document.createElement("span");
         text.textContent = pressedKeyData.key.toLowerCase();
-        const maxDepth = Math.max(...pressedKeyData.data.map(d => d.depth));
+        const maxDepth= Math.max(...pressedKeyData.data.map(d => d.depth));
+        const thisscore = Math.floor(50-Math.abs(maxDepth-nextWeight)*100);
+        score += thisscore;
+        const scoreDiv = document.getElementById("score")!;
+        scoreDiv.textContent = `score: ${score}`;
         text.style.fontSize = `${ Math.pow(maxDepth, 5)}rem`;
         done.appendChild(text);
         nextWeight = Math.random() * (maxWeight - minWeight) + minWeight;
@@ -190,6 +203,15 @@ function loadSentence(): void {
     }).catch((error) => {
         console.error("Failed to load sentence:", error);
     });
+}
+function GameOver(score: number): void {
+    app.innerHTML = "";
+    const gameOverText = document.createElement("div");
+    gameOverText.textContent = `Game Over! 
+    Your score: ${score}`;
+    gameOverText.style.fontSize = "2em";
+    gameOverText.style.color = "#fff";
+    app.appendChild(gameOverText);
 }
 
 Start();
