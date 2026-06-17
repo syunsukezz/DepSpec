@@ -112,6 +112,7 @@ function Start(): void {
 }
 const round = 10;
 let score = 0;
+let roundTime = 0;
 function Game(onGameOver?: (score: number) => void): void {
 
     app.innerHTML = "";
@@ -124,6 +125,14 @@ function Game(onGameOver?: (score: number) => void): void {
     scoreDiv.style.fontSize = "100px";
     scoreDiv.style.color = "rgba(255, 255, 255, 0.5)";
     app.appendChild(scoreDiv);
+    const timerDiv = document.createElement("div");
+    timerDiv.id = "timer";
+    timerDiv.style.position = "absolute";
+    timerDiv.style.top = "10px";
+    timerDiv.style.left = "10px";
+    timerDiv.style.fontSize = "100px";
+    timerDiv.style.color = "rgba(255, 255, 255, 0.5)";
+    app.appendChild(timerDiv);
     const targetdiv = document.createElement("div");
     targetdiv.id = "target";
     app.appendChild(targetdiv);
