@@ -112,7 +112,7 @@ function Start(): void {
 }
 const round = 10;
 let score = 0;
-let roundTime = 0;
+//let roundTime = 0;
 function Game(onGameOver?: (score: number) => void): void {
 
     app.innerHTML = "";
