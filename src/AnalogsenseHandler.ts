@@ -1,4 +1,4 @@
-import "./Analogsense.js";
+import "./analogsense.js";
 
 
 
