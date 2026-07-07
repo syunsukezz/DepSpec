@@ -12,7 +12,9 @@ export default defineConfig({
       }
     },
     headers: {
-      'Access-Control-Allow-Origin': '*'
+      'Access-Control-Allow-Origin': '*',
+      'Cross-Origin-Opener-Policy': 'same-origin',
+      'Cross-Origin-Embedder-Policy': 'require-corp'
     }
   },
   // 静的ファイルの圧縮を無効化（.gz ファイルは既に圧縮済み）

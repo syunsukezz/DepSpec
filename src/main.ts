@@ -1,227 +1,266 @@
+/**
+ * main.ts
+ * エントリーポイント。ゲーム全体のステート管理・ループ。
+ *
+ * ── ゲームの流れ ──
+ *
+ *   start ─[Space]→ playing ─[全エリアクリア]→ result ─[Space]→ playing（リトライ）
+ *
+ * ── エリア順序 ──
+ *
+ *   Stage が管理する:
+ *     1. ObstacleArea（障害物エリア）: autoMove=true、高さで障害物を回避
+ *     2. ValleyArea  （谷越えエリア）: autoMove=false、距離で穴を越える
+ *     3. NailArea    （釘打ちエリア）: autoMove=false、高さで釘を打ち込む
+ *
+ * ── getGroundY / autoMove の役割 ──
+ *   各エリアは getGroundY(playerX) を実装する。
+ *   main.ts はこれを使って player.update() に渡す地面 Y を決める。
+ *   ValleyArea: 穴の上では -Infinity → プレイヤーが落下
+ *   ObstacleArea: 常に floorY → 平坦な地面
+ */
 
-import "./style.css";
-import {Keyboard,highlightKey} from "./keyboard";
-import depspec from "../public/depspec.png";
-const _kuromojiModule = await import("./kuromoji");
-let kuromoji: any = (_kuromojiModule && (_kuromojiModule as any).default) ? (_kuromojiModule as any).default : _kuromojiModule;
-// Additional fallbacks for different bundling/UMD shapes
-if (!kuromoji || typeof kuromoji.builder !== "function") {
-    if (kuromoji && kuromoji.kuromoji) {
-        kuromoji = kuromoji.kuromoji;
-    } else if ((window as any).kuromoji) {
-        kuromoji = (window as any).kuromoji;
-    }
-}
-console.log("kuromoji detection:", kuromoji && typeof kuromoji.builder === "function" ? "builder OK" : kuromoji);
+import { Renderer }       from './core/Renderer.ts';
+import { Camera }         from './core/Camera.ts';
+import { InputManager }   from './core/InputManager.ts';
+import { Player }         from './game/Player.ts';
+import { TypingManager }  from './game/TypingManager.ts';
+import { Stage }          from './game/Stage.ts';
+import { HUD }            from './ui/HUD.ts';
+import { StartScreen }    from './ui/StartScreen.ts';
+import { ResultScreen }   from './ui/ResultScreen.ts';
 
-import StartAnalogSenseReader from "./analogSenseReader";
-import { requestDevice } from "./analogSenseReader";
-import type { OnPressedKeyData } from "./analogSenseReader";
-import {keygraph} from "./keygraph";
-import "./analogsense";
-import {katakanaToHiragana} from "./textUtil";
-let randomWords = ["コンピュータ", "プログラミング", "キーボード", "マウス", "ディスプレイ", "インターネット", "ソフトウェア", "ハードウェア", "アルゴリズム", "データベース"];
+// ──────────────────────────────────────────
+// DOM 構築
+// ──────────────────────────────────────────
 
-const meigenapi = "/api/json.php";
-//[{"meigen":"幸福であろうと思えば、「こうでさえあったらなあ」という言葉をやめて、その代わり、「今度こそは」という言葉に変えなさい。","auther":"スマイリー・ブラントン"}]
-interface MeigenData {
-    meigen: string;
-    auther: string;
-}
-const fallbackMeigenList: MeigenData[] = [
-    {
-        meigen: "幸福であろうと思えば、「こうでさえあったらなあ」という言葉をやめて、その代わり、「今度こそは」という言葉に変えなさい。",
-        auther: "スマイリー・ブラントン",
-    },
-    {
-        meigen: "成功とは、失敗を重ねても情熱を失わない力のことだ。",
-        auther: "ウィンストン・チャーチル",
-    },
-    {
-        meigen: "昨日から学び、今日を生き、明日へ期待しよう。",
-        auther: "アルベルト・アインシュタイン",
-    },
+const app = document.getElementById('app')!;
+
+const container = document.createElement('div');
+container.style.cssText = 'position:relative; width:100vw; height:100vh; overflow:hidden;';
+app.appendChild(container);
+
+const glCanvas = document.createElement('canvas');
+glCanvas.width  = window.innerWidth;
+glCanvas.height = window.innerHeight;
+glCanvas.style.cssText = 'position:absolute; top:0; left:0; display:block;';
+container.appendChild(glCanvas);
+
+const connectButton = document.createElement('button');
+connectButton.textContent = 'アナログキーボードを接続';
+connectButton.style.cssText = `
+  position: fixed; top: 12px; left: 50%;
+  transform: translateX(-50%);
+  padding: 8px 20px; font-size: 14px;
+  background: rgba(0,0,0,0.7); color: #fff;
+  border: 1px solid #555; border-radius: 6px;
+  cursor: pointer; z-index: 10;
+`;
+container.appendChild(connectButton);
+
+// ──────────────────────────────────────────
+// 定数
+// ──────────────────────────────────────────
+
+/** 地面の上面 Y 座標（Y 上向き座標系: プレイヤーの足元） */
+const FLOOR_Y   = 40;
+
+/** 天井の Y 座標（ObstacleArea で使用） */
+const CEILING_Y = FLOOR_Y + 280;
+
+// ──────────────────────────────────────────
+// コアシステム（ゲーム全体で共有）
+// ──────────────────────────────────────────
+
+const renderer     = new Renderer(glCanvas);
+const camera       = new Camera(glCanvas.width, glCanvas.height);
+const inputManager = new InputManager(connectButton);
+const typingMgr    = new TypingManager();
+
+// ── Canvas 2D オーバーレイ ──
+const hudOverlay    = new HUD(window.innerWidth, window.innerHeight);
+const startScreen   = new StartScreen(window.innerWidth, window.innerHeight);
+const resultScreen  = new ResultScreen(window.innerWidth, window.innerHeight);
+container.appendChild(hudOverlay.element);
+container.appendChild(startScreen.element);
+container.appendChild(resultScreen.element);
+
+// ──────────────────────────────────────────
+// ゲームステート
+// ──────────────────────────────────────────
+
+type GameState = 'start' | 'playing' | 'result';
+let gameState: GameState = 'start';
+
+// ゲームごとにリセットされる変数
+let player:     Player;
+let stage:      Stage;
+let score:      number;
+let elapsedSec: number;
+let wordIdx:    number;
+
+const words = [
+  'にほん', 'さくら', 'てんき', 'かいだん', 'はしる',
+  'たいよう', 'みずうみ', 'こうえん', 'やまびこ', 'そらいろ',
 ];
-async function getMeigen(): Promise<MeigenData> {
-    try {
-        const response = await fetch(meigenapi);
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
-        }
-        const data = await response.json();
-        return data[0];
-    } catch (error) {
-        console.warn("Falling back to local meigen list:", error);
-        return fallbackMeigenList[Math.floor(Math.random() * fallbackMeigenList.length)];
+
+function nextWord(): void {
+  typingMgr.loadWord(words[wordIdx % words.length]);
+  wordIdx++;
+}
+
+/**
+ * ゲームを初期化する。
+ * スタート時・リトライ時の両方で呼ぶ。
+ * Player と Stage を新規生成してリセット状態にする。
+ */
+function initGame(): void {
+  player     = new Player(0, FLOOR_Y);
+  stage      = new Stage(player, FLOOR_Y, CEILING_Y);
+  score      = 0;
+  elapsedSec = 0;
+  wordIdx    = 0;
+  nextWord();
+}
+
+// 最初のゲームを生成（スタート画面の背景として使う）
+initGame();
+
+// ──────────────────────────────────────────
+// 打鍵イベントのルーティング
+// ──────────────────────────────────────────
+
+inputManager.onKeyPress((e) => {
+  // playing 中のみ打鍵を処理
+  if (gameState !== 'playing') return;
+
+  const result = typingMgr.input(e.key);
+  hudOverlay.notifyKeyPress(e.pressure);
+
+  if (result === 'incorrect') return;
+
+  // 正しいキーを打った → エリアに通知
+  stage.onKeyPress(e.pressure, true);
+
+  if (result === 'finished') {
+    // 単語完了ボーナス: 単語長 × 100 × (1 + 打鍵圧)
+    const bonus = Math.round(
+      words[(wordIdx - 1) % words.length].length * 100 * (1 + e.pressure),
+    );
+    score += bonus;
+    nextWord();
+  }
+});
+
+// ──────────────────────────────────────────
+// スタート / リトライ入力
+// ──────────────────────────────────────────
+
+window.addEventListener('keydown', (e) => {
+  if (e.code !== 'Space') return;
+
+  if (gameState === 'start') {
+    initGame();
+    gameState = 'playing';
+    startScreen.hide();
+
+  } else if (gameState === 'result') {
+    initGame();
+    gameState = 'playing';
+    resultScreen.hide();
+  }
+});
+
+// ──────────────────────────────────────────
+// ゲームループ
+// ──────────────────────────────────────────
+
+let lastTime = 0;
+
+/** HUD canvas の 2D コンテキスト（遷移アニメーションの描画に再利用） */
+const hudCtx = hudOverlay.element.getContext('2d')!;
+
+function loop(now: number): void {
+  // dt をクランプ（タブ切り替え復帰時の大きな dt による物理破綻を防ぐ）
+  const dt = lastTime === 0 ? 0 : Math.min((now - lastTime) / 1000, 0.05);
+  lastTime = now;
+
+  // ── Update（playing 中のみ） ──
+  if (gameState === 'playing') {
+    elapsedSec += dt;
+
+    player.update(dt, stage.getGroundY(player.pos.x), stage.autoMove);
+    stage.update(dt, player);
+    camera.follow(player.pos, dt);
+
+    // 全エリアクリア → リザルト画面へ
+    if (stage.isFinished()) {
+      gameState = 'result';
+      resultScreen.show(score, elapsedSec);
     }
-}
-interface meigen {
-    text: string;
-    reading: string;
-    name: string;
-}
-let tango = true;
-async function kuromojiMeigen(): Promise<meigen> {
-    const meigenData = !tango ? await getMeigen() : { meigen: randomWords[Math.floor(Math.random() * randomWords.length)], auther: " " };
-    
-    return new Promise((resolve, reject) => {
-        const dicPath = "/dict";
-        console.log("Loading kuromoji with dicPath:", dicPath);
-        kuromoji.builder({ dicPath }).build(function (err: any, tokenizer: any) {
-            console.log("kuromoji.build callback:", err ? "error" : "success", err);
-            if (err || !tokenizer) {
-                reject(err ?? new Error("Failed to build kuromoji tokenizer"));
-                return;
-            }
-            // tokenizer is ready
-            const path = tokenizer.tokenize(meigenData.meigen);
-            console.log(path);
-            const readings = path.map((token: any) => {return token.reading}).join("");
-            resolve({ text: meigenData.meigen, reading: readings, name: meigenData.auther });
-        });
-    });
-}
+  }
 
+  // ── WebGL Render（常にゲーム世界を描画） ──
+  renderer.clear(0.46, 0.73, 0.90); // 空色
+  renderer.setCamera(camera);
 
-const app = document.getElementById("app")!;
-if(!app){
-    throw new Error("App element not found");
-}
+  stage.render(renderer, camera);
+  player.render(renderer);
 
+  // ── HUD（playing 中のみ） ──
+  if (gameState === 'playing') {
+    hudOverlay.render(
+      {
+        score,
+        elapsedSec,
+        seqDone:       typingMgr.seqDone,
+        seqCandidates: typingMgr.seqCandidates,
+        keyCandidate:  typingMgr.keyCandidate,
+      },
+      dt,
+    );
 
-function Start(): void {
-    let title = document.createElement("img");
-    title.src = depspec; // Replace with the actual path to your image
-    title.alt = "DepSpec Typing Game";
-    app.appendChild(title);
-    let StartButton = document.createElement("button");
-    StartButton.textContent = "Start";
-    StartButton.onclick = async () => {
-        StartButton.disabled = true;
-        const deviceAvailable = await requestDevice();
-        if (deviceAvailable) {
-         Game(GameOver);
-        }
-        else 
-        {
-            StartButton.disabled = false;
-        }
-        
-    }
-    app.appendChild(StartButton);
-}
-const round = 10;
-let score = 0;
-//let roundTime = 0;
-function Game(onGameOver?: (score: number) => void): void {
+    // エリア遷移アニメーション（HUD canvas を共用）
+    stage.renderTransition(hudCtx, glCanvas.width, glCanvas.height);
+  }
 
-    app.innerHTML = "";
-    const scoreDiv = document.createElement("div");
-    scoreDiv.id = "score";
-    scoreDiv.textContent = `score: 0`;
-    scoreDiv.style.position = "absolute";
-    scoreDiv.style.top = "10px";
-    scoreDiv.style.right = "10px";
-    scoreDiv.style.fontSize = "100px";
-    scoreDiv.style.color = "rgba(255, 255, 255, 0.5)";
-    app.appendChild(scoreDiv);
-    const timerDiv = document.createElement("div");
-    timerDiv.id = "timer";
-    timerDiv.style.position = "absolute";
-    timerDiv.style.top = "10px";
-    timerDiv.style.left = "10px";
-    timerDiv.style.fontSize = "100px";
-    timerDiv.style.color = "rgba(255, 255, 255, 0.5)";
-    app.appendChild(timerDiv);
-    const targetdiv = document.createElement("div");
-    targetdiv.id = "target";
-    app.appendChild(targetdiv);
-    const sentencediv = document.createElement("div");
-    sentencediv.id = "sentence";
-    sentencediv.style.lineHeight = "1rem";
-    app.appendChild(sentencediv);  
-    const namediv = document.createElement("div");
-    namediv.id = "name";
-    app.appendChild(namediv);
-   
-    app.appendChild(Keyboard());
+  // ── オーバーレイ ──
+  if (gameState === 'start') {
+    startScreen.render(dt);
+  } else if (gameState === 'result') {
+    resultScreen.render(dt);
+  }
 
-
-    StartAnalogSenseReader((pressedKeyData: OnPressedKeyData) => {
-        typingLogic(pressedKeyData, onGameOver);
-    },(_receivedData:{scancode: number,value: number}) => {
-        const value =  Math.pow(_receivedData.value, 5);
-        const inputing = document.getElementById("inputing")!;
-        inputing.style.fontSize = `${value}rem`;
-        inputing.textContent = window.analogsense.scancodeToString(_receivedData.scancode).toLowerCase();
-        highlightKey(window.analogsense.scancodeToString(_receivedData.scancode).toLowerCase(), value);
-        
-    },true);
-    loadSentence();
+  requestAnimationFrame(loop);
 }
 
+// ──────────────────────────────────────────
+// リサイズ対応
+// ──────────────────────────────────────────
 
-    
-let roundCount = 0;
-let nextWeight = 1;
-const maxWeight = 1;
-const minWeight = 0.3;
-let done = document.createElement("div");
-function typingLogic(pressedKeyData: OnPressedKeyData ,onGameOver?: (score: number) => void): void {
-    let sentenceElement = document.getElementById("sentence")!;
-    if(roundCount >= round){
-        console.log("Game Over");
-        onGameOver?.(score);
-        return;
-    }
-    if(keygraph.next(pressedKeyData.key.toLowerCase())){
-        const text = document.createElement("span");
-        text.textContent = pressedKeyData.key.toLowerCase();
-        const maxDepth= Math.max(...pressedKeyData.data.map(d => d.depth));
-        const thisscore = Math.floor(50-Math.abs(maxDepth-nextWeight)*100);
-        score += thisscore;
-        const scoreDiv = document.getElementById("score")!;
-        scoreDiv.textContent = `score: ${score}`;
-        text.style.fontSize = `${ Math.pow(maxDepth, 5)}rem`;
-        done.appendChild(text);
-        nextWeight = Math.random() * (maxWeight - minWeight) + minWeight;
-        sentenceElement.innerHTML =`<span style="color:white">${keygraph.seq_done()}</span><span style="color:gray">${keygraph.seq_candidates()}</span><br><span style="color:white">${done.innerHTML}</span><span id="next_key" style="color:red; position: relative; display: inline-block;font-size:${nextWeight}rem">${keygraph.key_candidate()[0]||""}<div id= "inputing" style = "position: absolute; left: 0; bottom: 0; color: rgba(255, 255, 255, 0.5);" >${keygraph.key_candidate()[0]||""}</div></span><span style="color:gray">${keygraph.key_candidate().slice(1)}</span><br>`;
-        if(keygraph.is_finished()){
-            roundCount++;
-            loadSentence();
-        }
-    }
-}
-function loadSentence(): void {
-    kuromojiMeigen().then((data) => {
-        console.log(data);
-        const targetdiv = document.getElementById("target")!;
-        targetdiv.textContent = data.text;
-        if(keygraph.build(katakanaToHiragana(data.reading))){
-            const sentencediv = document.getElementById("sentence")!;
-            sentencediv.innerHTML =`<span style="color:white">${keygraph.seq_done()}</span><span style="color:gray">${keygraph.seq_candidates()}</span><br><span style="color:white">${keygraph.key_done()}</span><span id="next_key" style="color:red; position: relative; display: inline-block;font-size:${nextWeight}rem">${keygraph.key_candidate()[0]||""}<div id= "inputing" style = "position: absolute; left: 0; bottom: 0; font-size: 0 ;color: rgba(255, 255, 255, 0.5);" >${keygraph.key_candidate()[0]||""}</div></span><span style="color:gray">${keygraph.key_candidate().slice(1)}</span><br>`;
-            done.innerHTML = "";
-        }
-        else{            
-            console.error("Failed to build keygraph for the sentence.");
-            loadSentence();
-            return;
-        }
-        const namediv = document.getElementById("name")!;
-        namediv.textContent = `— ${data.name}`;
-    }).catch((error) => {
-        console.error("Failed to load sentence:", error);
-    });
-}
-function GameOver(score: number): void {
-    app.innerHTML = "";
-    const gameOverText = document.createElement("div");
-    gameOverText.textContent = `Game Over! 
-    Your score: ${score}`;
-    gameOverText.style.fontSize = "2em";
-    gameOverText.style.color = "#fff";
-    app.appendChild(gameOverText);
-}
+window.addEventListener('resize', () => {
+  const w = window.innerWidth;
+  const h = window.innerHeight;
 
-Start();
+  glCanvas.width  = w;
+  glCanvas.height = h;
 
+  renderer.resize(w, h);
+  camera.resize(w, h);
+  hudOverlay.resize(w, h);
+  startScreen.resize(w, h);
+  resultScreen.resize(w, h);
+});
+
+// ──────────────────────────────────────────
+// テクスチャのロード → ループ開始
+// ──────────────────────────────────────────
+
+renderer.loadTextures({
+  player: '/player.drawio.png',
+  nail:   '/Nail.png',
+  ground: '/ground.png',
+  wood:   '/wood.png',
+}).catch(console.error).finally(() => {
+  requestAnimationFrame(loop);
+});
