@@ -10,6 +10,8 @@ const d = 0.001; // 仮の距離（メートル）
 const stroke_mm = 4; // キーのストローク距離（ミリメートル）
 const m = 0.002; // キーと指の質量（キログラム）
 const ReleaseThreshold = 0.2; // キーが戻ったとみなす値の閾値
+
+
 function CaliculatePressure(code: string, value: number) 
 {
     console.log(`Received input: code=${code}, value=${value}`);

@@ -1,5 +1,10 @@
 import "./analogsense.js";
 
+interface AnalogSenseInput {
+    key: string;
+    value: number;
+    timestamp: number;
+}
 
 
 
@@ -15,8 +20,8 @@ function RequestDeviceIfNeeded(button: HTMLButtonElement) {
                     console.log(`Device selected: ${device.getProductName()}`);
                     device.startListening((inputs) => {
                         //console.log("Received inputs:", inputs);
-                        const inputStrings = inputs.map(input => `${window.analogsense.scancodeToString(input.scancode)}:${input.value<0.1?0:input.value}`);
-                        AnalogsenseCallback(inputStrings);
+                        const inputAndTimestamp = inputs.map(input => ({ key: window.analogsense.scancodeToString(input.scancode), value: input.value<0.1?0:input.value, timestamp: performance.now() }));
+                        AnalogsenseCallback(inputAndTimestamp);
                     });
                     button.disabled = true;
                 } else {
@@ -31,21 +36,22 @@ function RequestDeviceIfNeeded(button: HTMLButtonElement) {
             console.log(`Device already connected: ${device.getProductName()}`);
             device.startListening((inputs) => {
                 //console.log("Received inputs:", inputs);
-                const inputStrings = inputs.map(input => `${window.analogsense.scancodeToString(input.scancode)}:${input.value<0.1?0:input.value}`);
-                AnalogsenseCallback(inputStrings);
+                const inputAndTimestamp = inputs.map(input => ({ key: window.analogsense.scancodeToString(input.scancode), value: input.value<0.1?0:input.value, timestamp: performance.now() }));
+                AnalogsenseCallback(inputAndTimestamp);
             });
             button.disabled = true;
         }
     });
 }
-let AnalogsenseCallback:(inputs:string[])=>void = (inputs: string[]) => {
+let AnalogsenseCallback:(inputs: AnalogSenseInput[])=>void = (inputs: AnalogSenseInput[]) => {
   console.log("Received inputs:", inputs);
 };
 
-function SetAnalogsenseCallback(callback:(inputs:string[])=>void)
+function SetAnalogsenseCallback(callback:(inputs: AnalogSenseInput[])=>void)
 {
   AnalogsenseCallback = callback;
 }
 
-export { RequestDeviceIfNeeded, SetAnalogsenseCallback };
+
+export { RequestDeviceIfNeeded, SetAnalogsenseCallback ,type AnalogSenseInput};
 
