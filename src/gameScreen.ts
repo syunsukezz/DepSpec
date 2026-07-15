@@ -330,27 +330,48 @@ export function showGameScreen(
 
     function updateTypingDisplay() {
         const done = [...(keygraph.seq_done() ?? '')];
-        const candidates = keygraph.seq_candidates() ?? queue[0].text;
+        const candidates = [...(keygraph.seq_candidates() ?? queue[0].text)];
         const romDone = keygraph.key_done();
         const romCandidate = keygraph.key_candidate();
-
-        // 打鍵済み文字: 打鍵圧に応じてサイズ変化 (0.6N→2rem, 3.0N→5rem)
-        kanaRow.innerHTML = '';
         const phrase = queue[0];
+        const { symbol, color } = INSTRUCTION_LABEL[phrase.instruction];
+        const targetSet = new Set(phrase.targets);
+
+        kanaRow.innerHTML = '';
+
+        // 打鍵済み文字: アイコンなし、打鍵圧でサイズ変化
         done.forEach((ch, i) => {
             const n = phrase.charPressures[i] ?? 0.6;
             const t = Math.min(1, Math.max(0, (n - 0.6) / (3.0 - 0.6)));
             const size = (2 + t * 3).toFixed(2) + 'rem';
             const span = document.createElement('span');
             span.textContent = ch;
-            span.style.cssText = `font-size:${size}; color:#64748b; font-family:system-ui,sans-serif; transition:font-size 0.1s; line-height:1; align-self:flex-end;`;
+            span.style.cssText = `font-size:${size}; color:#64748b; font-family:system-ui,sans-serif; line-height:1; align-self:flex-end;`;
             kanaRow.appendChild(span);
         });
-        // 未入力文字
-        const rest = document.createElement('span');
-        rest.textContent = candidates ?? '';
-        rest.style.cssText = 'font-size:3rem; color:#f1f5f9; font-family:system-ui,sans-serif;';
-        kanaRow.appendChild(rest);
+
+        // 未入力文字: ターゲット文字の上にアイコン表示
+        candidates.forEach((ch, j) => {
+            const originalIdx = done.length + j;
+            const showIcon = phrase.instruction === 'vibrato'
+                ? j === 0  // vibrato は先頭にのみ表示
+                : targetSet.has(originalIdx);
+
+            const wrapper = document.createElement('div');
+            wrapper.style.cssText = 'display:flex; flex-direction:column; align-items:center;';
+
+            const iconEl = document.createElement('span');
+            iconEl.textContent = showIcon ? symbol : '\u00A0';
+            iconEl.style.cssText = `font-size:1.2rem; color:${color}; font-weight:bold; line-height:1.2;`;
+
+            const charEl = document.createElement('span');
+            charEl.textContent = ch;
+            charEl.style.cssText = 'font-size:3rem; color:#f1f5f9; font-family:system-ui,sans-serif; line-height:1;';
+
+            wrapper.appendChild(iconEl);
+            wrapper.appendChild(charEl);
+            kanaRow.appendChild(wrapper);
+        });
 
         romRow.innerHTML =
             `<span style="color:#334155">${romDone}</span>` +
