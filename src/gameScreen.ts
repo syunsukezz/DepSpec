@@ -447,9 +447,10 @@ export function showGameScreen(
     });
 
     // ── アナログ生値 → キーボード表示 ────────────────
-    // setRawListener((code: string, value: number) => {
-    //     updateKey(code, value);
-    // });
+     setRawListener((code: string, value: number) => {
+         //updateKey(code, value);
+         console.log(`Raw: ${code} = ${value}`);
+     });
 
     // ── 後片付け ──────────────────────────────────────
     function cleanup() {

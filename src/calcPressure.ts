@@ -1,7 +1,7 @@
 let PressedKeys: Set<string> = new Set();
 let StartTime: Map<string, number> = new Map();
 let PreviousKeyValues: Map<string, number> = new Map();
-let PressureCallback: (code: string, value: number) => void = (code: string, value: number) => {
+let PressureCallback: (code: string, value: number) => void = () => {
     //console.log(`Key ${code} pressed with value ${value}`);
 }
 const startNewton = 0.4; //キーの押し始めのニュートン数

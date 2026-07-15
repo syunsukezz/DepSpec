@@ -1,7 +1,7 @@
 import "./analogsense.js";
 import "./style.css";
 import { type AnalogSenseInput, RequestDeviceIfNeeded, SetAnalogsenseCallback } from "./AnalogsenseHandler";
-import { CaliculatePressure, SetPressureCallback } from "./calcPressure";
+import { CaliculatePressure, SetPressureCallback } from "./calcPressure.ts";
 import { showStartScreen } from "./startScreen";
 import { showGameScreen, type GameResult } from "./gameScreen";
 import { showResultScreen } from "./resultScreen";
