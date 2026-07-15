@@ -40,8 +40,8 @@
   - 打鍵圧 **強**: 300°（口が閉じた状態）
   - 打鍵圧 **弱**: 350°（口が開いた状態）
 - **フォルマント合成**により打鍵圧に応じた音声フィードバックを出す
-  - 強: 「ウ」の母音
-  - 弱: 「ワ」の母音
+  - 強: 「ワ」の母音
+  - 弱: 「ウ」の母音
   - 中間は線形補完
 
 #### 打鍵圧指示アイコン（吹き出し左上に表示）
@@ -74,16 +74,62 @@
 
 ---
 
-## 3. 技術スタック（現状）
+## 3. 技術スタック
 
 | 項目 | 内容 |
 |------|------|
 | フレームワーク | Vite + TypeScript |
 | デバイス連携 | AnalogSense（`AnalogsenseHandler.ts`） |
 | 打鍵圧推定 | `calcPressure.ts`（速度ベースの運動量モデル） |
-| 日本語処理 | kuromoji.js（ひらがな→ローマ字変換に使用と思われる） |
-| 音声合成 | Web Audio API（フォルマント合成・要実装） |
+| タイピング判定 | `keygraph.js`（`keygraph.build(ひらがな)` でお題セット、`keygraph.next(key)` で正誤判定） |
+| 音声合成 | **Tone.js v15**（`tone` パッケージ・フォルマント合成） |
 | 描画 | Canvas API または SVG（横顔キャラクター・要実装） |
+
+### keygraph.js の使い方（主要 API）
+
+```ts
+import { keygraph } from "./keygraph.js";
+
+keygraph.build("ひっしゅう");         // お題をひらがなでセット
+keygraph.key_candidate();             // 次に打つべきキー列（例: "hisshu"）
+keygraph.seq_done();                  // 打ち終わったひらがな
+keygraph.seq_candidates();            // これから打つひらがな
+
+// keydown イベントで
+if (keygraph.next(e.key)) {
+    // 正解
+    if (keygraph.is_finished()) { /* フレーズ完了 */ }
+} else {
+    // 不正解（ミス）
+}
+```
+
+- お題はひらがなで渡す（ローマ字変換は keygraph が内部処理）
+- 複数ローマ字候補（例: 「し」→ "si" / "shi"）は自動で対応
+- `key_done()` で打ったキー列履歴が取れる（打鍵圧記録との対応付けに利用）
+
+### Tone.js によるフォルマント合成
+
+打鍵圧（N値）を 0〜1 に正規化した `t` を使い、「ウ」と「ワ」の中間音を線形補完して出す。
+
+```ts
+import * as Tone from "tone";
+
+// 「ウ」のフォルマント周波数（F1, F2, F3 の概略値）
+const U_formants = [300, 700, 2300];   // Hz
+// 「ワ」のフォルマント周波数
+const WA_formants = [800, 1200, 2600]; // Hz
+
+// t=0: 「ウ」（弱打鍵）, t=1: 「ワ」（強打鍵）
+function playFormant(t: number) {
+    const freqs = U_formants.map((f, i) => f + (WA_formants[i] - f) * t);
+    // Tone.js の Filter + Noise、または PlayerSynth で実装
+}
+```
+
+実装の選択肢:
+- `Tone.Filter` + `Tone.Noise`（帯域通過フィルターでフォルマントを模倣）
+- `Tone.AMSynth` / `Tone.FMSynth`（より手軽だが厳密なフォルマントではない）
 
 ---
 

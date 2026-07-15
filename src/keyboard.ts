@@ -89,9 +89,9 @@ function keyboard(element: HTMLElement, layout: Key[][]): (code: string, value: 
     element.style.justifyContent = 'center';
     element.style.gap = '5px';
     element.style.padding = '10px';
-    element.style.border = '1px solid #ccc';
+    element.style.border = '1px solid #6cf';
     element.style.borderRadius = '5px';
-    element.style.backgroundColor = '#f9f9f9';
+    element.style.backgroundColor = '#6cf';
     element.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
     element.style.fontFamily = 'Arial, sans-serif';
     element.style.fontSize = '14px';
@@ -116,8 +116,8 @@ function keyboard(element: HTMLElement, layout: Key[][]): (code: string, value: 
             keyElement.style.display = 'flex';
             keyElement.style.alignItems = 'center';
             keyElement.style.justifyContent = 'center';
-            keyElement.style.height = '40px';
-            keyElement.style.width = `${40 * key.width}px`;
+            keyElement.style.height = '60px';
+            keyElement.style.width = `${60 * key.width}px`;
             keyElement.style.cursor = 'pointer';
             
             keyElement.style.border = '1px solid #ccc';
