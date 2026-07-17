@@ -1,13 +1,12 @@
 import * as Tone from 'tone';
+import { normalizeN } from './phrases';
 
 // 「ウ」のフォルマント周波数 (F1, F2, F3)
-const U_FORMANTS = [100, 500, 2100];
+const U_FORMANTS = [600, 800, 2000];
 // 「ワ」のフォルマント周波数
 const WA_FORMANTS = [800, 1200, 2600];
 
-// 打鍵圧の正規化範囲 (Newton) — 対数スケールで正規化
-const LOG_MIN = Math.log(0.6);
-const LOG_MAX = Math.log(3.0);
+
 
 let initialized = false;
 let filters: Tone.Filter[] = [];
@@ -18,14 +17,14 @@ function init() {
     initialized = true;
 
     // ホワイトノイズ源 + 矩形波源
-    const noise = new Tone.Noise('white').start();
-    const square = new Tone.Oscillator('A3', 'square').start();
-    const triangle = new Tone.Oscillator('B3', 'triangle').start();
+    const noise = new Tone.PulseOscillator('E2', 0.75).start();
+    const square = new Tone.PulseOscillator('G2',0.25).start();
+    const triangle = new Tone.Oscillator('C2', 'sine').start();
     
 
     // 各ソースのゲイン（0.0〜1.0 で比率を調整）
-    const NOISE_GAIN  = 0.2;
-    const SQUARE_GAIN = 0.4;
+    const NOISE_GAIN  = 0.1;
+    const SQUARE_GAIN = 0.5;
     const TRIANGLE_GAIN = 0.4;
 
     const noiseGain  = new Tone.Gain(NOISE_GAIN);
@@ -44,14 +43,14 @@ function init() {
     envelope = new Tone.AmplitudeEnvelope({
         attack: 0.01,
         decay: 1,
-        sustain: 1,
+        sustain: 0,
         release: 0.15,
     }).toDestination();
 
     // 3本のバンドパスフィルタを並列に接続（フォルマント模倣）
     // mixGain → filters → envelope → destination
     filters = U_FORMANTS.map(freq =>
-        new Tone.Filter({ frequency: freq, type: 'bandpass', Q: 12 })
+        new Tone.Filter({ frequency: freq, type: 'bandpass', Q: 10 })
     );
 
     filters.forEach(f => {
@@ -67,8 +66,8 @@ function init() {
 export function playFormant(newtonValue: number): void {
     try {
         init();
-        // 対数スケールで 0〜1 に正規化
-        const t = Math.min(1, Math.max(0, (Math.log(newtonValue) - LOG_MIN) / (LOG_MAX - LOG_MIN)));
+        
+        const t = normalizeN(newtonValue);
 
         filters.forEach((f, i) => {
             f.frequency.value = U_FORMANTS[i] + (WA_FORMANTS[i] - U_FORMANTS[i]) * t;

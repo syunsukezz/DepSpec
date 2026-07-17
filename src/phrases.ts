@@ -1,12 +1,10 @@
 export type PressureInstruction = 'strong' | 'weak' | 'vibrato';
 
-// 対数正規化用定数
-const LOG_MIN = Math.log(0.6);
-const LOG_MAX = Math.log(3.0);
-const LOG_RANGE = LOG_MAX - LOG_MIN;
+
+
 
 export function normalizeN(n: number): number {
-    return Math.min(1, Math.max(0, (Math.log(Math.max(n, 0.01)) - LOG_MIN) / LOG_RANGE));
+    return Math.min(1, Math.max(0, (n - 1) / 1));
 }
 
 // 閾値

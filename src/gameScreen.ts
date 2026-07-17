@@ -4,12 +4,13 @@ import {
     countPressureClears,
     type PhraseData,
     INSTRUCTION_LABEL,
+    normalizeN,
 } from './phrases';
 import { playFormant } from './audio';
 import { keyboard, wooting60heplus } from './keyboard';
 
 const GAME_DURATION_SEC = 120;
-const VISIBLE_BUBBLES = 3;
+const VISIBLE_BUBBLES = 5;
 
 export interface GameResult {
     phrasesCompleted: number;
@@ -37,7 +38,7 @@ function drawFace(canvas: HTMLCanvasElement, newtonValue: number): void {
     ctx.clearRect(0, 0, W, H);
 
     // 線形正規化: 0.6N〜3.0N → 0〜1
-    const t = Math.min(1, Math.max(0, (newtonValue - 0.6) / (3.0 - 0.6)));
+    const t = normalizeN(newtonValue);
 
     // 弧の角度: t=1(強) → 300°, t=0(弱) → 350°
     const arcDeg = 350 - t * 50;
@@ -266,6 +267,20 @@ export function showGameScreen(
     faceCanvas.style.flexShrink = '0';
     drawFace(faceCanvas, lastPressureN);
 
+    // エフェクト用 CSS
+    const effectStyle = document.createElement('style');
+    effectStyle.textContent = `
+        @keyframes kw-ripple {
+            0%   { transform: scale(0.2); opacity: 0.9; }
+            100% { transform: scale(2.5); opacity: 0; }
+        }
+        @keyframes kw-char-pop {
+            0%   { transform: translateY(0)   scale(1);   opacity: 1; }
+            100% { transform: translateY(-60px) scale(1.6); opacity: 0; }
+        }
+    `;
+    document.head.appendChild(effectStyle);
+
     // タイピング表示領域
     const typingEl = document.createElement('div');
     Object.assign(typingEl.style, {
@@ -274,7 +289,18 @@ export function showGameScreen(
         display: 'flex',
         flexDirection: 'column',
         gap: '0.4rem',
+        position: 'relative',
     });
+
+    // エフェクトレイヤー（typingEl 上に重ねる）
+    const effectLayer = document.createElement('div');
+    Object.assign(effectLayer.style, {
+        position: 'absolute',
+        inset: '0',
+        pointerEvents: 'none',
+        overflow: 'visible',
+    });
+    typingEl.appendChild(effectLayer);
 
     const kanaRow = document.createElement('div');
     kanaRow.style.cssText = 'display:flex; align-items:flex-end; flex-wrap:wrap; font-family:system-ui,sans-serif;';
@@ -323,7 +349,7 @@ export function showGameScreen(
         // queue[2], queue[3] = それ以降
         const visible = queue.slice(1, VISIBLE_BUBBLES + 1);
         for (let i = visible.length - 1; i >= 0; i--) {
-            const bubble = createBubble(visible[i], i === 0, 0);
+            const bubble = createBubble(visible[i], false, 0);
             bubblesEl.appendChild(bubble);
         }
     }
@@ -342,7 +368,7 @@ export function showGameScreen(
         // 打鍵済み文字: アイコンなし、打鍵圧でサイズ変化
         done.forEach((ch, i) => {
             const n = phrase.charPressures[i] ?? 0.6;
-            const t = Math.min(1, Math.max(0, (n - 0.6) / (3.0 - 0.6)));
+            const t = normalizeN(n);
             const size = (2 + t * 3).toFixed(2) + 'rem';
             const span = document.createElement('span');
             span.textContent = ch;
@@ -376,6 +402,53 @@ export function showGameScreen(
         romRow.innerHTML =
             `<span style="color:#334155">${romDone}</span>` +
             `<span style="color:#7ddfff">${romCandidate}</span>`;
+    }
+
+    function triggerEffect(ch: string, pressure: number) {
+        const t = normalizeN(pressure);
+
+        // 色: 弱(青) → 強(赤)
+        const r = Math.round(59  + t * (239 - 59));
+        const g = Math.round(130 - t * 130);
+        const b = Math.round(246 - t * 246);
+        const col = `rgb(${r},${g},${b})`;
+
+        // リップル円
+        const ripple = document.createElement('div');
+        const size = 60 + t * 100;
+        Object.assign(ripple.style, {
+            position: 'absolute',
+            left: '50%',
+            bottom: '3rem',
+            width: `${size}px`,
+            height: `${size}px`,
+            marginLeft: `-${size / 2}px`,
+            borderRadius: '50%',
+            border: `3px solid ${col}`,
+            animation: `kw-ripple ${0.35 + t * 0.15}s ease-out forwards`,
+            pointerEvents: 'none',
+        });
+        effectLayer.appendChild(ripple);
+        ripple.addEventListener('animationend', () => ripple.remove());
+
+        // 文字ポップ
+        const pop = document.createElement('div');
+        Object.assign(pop.style, {
+            position: 'absolute',
+            left: '50%',
+            bottom: '3.5rem',
+            transform: 'translateX(-50%)',
+            fontSize: `${1.5 + t * 2}rem`,
+            color: col,
+            fontFamily: 'system-ui, sans-serif',
+            fontWeight: 'bold',
+            animation: `kw-char-pop ${0.4 + t * 0.2}s ease-out forwards`,
+            pointerEvents: 'none',
+            whiteSpace: 'nowrap',
+        });
+        pop.textContent = ch;
+        effectLayer.appendChild(pop);
+        pop.addEventListener('animationend', () => pop.remove());
     }
 
     function flashMiss() {
@@ -436,6 +509,7 @@ export function showGameScreen(
             const pressure = lastPressureN;
             const phrase = queue[0];
 
+            triggerEffect(key, pressure);
             phrase.allPressures.push(pressure);
 
             // keygraph.next() 後に seq_done が増えていればひらがな1文字完了
