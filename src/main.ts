@@ -3,6 +3,7 @@ import "./style.css";
 import { type AnalogSenseInput, RequestDeviceIfNeeded, SetAnalogsenseCallback } from "./AnalogsenseHandler";
 import { CaliculatePressure, SetPressureCallback } from "./calcPressure.ts";
 import { showStartScreen } from "./startScreen";
+import { showTutorialScreen } from "./tutorialScreen";
 import { showGameScreen, type GameResult } from "./gameScreen";
 import { showResultScreen } from "./resultScreen";
 
@@ -34,8 +35,17 @@ function goToStart(): void {
     showStartScreen(
         app,
         (btn) => { RequestDeviceIfNeeded(btn); },
-        goToGame,
+        goToTutorial,
     );
+}
+
+function goToTutorial(): void {
+    showTutorialScreen(app, {
+        setPressureListener: (cb) => { pressureListener = cb; },
+        clearPressureListener: () => { pressureListener = null; },
+        onComplete: goToGame,
+        onSkip: goToGame,
+    });
 }
 
 function goToGame(): void {
