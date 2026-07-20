@@ -1,7 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "mcp__scrapbox__search_pages"
+      "mcp__scrapbox__search_pages",
+      "Bash(curl -sf http://localhost:5173)",
+      "Bash(break)",
+      "Read(//private/tmp/**)",
+      "Bash(curl -s http://localhost:5175)",
+      "Bash(npx playwright *)",
+      "Bash(node screenshot.mjs)"
     ]
   }
 }

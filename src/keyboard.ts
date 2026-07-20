@@ -89,9 +89,9 @@ function keyboard(element: HTMLElement, layout: Key[][]): (code: string, value: 
     element.style.justifyContent = 'center';
     element.style.gap = '5px';
     element.style.padding = '10px';
-    element.style.border = '1px solid #6cf';
+    element.style.border = '1px solid #ddd';
     element.style.borderRadius = '5px';
-    element.style.backgroundColor = '#6cf';
+    element.style.backgroundColor = '#ddd';
     element.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
     element.style.fontFamily = 'Arial, sans-serif';
     element.style.fontSize = '14px';
@@ -122,7 +122,7 @@ function keyboard(element: HTMLElement, layout: Key[][]): (code: string, value: 
             
             keyElement.style.border = '1px solid #ccc';
             keyElement.style.borderRadius = '3px';
-            keyElement.style.backgroundColor = `hsl(${key.value * 120+240}, 100%, 50%)`;
+            keyElement.style.backgroundColor = '#ddd';
             
             rowElement.appendChild(keyElement);
         
@@ -144,8 +144,11 @@ function keyboard(element: HTMLElement, layout: Key[][]): (code: string, value: 
                         const keyElement = keyElements[i] as HTMLElement;
                         if (keyElement.textContent === key.display)
                         {
-                            keyElement.style.backgroundColor = `hsl(${value * 120+240}, 100%, 50%)`;
-                            
+                            keyElement.style.backgroundColor = `hsl(${-value * 120+240}, 100%, 50%)`;
+                            if (value === 0)
+                            {
+                                keyElement.style.backgroundColor = '#ddd';
+                            }
                             break;
                         }
                     }

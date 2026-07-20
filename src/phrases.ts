@@ -110,7 +110,7 @@ export function countPressureClears(phrase: PhraseData): number {
 }
 
 export const INSTRUCTION_LABEL: Record<PressureInstruction, { symbol: string; color: string; name: string }> = {
-    strong:  { symbol: '▲', color: '#ef4444', name: '強く' },
-    weak:    { symbol: '▼', color: '#3b82f6', name: '弱く' },
-    vibrato: { symbol: '〜', color: '#22c55e', name: 'ビブラート' },
+    strong:  { symbol: '▲', color: '#dc2626', name: '強く' },
+    weak:    { symbol: '▼', color: '#2563eb', name: '弱く' },
+    vibrato: { symbol: '〜', color: '#16a34a', name: 'ビブラート' },
 };

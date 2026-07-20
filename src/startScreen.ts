@@ -11,8 +11,8 @@ export function showStartScreen(
         alignItems: 'center',
         justifyContent: 'center',
         height: '100vh',
-        background: '#0a0a0f',
-        color: 'white',
+        background: '#ffffff',
+        color: '#1e293b',
         fontFamily: "'Audiowide', sans-serif",
         gap: '2rem',
     });
@@ -25,14 +25,14 @@ export function showStartScreen(
             50%       { opacity: 1; }
         }
         @keyframes kw-glow {
-            0%, 100% { text-shadow: 0 0 20px #7ddfff88, 0 0 40px #7ddfff44; }
-            50%       { text-shadow: 0 0 40px #7ddfff, 0 0 80px #7ddfff88; }
+            0%, 100% { text-shadow: 0 0 20px #0891b244, 0 0 40px #0891b222; }
+            50%       { text-shadow: 0 0 40px #0891b288, 0 0 80px #0891b244; }
         }
         .kw-connect-btn:hover {
-            background: rgba(125, 223, 255, 0.1) !important;
+            background: rgba(8, 145, 178, 0.08) !important;
         }
         .kw-fs-btn:hover {
-            background: rgba(255,255,255,0.05) !important;
+            background: rgba(0,0,0,0.05) !important;
         }
     `;
     document.head.appendChild(style);
@@ -43,7 +43,7 @@ export function showStartScreen(
     Object.assign(title.style, {
         fontSize: '5rem',
         letterSpacing: '0.3em',
-        color: '#7ddfff',
+        color: '#0891b2',
         animation: 'kw-glow 3s ease-in-out infinite',
         userSelect: 'none',
     });
@@ -55,8 +55,8 @@ export function showStartScreen(
     Object.assign(connectBtn.style, {
         padding: '0.7rem 2rem',
         background: 'transparent',
-        border: '2px solid #7ddfff',
-        color: '#7ddfff',
+        border: '2px solid #0891b2',
+        color: '#0891b2',
         fontFamily: "'Audiowide', sans-serif",
         fontSize: '0.9rem',
         cursor: 'pointer',
@@ -69,7 +69,7 @@ export function showStartScreen(
     pressAny.textContent = 'Press any key to start';
     Object.assign(pressAny.style, {
         fontSize: '1rem',
-        color: '#ffffff',
+        color: '#475569',
         animation: 'kw-pulse 2s ease-in-out infinite',
         letterSpacing: '0.15em',
         marginTop: '2rem',
@@ -89,7 +89,7 @@ export function showStartScreen(
         right: '1rem',
         padding: '0.4rem 0.9rem',
         background: 'transparent',
-        border: '1px solid #334155',
+        border: '1px solid #cbd5e1',
         color: '#64748b',
         fontFamily: "'Audiowide', sans-serif",
         fontSize: '0.75rem',

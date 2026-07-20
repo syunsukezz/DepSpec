@@ -16,8 +16,8 @@ export function showResultScreen(
         alignItems: 'center',
         justifyContent: 'center',
         height: '100vh',
-        background: '#0a0a0f',
-        color: 'white',
+        background: '#ffffff',
+        color: '#1e293b',
         fontFamily: "'Audiowide', sans-serif",
         gap: '2rem',
         position: 'relative',
@@ -34,25 +34,25 @@ export function showResultScreen(
 
     // スコア計算式
     const formula = document.createElement('div');
-    formula.style.cssText = 'font-size: 1.1rem; color: #94a3b8; text-align: center; line-height: 2;';
+    formula.style.cssText = 'font-size: 1.1rem; color: #64748b; text-align: center; line-height: 2;';
     formula.innerHTML =
-        `<span style="color:#7ddfff">${phrasesCompleted}</span> × 100` +
+        `<span style="color:#0891b2">${phrasesCompleted}</span> × 100` +
         ` + ` +
-        `<span style="color:#22c55e">${pressureClears}</span> × 50` +
+        `<span style="color:#16a34a">${pressureClears}</span> × 50` +
         ` = ` +
-        `<span style="color:#fde047; font-size: 1.6rem;">${score}</span> pt`;
+        `<span style="color:#ca8a04; font-size: 1.6rem;">${score}</span> pt`;
 
     // 大きなスコア数字
     const bigScore = document.createElement('div');
-    bigScore.style.cssText = 'font-size: 5rem; color: #fde047; letter-spacing: 0.05em;';
+    bigScore.style.cssText = 'font-size: 5rem; color: #ca8a04; letter-spacing: 0.05em;';
     bigScore.textContent = `${score}`;
 
     // 内訳
     const detail = document.createElement('div');
     detail.style.cssText = 'font-size: 0.9rem; color: #475569; text-align: center; line-height: 2;';
     detail.innerHTML =
-        `フレーズ数: <span style="color:#7ddfff">${phrasesCompleted}</span><br>` +
-        `打鍵圧クリア: <span style="color:#22c55e">${pressureClears}</span>`;
+        `フレーズ数: <span style="color:#0891b2">${phrasesCompleted}</span><br>` +
+        `打鍵圧クリア: <span style="color:#16a34a">${pressureClears}</span>`;
 
     // タイトルへ戻るボタン（左下）
     const backBtn = document.createElement('button');
@@ -63,8 +63,8 @@ export function showResultScreen(
         left: '2rem',
         padding: '0.6rem 1.5rem',
         background: 'transparent',
-        border: '2px solid #334155',
-        color: '#94a3b8',
+        border: '2px solid #cbd5e1',
+        color: '#64748b',
         fontFamily: "'Audiowide', sans-serif",
         fontSize: '0.85rem',
         cursor: 'pointer',
@@ -72,12 +72,12 @@ export function showResultScreen(
         transition: 'border-color 0.2s, color 0.2s',
     });
     backBtn.addEventListener('mouseover', () => {
-        backBtn.style.borderColor = '#7ddfff';
-        backBtn.style.color = '#7ddfff';
+        backBtn.style.borderColor = '#0891b2';
+        backBtn.style.color = '#0891b2';
     });
     backBtn.addEventListener('mouseout', () => {
-        backBtn.style.borderColor = '#334155';
-        backBtn.style.color = '#94a3b8';
+        backBtn.style.borderColor = '#cbd5e1';
+        backBtn.style.color = '#64748b';
     });
     backBtn.addEventListener('click', onRestart);
 

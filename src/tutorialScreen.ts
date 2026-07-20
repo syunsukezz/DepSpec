@@ -25,8 +25,8 @@ export function showTutorialScreen(app: HTMLDivElement, options: TutorialOptions
         flexDirection: 'column',
         width: '100%',
         height: '100%',
-        background: '#0a0a0f',
-        color: 'white',
+        background: '#ffffff',
+        color: '#1e293b',
         fontFamily: "'Audiowide', sans-serif",
         overflow: 'hidden',
     });
@@ -43,8 +43,7 @@ export function showTutorialScreen(app: HTMLDivElement, options: TutorialOptions
             100% { transform: scale(1);   opacity: 1; }
         }
         .tut-step { animation: tut-fadein 0.3s ease-out both; }
-        .tut-next-btn:hover:not(:disabled) { background: rgba(125,223,255,0.12) !important; }
-        .tut-skip-btn:hover { color: #94a3b8 !important; }
+        .tut-skip-btn:hover { color: #334155 !important; }
     `;
     document.head.appendChild(style);
 
@@ -55,16 +54,16 @@ export function showTutorialScreen(app: HTMLDivElement, options: TutorialOptions
         justifyContent: 'space-between',
         alignItems: 'center',
         padding: '0.8rem 2rem',
-        borderBottom: '1px solid #1e293b',
+        borderBottom: '1px solid #e2e8f0',
     });
     const titleEl = document.createElement('span');
     titleEl.textContent = 'Tutorial';
-    titleEl.style.cssText = 'font-size:1.1rem; color:#7ddfff; letter-spacing:0.2em;';
+    titleEl.style.cssText = 'font-size:1.1rem; color:#0891b2; letter-spacing:0.2em;';
     const skipBtn = document.createElement('button');
     skipBtn.textContent = 'Skip →';
     skipBtn.className = 'tut-skip-btn';
     Object.assign(skipBtn.style, {
-        background: 'transparent', border: 'none', color: '#475569',
+        background: 'transparent', border: 'none', color: '#94a3b8',
         fontFamily: "'Audiowide', sans-serif", fontSize: '0.85rem',
         cursor: 'pointer', transition: 'color 0.2s',
     });
@@ -83,7 +82,7 @@ export function showTutorialScreen(app: HTMLDivElement, options: TutorialOptions
         const dot = document.createElement('span');
         dot.style.cssText = `
             display:inline-block; width:8px; height:8px; border-radius:50%;
-            background:#1e293b; border:1px solid #334155; transition:background 0.3s;
+            background:#e2e8f0; border:1px solid #cbd5e1; transition:background 0.3s;
         `;
         dots.push(dot);
         dotsEl.appendChild(dot);
@@ -97,52 +96,34 @@ export function showTutorialScreen(app: HTMLDivElement, options: TutorialOptions
         padding: '2rem', gap: '1.5rem', overflow: 'hidden',
     });
 
-    // ── ナビ ───────────────────────────────────────────────────
-    const navEl = document.createElement('div');
-    Object.assign(navEl.style, {
-        display: 'flex', justifyContent: 'center',
-        padding: '1.2rem 2rem', borderTop: '1px solid #1e293b',
-    });
-    const nextBtn = document.createElement('button');
-    nextBtn.className = 'tut-next-btn';
-    Object.assign(nextBtn.style, {
-        padding: '0.7rem 3rem', background: 'transparent',
-        border: '2px solid #7ddfff', color: '#7ddfff',
-        fontFamily: "'Audiowide', sans-serif", fontSize: '1rem',
-        cursor: 'pointer', borderRadius: '8px', transition: 'background 0.2s, opacity 0.2s',
-        letterSpacing: '0.1em',
-    });
-    nextBtn.addEventListener('click', advance);
-
     app.appendChild(header);
     app.appendChild(dotsEl);
     app.appendChild(contentEl);
-    app.appendChild(navEl);
-    navEl.appendChild(nextBtn);
 
     // ── ステップ管理 ───────────────────────────────────────────
     let currentStep = 0;
     let stepCleanup: (() => void) | null = null;
+    let autoAdvanceTimer = 0;
 
     function setStep(n: number) {
         currentStep = n;
+        clearTimeout(autoAdvanceTimer);
         if (stepCleanup) { stepCleanup(); stepCleanup = null; }
         clearPressureListener();
-        dots.forEach((d, i) => { d.style.background = i <= n ? '#7ddfff' : '#1e293b'; });
+        dots.forEach((d, i) => { d.style.background = i <= n ? '#0891b2' : '#e2e8f0'; });
         contentEl.innerHTML = '';
-        setNextEnabled(false);
         STEP_RENDERERS[n]();
     }
 
     function advance() {
+        clearTimeout(autoAdvanceTimer);
         if (currentStep < STEPS - 1) setStep(currentStep + 1);
         else { cleanup(); onComplete(); }
     }
 
-    function setNextEnabled(enabled: boolean) {
-        nextBtn.disabled = !enabled;
-        nextBtn.style.opacity = enabled ? '1' : '0.3';
-        nextBtn.style.cursor = enabled ? 'pointer' : 'not-allowed';
+    /** クリア判定後、少し間を置いて自動的に次のステップへ */
+    function scheduleAdvance(delay = 800): void {
+        autoAdvanceTimer = window.setTimeout(advance, delay);
     }
 
     // ── 共通 UI ヘルパー ───────────────────────────────────────
@@ -174,7 +155,7 @@ export function showTutorialScreen(app: HTMLDivElement, options: TutorialOptions
         const p = document.createElement('p');
         p.textContent = text;
         Object.assign(p.style, {
-            fontSize: '1rem', color: '#94a3b8', lineHeight: '1.8',
+            fontSize: '1rem', color: '#64748b', lineHeight: '1.8',
             textAlign: 'center', margin: '0', maxWidth: '500px',
             fontFamily: 'system-ui, sans-serif',
         });
@@ -185,7 +166,7 @@ export function showTutorialScreen(app: HTMLDivElement, options: TutorialOptions
     function makePressureGauge(): { el: HTMLDivElement; update: (t: number) => void } {
         const outer = document.createElement('div');
         Object.assign(outer.style, {
-            width: '320px', height: '18px', background: '#1e293b',
+            width: '320px', height: '18px', background: '#e2e8f0',
             borderRadius: '9px', overflow: 'hidden', position: 'relative',
         });
         const fill = document.createElement('div');
@@ -206,14 +187,14 @@ export function showTutorialScreen(app: HTMLDivElement, options: TutorialOptions
         const el = document.createElement('div');
         el.textContent = `✓ ${msg}`;
         el.style.cssText = `
-            font-size:1.3rem; color:#22c55e; letter-spacing:0.1em;
+            font-size:1.3rem; color:#16a34a; letter-spacing:0.1em;
             animation: tut-success 0.4s ease-out both;
         `;
         container.appendChild(el);
     }
 
     // 顔描画（tutorialScreen 内）
-    function drawFaceMini(canvas: HTMLCanvasElement, newtonValue: number, color = '#7ddfff'): void {
+    function drawFaceMini(canvas: HTMLCanvasElement, newtonValue: number, color = '#0891b2'): void {
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
         const W = canvas.width, H = canvas.height;
@@ -237,14 +218,13 @@ export function showTutorialScreen(app: HTMLDivElement, options: TutorialOptions
 
     // ── Step 0: タイピング練習 ─────────────────────────────────
     function renderStep0() {
-        nextBtn.textContent = 'Next →';
         const PRACTICE = 'あいう';
         keygraph.build(PRACTICE);
 
         const card = makeCard();
         const heading = document.createElement('h2');
         heading.textContent = 'タイピング練習';
-        heading.style.cssText = 'font-size:1.8rem; color:#7ddfff; letter-spacing:0.15em; margin:0;';
+        heading.style.cssText = 'font-size:1.8rem; color:#0891b2; letter-spacing:0.15em; margin:0;';
         card.appendChild(heading);
         card.appendChild(makeDesc(`「${PRACTICE}」をローマ字で入力してください`));
 
@@ -264,18 +244,18 @@ export function showTutorialScreen(app: HTMLDivElement, options: TutorialOptions
             done.forEach(ch => {
                 const s = document.createElement('span');
                 s.textContent = ch;
-                s.style.cssText = 'font-size:3.5rem; color:#475569;';
+                s.style.cssText = 'font-size:3.5rem; color:#94a3b8;';
                 kanaRow.appendChild(s);
             });
             candidates.forEach(ch => {
                 const s = document.createElement('span');
                 s.textContent = ch;
-                s.style.cssText = 'font-size:3.5rem; color:#f1f5f9;';
+                s.style.cssText = 'font-size:3.5rem; color:#1e293b;';
                 kanaRow.appendChild(s);
             });
             romRow.innerHTML =
-                `<span style="color:#334155">${keygraph.key_done()}</span>` +
-                `<span style="color:#7ddfff">${keygraph.key_candidate()}</span>`;
+                `<span style="color:#94a3b8">${keygraph.key_done()}</span>` +
+                `<span style="color:#0891b2">${keygraph.key_candidate()}</span>`;
         }
         updateDisplay();
 
@@ -286,11 +266,11 @@ export function showTutorialScreen(app: HTMLDivElement, options: TutorialOptions
                 updateDisplay();
                 if (keygraph.is_finished()) {
                     showSuccess(card);
-                    setNextEnabled(true);
                     document.removeEventListener('keydown', onKey);
+                    scheduleAdvance();
                 }
             } else {
-                kanaRow.style.color = '#ef4444';
+                kanaRow.style.color = '#dc2626';
                 setTimeout(() => { kanaRow.style.color = ''; }, 120);
             }
         }
@@ -300,7 +280,6 @@ export function showTutorialScreen(app: HTMLDivElement, options: TutorialOptions
 
     // ── Step 1: 強く ───────────────────────────────────────────
     function renderStep1() {
-        nextBtn.textContent = 'Next →';
         const { symbol, color, name } = INSTRUCTION_LABEL['strong'];
 
         const card = makeCard();
@@ -342,15 +321,14 @@ export function showTutorialScreen(app: HTMLDivElement, options: TutorialOptions
             playFormant(value);
             if (t >= STRONG_THRESHOLD) {
                 showSuccess(card, '強打を検出！');
-                setNextEnabled(true);
                 clearPressureListener();
+                scheduleAdvance();
             }
         });
     }
 
     // ── Step 2: 弱く ───────────────────────────────────────────
     function renderStep2() {
-        nextBtn.textContent = 'Next →';
         const { symbol, color, name } = INSTRUCTION_LABEL['weak'];
 
         const card = makeCard();
@@ -386,15 +364,14 @@ export function showTutorialScreen(app: HTMLDivElement, options: TutorialOptions
             playFormant(value);
             if (t <= WEAK_THRESHOLD) {
                 showSuccess(card, '弱打を検出！');
-                setNextEnabled(true);
                 clearPressureListener();
+                scheduleAdvance();
             }
         });
     }
 
     // ── Step 3: ビブラート ─────────────────────────────────────
     function renderStep3() {
-        nextBtn.textContent = 'ゲームスタート！';
         const { symbol, color, name } = INSTRUCTION_LABEL['vibrato'];
 
         const card = makeCard();
@@ -412,7 +389,7 @@ export function showTutorialScreen(app: HTMLDivElement, options: TutorialOptions
         Object.assign(historyEl.style, {
             display: 'flex', alignItems: 'flex-end', gap: '4px',
             height: '60px', padding: '4px',
-            background: '#111827', borderRadius: '8px',
+            background: '#f1f5f9', borderRadius: '8px',
             width: '320px',
         });
 
@@ -465,14 +442,15 @@ export function showTutorialScreen(app: HTMLDivElement, options: TutorialOptions
             if (checkVibrato()) {
                 cleared = true;
                 showSuccess(card, 'ビブラートを検出！');
-                setNextEnabled(true);
                 clearPressureListener();
+                scheduleAdvance();
             }
         });
     }
 
     // ── 後片付け ───────────────────────────────────────────────
     function cleanup() {
+        clearTimeout(autoAdvanceTimer);
         if (stepCleanup) { stepCleanup(); stepCleanup = null; }
         clearPressureListener();
         style.remove();

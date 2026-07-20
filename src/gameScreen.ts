@@ -52,7 +52,7 @@ function drawFace(canvas: HTMLCanvasElement, newtonValue: number): void {
     // 顔の輪郭弧（口部分が右側）
     ctx.beginPath();
     ctx.arc(cx, cy, r, gapRad, 2 * Math.PI - gapRad, false);
-    ctx.strokeStyle = '#7ddfff';
+    ctx.strokeStyle = '#0891b2';
     ctx.lineWidth = 6;
     ctx.lineCap = 'round';
     ctx.stroke();
@@ -67,7 +67,7 @@ function drawFace(canvas: HTMLCanvasElement, newtonValue: number): void {
     ctx.moveTo(p1x, p1y);
     ctx.lineTo(cx, cy);
     ctx.lineTo(p2x, p2y);
-    ctx.strokeStyle = '#7ddfff';
+    ctx.strokeStyle = '#0891b2';
     ctx.lineWidth = 6;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
@@ -78,11 +78,11 @@ function drawFace(canvas: HTMLCanvasElement, newtonValue: number): void {
     const eyeY = cy - r * 0.32;
     ctx.beginPath();
     ctx.arc(eyeX, eyeY, r * 0.07, 0, 2 * Math.PI);
-    ctx.fillStyle = '#7ddfff';
+    ctx.fillStyle = '#0891b2';
     ctx.fill();
 
     // 打鍵圧インジケータ（小さいテキスト）
-    ctx.fillStyle = '#ffffff44';
+    ctx.fillStyle = '#64748b88';
     ctx.font = `${W * 0.08}px Audiowide, sans-serif`;
     ctx.textAlign = 'center';
     ctx.fillText(`${newtonValue.toFixed(1)}N`, cx, H - 8);
@@ -100,8 +100,8 @@ function createBubble(phrase: PhraseData, isActive: boolean, doneCount = 0): HTM
     const bubble = document.createElement('div');
     Object.assign(bubble.style, {
         position: 'relative',
-        background: isActive ? '#1e293b' : '#111827',
-        border: isActive ? `2px solid #7ddfff` : '1px solid #334155',
+        background: isActive ? '#eef6fa' : '#f8fafc',
+        border: isActive ? `2px solid #0891b2` : '1px solid #e2e8f0',
         borderRadius: '14px',
         padding: '0.8rem 1.2rem',
         paddingLeft: phrase.instruction === 'vibrato' ? '2.6rem' : '1.2rem',
@@ -171,7 +171,7 @@ function createBubble(phrase: PhraseData, isActive: boolean, doneCount = 0): HTM
 
         const charEl = document.createElement('span');
         charEl.textContent = ch;
-        charEl.style.cssText = `font-size:${charSize}; font-family:system-ui,sans-serif; color:#e2e8f0;`;
+        charEl.style.cssText = `font-size:${charSize}; font-family:system-ui,sans-serif; color:#1e293b;`;
 
         wrapper.appendChild(iconEl);
         wrapper.appendChild(charEl);
@@ -198,8 +198,8 @@ export function showGameScreen(
         gridTemplateRows: 'auto 1fr 200px auto',
         width: '100%',
         height: '100%',
-        background: '#0a0a0f',
-        color: 'white',
+        background: '#ffffff',
+        color: '#1e293b',
         overflow: 'hidden',
     });
 
@@ -222,16 +222,16 @@ export function showGameScreen(
         justifyContent: 'space-between',
         alignItems: 'center',
         padding: '0.8rem 2rem',
-        borderBottom: '1px solid #1e293b',
+        borderBottom: '1px solid #e2e8f0',
         fontFamily: "'Audiowide', sans-serif",
     });
 
     const timerEl = document.createElement('div');
-    timerEl.style.cssText = 'font-size: 1.8rem; color: #7ddfff;';
+    timerEl.style.cssText = 'font-size: 1.8rem; color: #0891b2;';
     timerEl.textContent = '2:00';
 
     const scoreEl = document.createElement('div');
-    scoreEl.style.cssText = 'font-size: 1.4rem; color: #fde047;';
+    scoreEl.style.cssText = 'font-size: 1.4rem; color: #ca8a04;';
     scoreEl.textContent = '0 pt';
 
     header.appendChild(timerEl);
@@ -257,7 +257,7 @@ export function showGameScreen(
         justifyContent: 'center',
         gap: '1.5rem',
         padding: '0.8rem 2rem',
-        borderTop: '1px solid #1e293b',
+        borderTop: '1px solid #e2e8f0',
     });
 
     // 横顔キャンバス
@@ -320,7 +320,7 @@ export function showGameScreen(
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        background: '#0a0a0f',
+        background: '#ffffff',
         // scale(2) で高さが2倍になるが layout 上の高さは変わらないので padding で補う
         padding: '30px 0',
     });
@@ -392,7 +392,7 @@ export function showGameScreen(
 
             const charEl = document.createElement('span');
             charEl.textContent = ch;
-            charEl.style.cssText = 'font-size:3rem; color:#f1f5f9; font-family:system-ui,sans-serif; line-height:1;';
+            charEl.style.cssText = 'font-size:3rem; color:#1e293b; font-family:system-ui,sans-serif; line-height:1;';
 
             wrapper.appendChild(iconEl);
             wrapper.appendChild(charEl);
@@ -400,8 +400,8 @@ export function showGameScreen(
         });
 
         romRow.innerHTML =
-            `<span style="color:#334155">${romDone}</span>` +
-            `<span style="color:#7ddfff">${romCandidate}</span>`;
+            `<span style="color:#94a3b8">${romDone}</span>` +
+            `<span style="color:#0891b2">${romCandidate}</span>`;
     }
 
     function triggerEffect(ch: string, pressure: number) {
@@ -452,7 +452,7 @@ export function showGameScreen(
     }
 
     function flashMiss() {
-        kanaRow.style.color = '#ef4444';
+        kanaRow.style.color = '#dc2626';
         setTimeout(() => { kanaRow.style.color = ''; }, 120);
     }
 
@@ -485,7 +485,7 @@ export function showGameScreen(
         const m = Math.floor(timeLeft / 60);
         const s = timeLeft % 60;
         timerEl.textContent = `${m}:${s.toString().padStart(2, '0')}`;
-        if (timeLeft <= 30) timerEl.style.color = '#ef4444';
+        if (timeLeft <= 30) timerEl.style.color = '#dc2626';
         if (timeLeft <= 0) {
             clearInterval(timerInterval);
             cleanup();
