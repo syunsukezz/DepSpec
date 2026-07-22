@@ -1,14 +1,15 @@
 import { keygraph } from './keygraph.js';
-import { INSTRUCTION_LABEL, normalizeN } from './phrases';
+import { INSTRUCTION_LABEL, normalizeN, pressureLevel } from './phrases';
 import { playFormant } from './audio';
+import type { GameMode } from './gameScreen';
+import { createStage } from './stage';
 
-// 閾値 (phrases.ts と同じ値)
-const STRONG_THRESHOLD = 0.55;
-const WEAK_THRESHOLD   = 0.35;
-const VIBRATO_STDDEV   = 0.2;
-const VIBRATO_MIN_SAMPLES = 6;
+// 正規化値の3等分境界 (phrases.ts の pressureLevel と同じ)
+const LEVEL_LOW  = 1 / 3; // これ未満 → 弱い
+const LEVEL_HIGH = 2 / 3; // これ以上 → 強い
 
 export interface TutorialOptions {
+    mode: GameMode;
     setPressureListener: (cb: (code: string, value: number) => void) => void;
     clearPressureListener: () => void;
     onComplete: () => void;
@@ -16,20 +17,20 @@ export interface TutorialOptions {
 }
 
 export function showTutorialScreen(app: HTMLDivElement, options: TutorialOptions): void {
-    const { setPressureListener, clearPressureListener, onComplete, onSkip } = options;
+    const { mode, setPressureListener, clearPressureListener, onComplete, onSkip } = options;
+    const isAnalog = mode === 'analog';
+    // 通常モードは打鍵圧の練習ステップが不要なので、タイピング練習だけ
+    const STEP_RENDERERS = isAnalog
+        ? [renderStep0, renderStep1, renderStep2, renderStep3]
+        : [renderStep0];
+    const STEPS = STEP_RENDERERS.length;
 
-    app.innerHTML = '';
-    app.removeAttribute('style');
-    Object.assign(app.style, {
+    // 割合を一定に保つため等倍スケール（fit）
+    const { stage, dispose: disposeStage } = createStage(app, {
         display: 'flex',
         flexDirection: 'column',
-        width: '100%',
-        height: '100%',
-        background: '#ffffff',
-        color: '#1e293b',
         fontFamily: "'Audiowide', sans-serif",
-        overflow: 'hidden',
-    });
+    }, { fit: true, designW: 1000, designH: 720 });
 
     const style = document.createElement('style');
     style.textContent = `
@@ -72,7 +73,6 @@ export function showTutorialScreen(app: HTMLDivElement, options: TutorialOptions
     header.appendChild(skipBtn);
 
     // ── 進捗ドット ─────────────────────────────────────────────
-    const STEPS = 4;
     const dotsEl = document.createElement('div');
     Object.assign(dotsEl.style, {
         display: 'flex', justifyContent: 'center', gap: '0.5rem', padding: '0.6rem 0',
@@ -96,9 +96,9 @@ export function showTutorialScreen(app: HTMLDivElement, options: TutorialOptions
         padding: '2rem', gap: '1.5rem', overflow: 'hidden',
     });
 
-    app.appendChild(header);
-    app.appendChild(dotsEl);
-    app.appendChild(contentEl);
+    stage.appendChild(header);
+    stage.appendChild(dotsEl);
+    stage.appendChild(contentEl);
 
     // ── ステップ管理 ───────────────────────────────────────────
     let currentStep = 0;
@@ -284,7 +284,7 @@ export function showTutorialScreen(app: HTMLDivElement, options: TutorialOptions
 
         const card = makeCard();
         card.appendChild(makeHeading(symbol, color, name));
-        card.appendChild(makeDesc('キーを力強く押してください。ゲージが右端付近まで達したらクリアです。'));
+        card.appendChild(makeDesc('キーを押してください。「弱い」ゾーンを超えればクリアです。'));
 
         const faceCanvas = document.createElement('canvas');
         faceCanvas.width = 120; faceCanvas.height = 120;
@@ -292,20 +292,20 @@ export function showTutorialScreen(app: HTMLDivElement, options: TutorialOptions
 
         const gauge = makePressureGauge();
 
-        // 閾値マーカー
+        // 閾値マーカー: 「弱い」との境界（ここ以上でクリア）
         const gaugeWrap = document.createElement('div');
         gaugeWrap.style.cssText = 'position:relative; display:flex; flex-direction:column; align-items:flex-start;';
         gaugeWrap.appendChild(gauge.el);
         const marker = document.createElement('div');
         marker.style.cssText = `
-            position:absolute; top:0; bottom:0; left:${STRONG_THRESHOLD * 100}%;
+            position:absolute; top:0; bottom:0; left:${LEVEL_LOW * 100}%;
             width:2px; background:${color}; opacity:0.7;
         `;
         gauge.el.appendChild(marker);
         const markerLabel = document.createElement('div');
         markerLabel.textContent = '← ここ以上';
         markerLabel.style.cssText = `font-size:0.7rem; color:${color}; font-family:system-ui,sans-serif;
-            position:absolute; top:22px; left:${STRONG_THRESHOLD * 100}%; white-space:nowrap;`;
+            position:absolute; top:22px; left:${LEVEL_LOW * 100}%; white-space:nowrap;`;
         gauge.el.style.position = 'relative';
         gauge.el.appendChild(markerLabel);
         gaugeWrap.appendChild(gauge.el);
@@ -319,7 +319,7 @@ export function showTutorialScreen(app: HTMLDivElement, options: TutorialOptions
             gauge.update(t);
             drawFaceMini(faceCanvas, value, color);
             playFormant(value);
-            if (t >= STRONG_THRESHOLD) {
+            if (pressureLevel(value) !== 'weak') {
                 showSuccess(card, '強打を検出！');
                 clearPressureListener();
                 scheduleAdvance();
@@ -333,7 +333,7 @@ export function showTutorialScreen(app: HTMLDivElement, options: TutorialOptions
 
         const card = makeCard();
         card.appendChild(makeHeading(symbol, color, name));
-        card.appendChild(makeDesc('キーをそっと、やさしく押してください。ゲージが低い位置に留まったらクリアです。'));
+        card.appendChild(makeDesc('キーをそっと押してください。「強い」ゾーンに入らなければクリアです。'));
 
         const faceCanvas = document.createElement('canvas');
         faceCanvas.width = 120; faceCanvas.height = 120;
@@ -341,16 +341,17 @@ export function showTutorialScreen(app: HTMLDivElement, options: TutorialOptions
 
         const gauge = makePressureGauge();
         gauge.el.style.position = 'relative';
+        // 閾値マーカー: 「強い」との境界（ここ以下でクリア）
         const marker = document.createElement('div');
         marker.style.cssText = `
-            position:absolute; top:0; bottom:0; left:${WEAK_THRESHOLD * 100}%;
+            position:absolute; top:0; bottom:0; left:${LEVEL_HIGH * 100}%;
             width:2px; background:${color}; opacity:0.7;
         `;
         gauge.el.appendChild(marker);
         const markerLabel = document.createElement('div');
         markerLabel.textContent = 'ここ以下 →';
         markerLabel.style.cssText = `font-size:0.7rem; color:${color}; font-family:system-ui,sans-serif;
-            position:absolute; top:22px; right:${(1 - WEAK_THRESHOLD) * 100}%; white-space:nowrap;`;
+            position:absolute; top:22px; right:${(1 - LEVEL_HIGH) * 100}%; white-space:nowrap;`;
         gauge.el.appendChild(markerLabel);
 
         card.appendChild(faceCanvas);
@@ -362,7 +363,7 @@ export function showTutorialScreen(app: HTMLDivElement, options: TutorialOptions
             gauge.update(t);
             drawFaceMini(faceCanvas, value, color);
             playFormant(value);
-            if (t <= WEAK_THRESHOLD) {
+            if (pressureLevel(value) !== 'strong') {
                 showSuccess(card, '弱打を検出！');
                 clearPressureListener();
                 scheduleAdvance();
@@ -370,82 +371,90 @@ export function showTutorialScreen(app: HTMLDivElement, options: TutorialOptions
         });
     }
 
-    // ── Step 3: ビブラート ─────────────────────────────────────
+    // ── Step 3: 打鍵圧マークの説明 ─────────────────────────────
     function renderStep3() {
-        const { symbol, color, name } = INSTRUCTION_LABEL['vibrato'];
+        const strong = INSTRUCTION_LABEL['strong'];
+        const weak = INSTRUCTION_LABEL['weak'];
 
         const card = makeCard();
-        card.appendChild(makeHeading(symbol, color, name));
-        card.appendChild(makeDesc(
-            `打鍵圧を強→弱→強と変化させながら${VIBRATO_MIN_SAMPLES}回以上キーを押してください。`
-        ));
+        const heading = document.createElement('h2');
+        heading.textContent = '打鍵圧マーク';
+        heading.style.cssText = 'font-size:1.8rem; color:#0891b2; letter-spacing:0.15em; margin:0;';
+        card.appendChild(heading);
+        card.appendChild(makeDesc('ゲームでは文字の上にマークが付きます。指示どおりの打鍵圧で打つとボーナス点です。'));
 
-        const faceCanvas = document.createElement('canvas');
-        faceCanvas.width = 120; faceCanvas.height = 120;
-        drawFaceMini(faceCanvas, 0.6, color);
-
-        // 打鍵履歴ドット
-        const historyEl = document.createElement('div');
-        Object.assign(historyEl.style, {
-            display: 'flex', alignItems: 'flex-end', gap: '4px',
-            height: '60px', padding: '4px',
-            background: '#f1f5f9', borderRadius: '8px',
-            width: '320px',
+        // 2種類のマークの凡例
+        const legend = document.createElement('div');
+        legend.style.cssText = 'display:flex; gap:3rem; font-family:system-ui,sans-serif;';
+        ([
+            { m: strong, desc: 'この字を強く打つ' },
+            { m: weak,   desc: 'この字を弱く打つ' },
+        ] as const).forEach(({ m, desc }) => {
+            const item = document.createElement('div');
+            item.style.cssText = 'display:flex; flex-direction:column; align-items:center; gap:0.3rem;';
+            const sym = document.createElement('div');
+            sym.textContent = m.symbol;
+            sym.style.cssText = `font-size:2.6rem; color:${m.color}; font-weight:bold; line-height:1;`;
+            const nm = document.createElement('div');
+            nm.textContent = m.name;
+            nm.style.cssText = `font-size:1.3rem; color:${m.color};`;
+            const ds = document.createElement('div');
+            ds.textContent = desc;
+            ds.style.cssText = 'font-size:0.9rem; color:#64748b;';
+            item.appendChild(sym);
+            item.appendChild(nm);
+            item.appendChild(ds);
+            legend.appendChild(item);
         });
+        card.appendChild(legend);
 
-        const pressures: number[] = [];
-        let cleared = false;
-
-        function addPressureDot(t: number) {
-            const dot = document.createElement('div');
-            const h = Math.max(6, t * 52);
-            Object.assign(dot.style, {
-                width: '16px', height: `${h}px`, borderRadius: '3px',
-                background: color, opacity: '0.8', flexShrink: '0',
-                transition: 'height 0.1s',
-            });
-            historyEl.appendChild(dot);
-            // 古いドットを削除して幅を保つ
-            while (historyEl.children.length > 16) {
-                historyEl.removeChild(historyEl.firstChild!);
+        // ゲームと同じ見た目のフレーズ見本（対象文字の上にマーク）
+        const exampleText = 'さくらがさいた';
+        const marks: Record<number, 'strong' | 'weak'> = { 0: 'strong', 4: 'weak' };
+        const exampleRow = document.createElement('div');
+        exampleRow.style.cssText =
+            'display:flex; align-items:flex-end; gap:0; padding:0.6rem 1.2rem;' +
+            'background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px;';
+        [...exampleText].forEach((ch, i) => {
+            const wrap = document.createElement('div');
+            wrap.style.cssText = 'display:flex; flex-direction:column; align-items:center;';
+            const icon = document.createElement('span');
+            const mk = marks[i];
+            if (mk) {
+                const lbl = INSTRUCTION_LABEL[mk];
+                icon.textContent = lbl.symbol;
+                icon.style.cssText = `font-size:1.3rem; color:${lbl.color}; font-weight:bold; line-height:1.2;`;
+            } else {
+                icon.textContent = ' ';
+                icon.style.cssText = 'font-size:1.3rem; line-height:1.2;';
             }
-        }
+            const c = document.createElement('span');
+            c.textContent = ch;
+            c.style.cssText = 'font-size:2.6rem; color:#1e293b; font-family:system-ui,sans-serif; line-height:1;';
+            wrap.appendChild(icon);
+            wrap.appendChild(c);
+            exampleRow.appendChild(wrap);
+        });
+        card.appendChild(exampleRow);
 
-        // stddev チェック
-        function checkVibrato(): boolean {
-            if (pressures.length < VIBRATO_MIN_SAMPLES) return false;
-            const logs = pressures.map(n => Math.log(Math.max(n, 0.01)));
-            const mean = logs.reduce((a, b) => a + b, 0) / logs.length;
-            const variance = logs.reduce((a, b) => a + (b - mean) ** 2, 0) / logs.length;
-            return Math.sqrt(variance) >= VIBRATO_STDDEV;
-        }
+        card.appendChild(makeDesc('指定どおりに打てると +50pt。連続で決めるとコンボで倍増します。'));
 
-        // カウンタ表示
-        const countEl = document.createElement('div');
-        countEl.style.cssText = `font-size:0.85rem; color:#64748b; font-family:system-ui,sans-serif;`;
-        countEl.textContent = `0 / ${VIBRATO_MIN_SAMPLES} 回`;
+        // 続行プロンプト（何かキーで開始）
+        const prompt = document.createElement('div');
+        prompt.textContent = '何かキーを押してゲーム開始';
+        prompt.style.cssText = 'font-size:1rem; color:#0891b2; letter-spacing:0.1em; margin-top:0.4rem;';
+        card.appendChild(prompt);
 
-        card.appendChild(faceCanvas);
-        card.appendChild(historyEl);
-        card.appendChild(countEl);
         contentEl.appendChild(card);
 
-        setPressureListener((_code, value) => {
-            if (cleared) return;
-            const t = normalizeN(value);
-            pressures.push(value);
-            if (pressures.length > VIBRATO_MIN_SAMPLES) pressures.shift();
-            addPressureDot(t);
-            drawFaceMini(faceCanvas, value, color);
-            playFormant(value);
-            countEl.textContent = `${pressures.length} / ${VIBRATO_MIN_SAMPLES} 回`;
-            if (checkVibrato()) {
-                cleared = true;
-                showSuccess(card, 'ビブラートを検出！');
-                clearPressureListener();
-                scheduleAdvance();
-            }
-        });
+        function onKey(e: KeyboardEvent) {
+            if (e.ctrlKey || e.metaKey || e.altKey || e.key.length !== 1) return;
+            e.preventDefault();
+            document.removeEventListener('keydown', onKey);
+            advance();
+        }
+        document.addEventListener('keydown', onKey);
+        stepCleanup = () => document.removeEventListener('keydown', onKey);
     }
 
     // ── 後片付け ───────────────────────────────────────────────
@@ -454,8 +463,8 @@ export function showTutorialScreen(app: HTMLDivElement, options: TutorialOptions
         if (stepCleanup) { stepCleanup(); stepCleanup = null; }
         clearPressureListener();
         style.remove();
+        disposeStage();
     }
 
-    const STEP_RENDERERS = [renderStep0, renderStep1, renderStep2, renderStep3];
     setStep(0);
 }

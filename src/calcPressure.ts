@@ -1,6 +1,7 @@
 let PressedKeys: Set<string> = new Set();
 let StartTime: Map<string, number> = new Map();
 let PreviousKeyValues: Map<string, number> = new Map();
+let StartKeyValues: Map<string, number> = new Map();
 let PressureCallback: (code: string, value: number) => void = () => {
     //console.log(`Key ${code} pressed with value ${value}`);
 }
@@ -20,7 +21,9 @@ function CaliculatePressure(code: string, value: number)
     PressedKeys.delete(code);
     StartTime.delete(code);
     PreviousKeyValues.delete(code);
+    StartKeyValues.delete(code);
     console.log(`Key ${code} released`);
+
   }
 
   if (value > ReleaseThreshold && previousValue > ReleaseThreshold) {
@@ -47,7 +50,8 @@ function CaliculatePressure(code: string, value: number)
       return;
     }
     if (isVelocity) {
-      const v = stroke_mm / ms; // 平均速度（mm/ms = m/s）
+      // 開始位置(StartKeyValues)からボトム(=1)までの距離 / 経過時間
+      const v = (stroke_mm - StartKeyValues.get(code)! * stroke_mm) / ms; // 平均速度（mm/ms = m/s）
       PressureCallback(code, v*0.529136+0.81);
       PressedKeys.add(code);
       return;
@@ -61,6 +65,7 @@ function CaliculatePressure(code: string, value: number)
   else if (value > ReleaseThreshold && previousValue < ReleaseThreshold) {
     // キーが押されたので、開始時間を記録する
     StartTime.set(code, performance.now());
+    StartKeyValues.set(code, value);
     PreviousKeyValues.set(code, value);
   }
   if (!PressedKeys.has(code) && value < previousValue && value > ReleaseThreshold)
@@ -73,7 +78,7 @@ function CaliculatePressure(code: string, value: number)
         return;
       }
       const ms = performance.now() - startTime;
-      const mm = value *stroke_mm;// キーが押された距離（mm）
+      const mm = value *stroke_mm-StartKeyValues.get(code)! *stroke_mm;// キーが押された距離（mm）
       const v = mm / ms;
       PressureCallback(code, v*0.529136+0.81);
       PressedKeys.add(code);

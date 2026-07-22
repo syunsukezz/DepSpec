@@ -1,23 +1,31 @@
-export type PressureInstruction = 'strong' | 'weak' | 'vibrato';
+export type PressureInstruction = 'strong' | 'weak';
 
 
 
 
 export function normalizeN(n: number): number {
-    return Math.min(1, Math.max(0, (n - 1) / 1));
+    return Math.min(1, Math.max(0, (n*5 - 4) / 2));
 }
 
-// 閾値
-const STRONG_THRESHOLD = 0.55; // 正規化値でこれ以上 → 強く
-const WEAK_THRESHOLD   = 0.35; // 正規化値でこれ以下 → 弱く
-const VIBRATO_STDDEV   = 0.4;  // log空間の標準偏差でこれ以上 → ビブラート
+// 打鍵圧のカテゴリ: 正規化値(0〜1)を3等分して 弱い / 普通 / 強い に分類する
+export type PressureLevel = 'weak' | 'normal' | 'strong';
+const LEVEL_LOW  = 1 / 3; // これ未満 → 弱い
+const LEVEL_HIGH = 2 / 3; // これ以上 → 強い
+
+export function pressureLevel(n: number): PressureLevel {
+    const t = normalizeN(n);
+    if (t < LEVEL_LOW) return 'weak';
+    if (t < LEVEL_HIGH) return 'normal';
+    return 'strong';
+}
+
+const MAX_MARKS = 3; // 1文に付けられるアイコンの最大数
 
 export interface PhraseData {
     text: string;               // ひらがな
-    instruction: PressureInstruction;
-    targets: number[];          // strong/weak: 対象ひらがなのインデックス (0-based)
+    // 文字インデックス(0-based) -> 強/弱。1文に強・弱が混在してよい (最大 MAX_MARKS 個)
+    targets: Record<number, PressureInstruction>;
     charPressures: Record<number, number>; // ひらがな完了時の打鍵圧 (index -> N)
-    allPressures: number[];     // 全キープレス時の打鍵圧 (振動判定用)
 }
 
 const PHRASE_POOL: string[] = [
@@ -59,58 +67,52 @@ const PHRASE_POOL: string[] = [
     "いきをあわせて",
 ];
 
-const INSTRUCTIONS: PressureInstruction[] = ['strong', 'weak', 'vibrato'];
-
-export function generatePhrase(): PhraseData {
+/**
+ * @param withTargets false の場合は強/弱アイコンを付けない（通常キーボード用ベースライン）
+ */
+export function generatePhrase(withTargets = true): PhraseData {
     const text = PHRASE_POOL[Math.floor(Math.random() * PHRASE_POOL.length)];
-    const instruction = INSTRUCTIONS[Math.floor(Math.random() * INSTRUCTIONS.length)];
     const chars = [...text];
 
-    let targets: number[] = [];
-    if (instruction !== 'vibrato') {
-        const count = Math.min(Math.floor(Math.random() * 3) + 1, chars.length);
-        // ランダムに count 個選ぶ（重複なし）
-        const indices = Array.from({ length: chars.length }, (_, i) => i);
-        for (let i = indices.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [indices[i], indices[j]] = [indices[j], indices[i]];
-        }
-        targets = indices.slice(0, count).sort((a, b) => a - b);
+    if (!withTargets) {
+        return { text, targets: {}, charPressures: {} };
     }
 
-    return { text, instruction, targets, charPressures: {}, allPressures: [] };
+    // 対象の文字を重複なくランダムに最大 MAX_MARKS 個選び、各文字に強/弱を割り当てる
+    const count = Math.min(Math.floor(Math.random() * MAX_MARKS) + 1, chars.length);
+    const indices = Array.from({ length: chars.length }, (_, i) => i);
+    for (let i = indices.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [indices[i], indices[j]] = [indices[j], indices[i]];
+    }
+
+    const targets: Record<number, PressureInstruction> = {};
+    for (const idx of indices.slice(0, count)) {
+        targets[idx] = Math.random() < 0.5 ? 'strong' : 'weak';
+    }
+
+    return { text, targets, charPressures: {} };
 }
 
 /**
- * フレーズの打鍵圧からクリア数を返す
- * - strong/weak: クリアしたターゲット文字の数（0〜targets.length）
- * - vibrato:     クリアなら1、そうでなければ0
+ * フレーズの打鍵圧からクリアしたアイコン数を返す（0〜アイコン数）。
+ * - 強く: 打鍵圧が「弱い」でなければクリア（普通 or 強い）
+ * - 弱く: 打鍵圧が「強い」でなければクリア（弱い or 普通）
  */
 export function countPressureClears(phrase: PhraseData): number {
-    const { instruction, targets, charPressures, allPressures } = phrase;
-
-    if (instruction === 'strong') {
-        return targets.filter(idx => {
-            const n = charPressures[idx];
-            return n !== undefined && normalizeN(n) >= STRONG_THRESHOLD;
-        }).length;
+    const { targets, charPressures } = phrase;
+    let cleared = 0;
+    for (const [idxStr, instruction] of Object.entries(targets)) {
+        const n = charPressures[Number(idxStr)];
+        if (n === undefined) continue;
+        const level = pressureLevel(n);
+        if (instruction === 'strong' && level !== 'weak') cleared++;
+        else if (instruction === 'weak' && level !== 'strong') cleared++;
     }
-    if (instruction === 'weak') {
-        return targets.filter(idx => {
-            const n = charPressures[idx];
-            return n !== undefined && normalizeN(n) <= WEAK_THRESHOLD;
-        }).length;
-    }
-    // vibrato: 1 or 0
-    if (allPressures.length < 2) return 0;
-    const logs = allPressures.map(n => Math.log(Math.max(n, 0.01)));
-    const mean = logs.reduce((a, b) => a + b, 0) / logs.length;
-    const variance = logs.reduce((a, b) => a + (b - mean) ** 2, 0) / logs.length;
-    return Math.sqrt(variance) >= VIBRATO_STDDEV ? 1 : 0;
+    return cleared;
 }
 
 export const INSTRUCTION_LABEL: Record<PressureInstruction, { symbol: string; color: string; name: string }> = {
     strong:  { symbol: '▲', color: '#dc2626', name: '強く' },
     weak:    { symbol: '▼', color: '#2563eb', name: '弱く' },
-    vibrato: { symbol: '〜', color: '#16a34a', name: 'ビブラート' },
 };

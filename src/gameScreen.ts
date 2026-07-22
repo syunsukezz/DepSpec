@@ -1,23 +1,45 @@
 import { keygraph } from './keygraph.js';
 import {
     generatePhrase,
-    countPressureClears,
     type PhraseData,
+    type PressureLevel,
     INSTRUCTION_LABEL,
     normalizeN,
+    pressureLevel,
 } from './phrases';
 import { playFormant } from './audio';
 import { keyboard, wooting60heplus } from './keyboard';
+import { createStage } from './stage';
 
-const GAME_DURATION_SEC = 120;
-const VISIBLE_BUBBLES = 5;
+const GAME_DURATION_SEC = 60;
+const VISIBLE_BUBBLES = 2;
+
+// analog: アナログキーボード（打鍵圧あり・強弱判定あり）
+// normal: 通常キーボード（打鍵圧なし・速度と正確性だけのベースライン）
+export type GameMode = 'analog' | 'normal';
 
 export interface GameResult {
+    mode: GameMode;
     phrasesCompleted: number;
     pressureClears: number;
+    totalTargets: number;      // 完了フレーズ内の指定アイコン総数
+    pressures: number[];       // 全打鍵の打鍵圧(N値・アナログのみ)
+    expressionScore: number;   // コンボ倍率込みの表現点
+    maxCombo: number;          // セッション最大コンボ
+}
+
+// コンボ倍率: COMBO_STEP 連続クリアごとに MULT_BASE 倍（掛け算で伸びる・上限 MAX_MULT）
+// 例: COMBO_STEP=3, MULT_BASE=2 → x1, x2, x4, x8, ...
+const COMBO_STEP = 1;
+const MULT_BASE = 2;
+const MAX_MULT = 100000000;
+function comboMultiplier(combo: number): number {
+    const tier = Math.floor((combo - 1) / COMBO_STEP);
+    return Math.min(MULT_BASE ** tier, MAX_MULT);
 }
 
 export interface GameScreenOptions {
+    mode: GameMode;
     setPressureListener: (cb: (code: string, value: number) => void) => void;
     clearPressureListener: () => void;
     setRawListener: (cb: (code: string, value: number) => void) => void;
@@ -93,7 +115,6 @@ function drawFace(canvas: HTMLCanvasElement, newtonValue: number): void {
 // doneCount: アクティブ時に何文字入力済みか（グレーアウト用）
 // -----------------------------------------------------------------------
 function createBubble(phrase: PhraseData, isActive: boolean, doneCount = 0): HTMLDivElement {
-    const { symbol, color, name } = INSTRUCTION_LABEL[phrase.instruction];
     const charSize = isActive ? '3.6rem' : '2.8rem';
     const iconSize = isActive ? '1.4rem' : '1.1rem';
 
@@ -104,31 +125,14 @@ function createBubble(phrase: PhraseData, isActive: boolean, doneCount = 0): HTM
         border: isActive ? `2px solid #0891b2` : '1px solid #e2e8f0',
         borderRadius: '14px',
         padding: '0.8rem 1.2rem',
-        paddingLeft: phrase.instruction === 'vibrato' ? '2.6rem' : '1.2rem',
         opacity: isActive ? '1' : '0.45',
         transition: 'opacity 0.3s',
         minHeight: '3.5rem',
         width: '900px',
-        maxWidth: '92vw',
+        maxWidth: '100%',
         display: 'flex',
         alignItems: 'flex-end',
     });
-
-    // ビブラートはバブル左上にアイコン
-    if (phrase.instruction === 'vibrato') {
-        const icon = document.createElement('span');
-        icon.textContent = symbol;
-        icon.title = name;
-        Object.assign(icon.style, {
-            position: 'absolute',
-            left: '0.6rem',
-            top: '0.6rem',
-            fontSize: '1rem',
-            color,
-            fontWeight: 'bold',
-        });
-        bubble.appendChild(icon);
-    }
 
     const charsEl = document.createElement('div');
     Object.assign(charsEl.style, {
@@ -139,7 +143,6 @@ function createBubble(phrase: PhraseData, isActive: boolean, doneCount = 0): HTM
     });
 
     const chars = [...phrase.text];
-    const targetSet = new Set(phrase.targets);
 
     // アクティブ吹き出しは未入力文字のみ表示
     const displayChars = isActive ? chars.slice(doneCount) : chars;
@@ -155,12 +158,11 @@ function createBubble(phrase: PhraseData, isActive: boolean, doneCount = 0): HTM
             alignItems: 'center',
         });
 
-        // アイコン: アクティブ時は先頭文字（現在入力中）にマーク、非アクティブはターゲット文字にマーク
-        const showIcon = phrase.instruction !== 'vibrato' && (
-            isActive ? j === 0 : targetSet.has(i)
-        );
+        // アイコン: 対象文字にその文字の強/弱アイコンを表示
+        const instruction = phrase.targets[i];
         const iconEl = document.createElement('span');
-        if (showIcon) {
+        if (instruction) {
+            const { symbol, color, name } = INSTRUCTION_LABEL[instruction];
             iconEl.textContent = symbol;
             iconEl.style.cssText = `font-size:${iconSize}; color:${color}; font-weight:bold; line-height:1.2;`;
             iconEl.title = name;
@@ -189,30 +191,33 @@ export function showGameScreen(
     app: HTMLDivElement,
     options: GameScreenOptions,
 ): void {
-    const { setPressureListener, clearPressureListener, setRawListener, clearRawListener, onFinish } = options;
+    const { mode, setPressureListener, clearPressureListener, setRawListener, clearRawListener, onFinish } = options;
+    const isAnalog = mode === 'analog';
 
-    app.innerHTML = '';
-    app.removeAttribute('style');
-    Object.assign(app.style, {
+    // 設計サイズ固定のステージ。中身はここに載せ、ウィンドウに合わせて拡縮する
+    // 割合を一定に保つため等倍スケール（fit）
+    const { stage, dispose: disposeStage } = createStage(app, {
         display: 'grid',
-        gridTemplateRows: 'auto 1fr 200px auto',
-        width: '100%',
-        height: '100%',
-        background: '#ffffff',
-        color: '#1e293b',
-        overflow: 'hidden',
-    });
+        // アナログはヘッダー直下に打鍵圧スタックの帯を挟む
+        gridTemplateRows: isAnalog ? 'auto auto 1fr 200px auto' : 'auto 1fr 200px auto',
+    }, { fit: true, designW: 1060, designH: 1000 });
 
     // ── 状態 ──────────────────────────────────────────
     let queue: PhraseData[] = [];
     let phrasesCompleted = 0;
     let pressureClears = 0;
+    let totalTargets = 0;              // 完了フレーズ内の指定アイコン総数
+    let combo = 0;                     // 指定の連続クリア数
+    let maxCombo = 0;
+    let expressionScore = 0;           // コンボ倍率込みの表現点
+    const sessionPressures: number[] = []; // 全打鍵の打鍵圧(N値)
     let timeLeft = GAME_DURATION_SEC;
     let lastPressureN = 0.6;
     let timerInterval = 0;
 
     // フレーズキューを初期化 (queue[0]=現在, queue[1..VISIBLE_BUBBLES]=吹き出し表示分)
-    for (let i = 0; i < VISIBLE_BUBBLES + 2; i++) queue.push(generatePhrase());
+    // 通常モードは強/弱アイコンを付けない
+    for (let i = 0; i < VISIBLE_BUBBLES + 2; i++) queue.push(generatePhrase(isAnalog));
     keygraph.build(queue[0].text);
 
     // ── ヘッダー ──────────────────────────────────────
@@ -228,14 +233,73 @@ export function showGameScreen(
 
     const timerEl = document.createElement('div');
     timerEl.style.cssText = 'font-size: 1.8rem; color: #0891b2;';
-    timerEl.textContent = '2:00';
+    timerEl.textContent = `${Math.floor(GAME_DURATION_SEC / 60)}:${(GAME_DURATION_SEC % 60).toString().padStart(2, '0')}`;
 
     const scoreEl = document.createElement('div');
     scoreEl.style.cssText = 'font-size: 1.4rem; color: #ca8a04;';
     scoreEl.textContent = '0 pt';
 
+    // コンボバッジ（中央・コンボ2以上で表示）
+    const comboBadge = document.createElement('div');
+    comboBadge.style.cssText =
+        'font-size: 1.4rem; color: #f59e0b; letter-spacing: 0.08em; opacity: 0;' +
+        'transition: opacity 0.2s, transform 0.12s ease-out;';
+
     header.appendChild(timerEl);
+    header.appendChild(comboBadge);
     header.appendChild(scoreEl);
+
+    // ── 打鍵圧スタック（強/普通/弱を色で、左→右へ4行ずつ積む）──
+    const LEVEL_COLOR: Record<PressureLevel, string> = {
+        strong: '#ef4444', // 赤
+        normal: '#22c55e', // 緑
+        weak:   '#3b82f6', // 青
+    };
+    const STACK_ROWS = 4;
+    const CELL_PX = 16;
+    const CELL_GAP = 3;
+
+    const stackEl = document.createElement('div');
+    Object.assign(stackEl.style, {
+        display: 'flex',
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        gap: `${CELL_GAP}px`,
+        height: `${STACK_ROWS * CELL_PX + (STACK_ROWS - 1) * CELL_GAP + 16}px`,
+        padding: '8px 2rem',
+        borderBottom: '1px solid #e2e8f0',
+        overflowX: 'hidden',
+        overflowY: 'hidden',
+    });
+
+    let stackFilled = 0;              // これまでに置いた四角形の総数
+    let stackColumn: HTMLDivElement | null = null; // 現在積んでいる列
+
+    function addPressureSquare(pressure: number): void {
+        const row = stackFilled % STACK_ROWS;
+        if (row === 0) {
+            // 新しい列を作る（上から下へ積む）
+            stackColumn = document.createElement('div');
+            Object.assign(stackColumn.style, {
+                display: 'flex',
+                flexDirection: 'column',
+                gap: `${CELL_GAP}px`,
+                flexShrink: '0',
+            });
+            stackEl.appendChild(stackColumn);
+        }
+        const cell = document.createElement('div');
+        Object.assign(cell.style, {
+            width: `${CELL_PX}px`,
+            height: `${CELL_PX}px`,
+            borderRadius: '3px',
+            background: LEVEL_COLOR[pressureLevel(pressure)],
+        });
+        stackColumn!.appendChild(cell);
+        stackFilled++;
+        // 右端が埋まったら最新の列が見えるよう右へスクロール
+        stackEl.scrollLeft = stackEl.scrollWidth;
+    }
 
     // ── 吹き出しエリア ────────────────────────────────
     const bubblesEl = document.createElement('div');
@@ -285,7 +349,7 @@ export function showGameScreen(
     const typingEl = document.createElement('div');
     Object.assign(typingEl.style, {
         width: '500px',
-        maxWidth: '60vw',
+        maxWidth: '100%',
         display: 'flex',
         flexDirection: 'column',
         gap: '0.4rem',
@@ -311,7 +375,8 @@ export function showGameScreen(
     typingEl.appendChild(kanaRow);
     typingEl.appendChild(romRow);
 
-    bottomEl.appendChild(faceCanvas);
+    // 横顔は打鍵圧フィードバック用なのでアナログモードのみ表示
+    if (isAnalog) bottomEl.appendChild(faceCanvas);
     bottomEl.appendChild(typingEl);
 
     // ── キーボードエリア ───────────────────────────────
@@ -321,25 +386,37 @@ export function showGameScreen(
         justifyContent: 'center',
         alignItems: 'center',
         background: '#ffffff',
-        // scale(2) で高さが2倍になるが layout 上の高さは変わらないので padding で補う
         padding: '30px 0',
     });
 
     const keyboardEl = document.createElement('div');
-    keyboardEl.style.width = "80vw";
     keyboardEl.style.transformOrigin = 'center center';
 
     keyboardWrapper.appendChild(keyboardEl);
     const updateKey = keyboard(keyboardEl, wooting60heplus);
 
-    app.appendChild(header);
-    app.appendChild(bubblesEl);
-    app.appendChild(bottomEl);
-    app.appendChild(keyboardWrapper);
+    stage.appendChild(header);
+    if (isAnalog) stage.appendChild(stackEl);
+    stage.appendChild(bubblesEl);
+    stage.appendChild(bottomEl);
+    stage.appendChild(keyboardWrapper);
 
     // ── ヘルパー ──────────────────────────────────────
     function getScore() {
-        return phrasesCompleted * 100 + pressureClears * 50;
+        return phrasesCompleted * 100 + expressionScore;
+    }
+
+    function refreshScore() {
+        scoreEl.textContent = `${getScore()} pt`;
+    }
+
+    function updateComboBadge() {
+        if (combo >= 2) {
+            comboBadge.textContent = `${combo} COMBO ×${comboMultiplier(combo)}`;
+            comboBadge.style.opacity = '1';
+        } else {
+            comboBadge.style.opacity = '0';
+        }
     }
 
     function renderBubbles() {
@@ -360,8 +437,6 @@ export function showGameScreen(
         const romDone = keygraph.key_done();
         const romCandidate = keygraph.key_candidate();
         const phrase = queue[0];
-        const { symbol, color } = INSTRUCTION_LABEL[phrase.instruction];
-        const targetSet = new Set(phrase.targets);
 
         kanaRow.innerHTML = '';
 
@@ -379,16 +454,15 @@ export function showGameScreen(
         // 未入力文字: ターゲット文字の上にアイコン表示
         candidates.forEach((ch, j) => {
             const originalIdx = done.length + j;
-            const showIcon = phrase.instruction === 'vibrato'
-                ? j === 0  // vibrato は先頭にのみ表示
-                : targetSet.has(originalIdx);
+            const instruction = phrase.targets[originalIdx];
 
             const wrapper = document.createElement('div');
             wrapper.style.cssText = 'display:flex; flex-direction:column; align-items:center;';
 
             const iconEl = document.createElement('span');
-            iconEl.textContent = showIcon ? symbol : '\u00A0';
-            iconEl.style.cssText = `font-size:1.2rem; color:${color}; font-weight:bold; line-height:1.2;`;
+            const iconLabel = instruction ? INSTRUCTION_LABEL[instruction] : null;
+            iconEl.textContent = iconLabel ? iconLabel.symbol : '\u00A0';
+            iconEl.style.cssText = `font-size:1.2rem; color:${iconLabel ? iconLabel.color : 'transparent'}; font-weight:bold; line-height:1.2;`;
 
             const charEl = document.createElement('span');
             charEl.textContent = ch;
@@ -457,23 +531,64 @@ export function showGameScreen(
     }
 
     const clearSound = new Audio('/maou_se_system48.mp3');
+    function playClearSound() {
+        clearSound.currentTime = 0;
+        clearSound.play().catch(() => {});
+    }
+
+    // 指定クリア時の加点ポップ（表現点＋コンボ倍率）
+    function showComboGain(gained: number, mult: number) {
+        comboBadge.style.transform = 'scale(1.25)';
+        setTimeout(() => { comboBadge.style.transform = 'scale(1)'; }, 120);
+
+        const pop = document.createElement('div');
+        pop.textContent = mult > 1 ? `+${gained} ×${mult}` : `+${gained}`;
+        Object.assign(pop.style, {
+            position: 'absolute',
+            left: '50%',
+            bottom: '4rem',
+            transform: 'translateX(-50%)',
+            fontSize: '1.5rem',
+            color: '#f59e0b',
+            fontFamily: 'system-ui, sans-serif',
+            fontWeight: 'bold',
+            animation: 'kw-char-pop 0.7s ease-out forwards',
+            pointerEvents: 'none',
+            whiteSpace: 'nowrap',
+        });
+        effectLayer.appendChild(pop);
+        pop.addEventListener('animationend', () => pop.remove());
+    }
+
+    // 指定文字1つを判定してコンボ・表現点を更新
+    function judgeTarget(instruction: 'strong' | 'weak', pressure: number) {
+        const level = pressureLevel(pressure);
+        const cleared = (instruction === 'strong' && level !== 'weak')
+                     || (instruction === 'weak' && level !== 'strong');
+        if (cleared) {
+            combo++;
+            if (combo > maxCombo) maxCombo = combo;
+            const mult = comboMultiplier(combo);
+            const gained = 50 * mult;
+            expressionScore += gained;
+            pressureClears++;
+            playClearSound();
+            showComboGain(gained, mult);
+        } else {
+            combo = 0;
+        }
+        updateComboBadge();
+        refreshScore();
+    }
 
     function completePhrase() {
         const phrase = queue[0];
-        const clearedCount = countPressureClears(phrase);
-        pressureClears += clearedCount;
-        for (let i = 0; i < clearedCount; i++) {
-            const delay = i * 200;
-            setTimeout(() => {
-                clearSound.currentTime = 0;
-                clearSound.play().catch(() => {});
-            }, delay);
-        }
+        totalTargets += Object.keys(phrase.targets).length;
         phrasesCompleted++;
-        scoreEl.textContent = `${getScore()} pt`;
+        refreshScore();
 
         queue.shift();
-        queue.push(generatePhrase());
+        queue.push(generatePhrase(isAnalog));
         keygraph.build(queue[0].text);
 
         renderBubbles();
@@ -489,7 +604,7 @@ export function showGameScreen(
         if (timeLeft <= 0) {
             clearInterval(timerInterval);
             cleanup();
-            onFinish({ phrasesCompleted, pressureClears });
+            onFinish({ mode, phrasesCompleted, pressureClears, totalTargets, pressures: sessionPressures, expressionScore, maxCombo });
         }
     }
 
@@ -509,13 +624,27 @@ export function showGameScreen(
             const pressure = lastPressureN;
             const phrase = queue[0];
 
-            triggerEffect(key, pressure);
-            phrase.allPressures.push(pressure);
+            if (isAnalog) {
+                // 打鍵圧を強/普通/弱の四角形として左→右に積む
+                addPressureSquare(pressure);
+                sessionPressures.push(pressure);
+            } else {
+                // 通常モードはリップルで打鍵フィードバック＋keydownでキーボード点灯
+                triggerEffect(key, pressure);
+                const code = key.toUpperCase();
+                updateKey(code, 1);
+                setTimeout(() => updateKey(code, 0), 300);
+            }
 
             // keygraph.next() 後に seq_done が増えていればひらがな1文字完了
             const charsAfter = [...(keygraph.seq_done() ?? '')].length;
             if (charsAfter > charsBefore) {
                 phrase.charPressures[charsBefore] = pressure;
+                // 指定文字ならリアルタイムに判定してコンボ更新（アナログのみ）
+                const instruction = phrase.targets[charsBefore];
+                if (isAnalog && instruction) {
+                    judgeTarget(instruction, pressure);
+                }
             }
 
             if (keygraph.is_finished()) {
@@ -530,27 +659,30 @@ export function showGameScreen(
     };
     document.addEventListener('keydown', keydownHandler);
 
-    // ── 打鍵圧コールバック ────────────────────────────
-    setPressureListener((_code: string, value: number) => {
-        lastPressureN = value;
-        drawFace(faceCanvas, value);
-        updateKey(_code, value);
-        setTimeout(() => {
-            updateKey(_code, 0);
-        }, 300);
-        playFormant(value);
-    });
+    // ── 打鍵圧コールバック（アナログモードのみ）────────
+    if (isAnalog) {
+        setPressureListener((_code: string, value: number) => {
+            lastPressureN = value;
+            drawFace(faceCanvas, value);
+            updateKey(_code, value);
+            setTimeout(() => {
+                updateKey(_code, 0);
+            }, 300);
+            playFormant(value);
+        });
 
-    // ── アナログ生値 → キーボード表示 ────────────────
-     setRawListener((code: string, value: number) => {
-         //updateKey(code, value);
-         console.log(`Raw: ${code} = ${value}`);
-     });
+        // ── アナログ生値 → キーボード表示 ────────────────
+        setRawListener((code: string, value: number) => {
+            //updateKey(code, value);
+            console.log(`Raw: ${code} = ${value}`);
+        });
+    }
 
     // ── 後片付け ──────────────────────────────────────
     function cleanup() {
         document.removeEventListener('keydown', keydownHandler);
         document.removeEventListener('contextmenu', contextMenuHandler);
+        disposeStage();
         clearPressureListener();
         clearRawListener();
     }

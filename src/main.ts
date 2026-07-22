@@ -1,10 +1,10 @@
 import "./analogsense.js";
 import "./style.css";
-import { type AnalogSenseInput, RequestDeviceIfNeeded, SetAnalogsenseCallback } from "./AnalogsenseHandler";
+import { type AnalogSenseInput, connectAnalogDevice, hasAuthorizedDevice, SetAnalogsenseCallback } from "./AnalogsenseHandler";
 import { CaliculatePressure, SetPressureCallback } from "./calcPressure.ts";
 import { showStartScreen } from "./startScreen";
 import { showTutorialScreen } from "./tutorialScreen";
-import { showGameScreen, type GameResult } from "./gameScreen";
+import { showGameScreen, type GameResult, type GameMode } from "./gameScreen";
 import { showResultScreen } from "./resultScreen";
 
 const app = document.getElementById("app") as HTMLDivElement;
@@ -32,24 +32,26 @@ SetPressureCallback((code: string, value: number) => {
 
 // ── 画面遷移 ─────────────────────────────────────────────────────────────
 function goToStart(): void {
-    showStartScreen(
-        app,
-        (btn) => { RequestDeviceIfNeeded(btn); },
-        goToTutorial,
-    );
-}
-
-function goToTutorial(): void {
-    showTutorialScreen(app, {
-        setPressureListener: (cb) => { pressureListener = cb; },
-        clearPressureListener: () => { pressureListener = null; },
-        onComplete: goToGame,
-        onSkip: goToGame,
+    showStartScreen(app, {
+        connectAnalog: connectAnalogDevice,
+        hasAuthorizedDevice,
+        onStart: goToTutorial,
     });
 }
 
-function goToGame(): void {
+function goToTutorial(mode: GameMode): void {
+    showTutorialScreen(app, {
+        mode,
+        setPressureListener: (cb) => { pressureListener = cb; },
+        clearPressureListener: () => { pressureListener = null; },
+        onComplete: () => goToGame(mode),
+        onSkip: () => goToGame(mode),
+    });
+}
+
+function goToGame(mode: GameMode): void {
     showGameScreen(app, {
+        mode,
         setPressureListener: (cb) => { pressureListener = cb; },
         clearPressureListener: () => { pressureListener = null; },
         setRawListener: (cb) => { rawListener = cb; },
