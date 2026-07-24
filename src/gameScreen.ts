@@ -10,6 +10,8 @@ import {
 import { playFormant } from './audio';
 import { keyboard, wooting60heplus } from './keyboard';
 import { createStage } from './stage';
+import { flashRedScreen } from './rippleEffect';
+import { createPressureMeter, type PressureMeter } from './pressureMeter';
 
 const GAME_DURATION_SEC = 60;
 const VISIBLE_BUBBLES = 2;
@@ -528,6 +530,7 @@ export function showGameScreen(
     function flashMiss() {
         kanaRow.style.color = '#dc2626';
         setTimeout(() => { kanaRow.style.color = ''; }, 120);
+        flashRedScreen(); // ミス時に画面全体を赤くフラッシュ
     }
 
     const clearSound = new Audio('/maou_se_system48.mp3');
@@ -660,7 +663,9 @@ export function showGameScreen(
     document.addEventListener('keydown', keydownHandler);
 
     // ── 打鍵圧コールバック（アナログモードのみ）────────
+    let pressureMeter: PressureMeter | null = null;
     if (isAnalog) {
+        pressureMeter = createPressureMeter(); // 押下量の常時ライブメーター
         setPressureListener((_code: string, value: number) => {
             lastPressureN = value;
             drawFace(faceCanvas, value);
@@ -671,10 +676,9 @@ export function showGameScreen(
             playFormant(value);
         });
 
-        // ── アナログ生値 → キーボード表示 ────────────────
-        setRawListener((code: string, value: number) => {
-            //updateKey(code, value);
-            console.log(`Raw: ${code} = ${value}`);
+        // ── アナログ生値（押下量 0〜1）→ ライブメーター ──────
+        setRawListener((_code: string, value: number) => {
+            pressureMeter?.update(value);
         });
     }
 
@@ -682,6 +686,7 @@ export function showGameScreen(
     function cleanup() {
         document.removeEventListener('keydown', keydownHandler);
         document.removeEventListener('contextmenu', contextMenuHandler);
+        pressureMeter?.dispose();
         disposeStage();
         clearPressureListener();
         clearRawListener();

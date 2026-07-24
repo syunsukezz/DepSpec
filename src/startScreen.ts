@@ -6,12 +6,14 @@ export interface StartOptions {
     connectAnalog: () => Promise<boolean>;
     /** 既に許可済みのアナログデバイスがあるか */
     hasAuthorizedDevice: () => Promise<boolean>;
-    /** モードを選んでゲーム開始 */
+    /** キーボード選択画面へ（アナログが使える場合） */
+    onSelect: () => void;
+    /** モードを指定してゲームへ直行（通常モードへのスキップに使う） */
     onStart: (mode: GameMode) => void;
 }
 
 export function showStartScreen(app: HTMLDivElement, options: StartOptions): void {
-    const { connectAnalog, hasAuthorizedDevice, onStart } = options;
+    const { connectAnalog, hasAuthorizedDevice, onSelect, onStart } = options;
 
     // タイトル画面は割合を一定に保ちたいので等倍スケール（fit）
     const { stage, dispose: disposeStage } = createStage(app, {
@@ -23,22 +25,15 @@ export function showStartScreen(app: HTMLDivElement, options: StartOptions): voi
         gap: '2rem',
     }, { fit: true, designW: 900, designH: 680 });
 
-    // アニメーション用スタイル
     const style = document.createElement('style');
     style.textContent = `
         @keyframes kw-glow {
             0%, 100% { text-shadow: 0 0 20px #0891b244, 0 0 40px #0891b222; }
             50%       { text-shadow: 0 0 40px #0891b288, 0 0 80px #0891b244; }
         }
-        .kw-mode-btn:hover:not(:disabled) {
-            background: rgba(8, 145, 178, 0.08) !important;
-        }
-        .kw-normal-btn:hover:not(:disabled) {
-            background: rgba(0, 0, 0, 0.05) !important;
-        }
-        .kw-fs-btn:hover {
-            background: rgba(0,0,0,0.05) !important;
-        }
+        @keyframes kw-pulse { 0%,100% { opacity: 0.35; } 50% { opacity: 1; } }
+        .kw-connect-btn:hover:not(:disabled) { background: rgba(8,145,178,0.08) !important; }
+        .kw-fs-btn:hover { background: rgba(0,0,0,0.05) !important; }
     `;
     document.head.appendChild(style);
 
@@ -51,74 +46,43 @@ export function showStartScreen(app: HTMLDivElement, options: StartOptions): voi
         color: '#0891b2',
         animation: 'kw-glow 3s ease-in-out infinite',
         userSelect: 'none',
+        margin: '0',
     });
 
-    // モード説明
-    const lead = document.createElement('p');
-    lead.textContent = 'キーボードを選んで start';
-    Object.assign(lead.style, {
-        fontSize: '1rem',
+    // 「Press any key」案内
+    const pressAny = document.createElement('p');
+    pressAny.textContent = 'Press any key to start';
+    Object.assign(pressAny.style, {
+        fontSize: '1.1rem',
         color: '#475569',
         letterSpacing: '0.15em',
         margin: '0',
+        animation: 'kw-pulse 2s ease-in-out infinite',
     });
 
-    // ボタン置き場
-    const btnRow = document.createElement('div');
-    Object.assign(btnRow.style, {
-        display: 'flex',
-        gap: '1.2rem',
-        flexWrap: 'wrap',
-        justifyContent: 'center',
-    });
-
-    const baseBtn = {
-        padding: '1rem 1.8rem',
-        fontFamily: "'Audiowide', sans-serif",
-        fontSize: '0.95rem',
-        cursor: 'pointer',
-        borderRadius: '10px',
-        transition: 'background 0.2s, opacity 0.2s',
-        minWidth: '230px',
-        lineHeight: '1.5',
-    };
-
-    // アナログキーボードで遊ぶ
-    const analogBtn = document.createElement('button');
-    analogBtn.className = 'kw-mode-btn';
-    analogBtn.innerHTML = '▲ アナログキーボードで遊ぶ<br><small style="opacity:0.7">打鍵圧で強弱・音・可視化あり</small>';
-    Object.assign(analogBtn.style, {
-        ...baseBtn,
+    // アナログキーボード接続ボタン（初回接続用）
+    const connectBtn = document.createElement('button');
+    connectBtn.className = 'kw-connect-btn';
+    connectBtn.textContent = 'アナログキーボードを接続';
+    Object.assign(connectBtn.style, {
+        position: 'fixed',
+        top: '1rem',
+        left: '1rem',
+        padding: '0.6rem 1.4rem',
         background: 'transparent',
-        border: '2px solid #0891b2',
+        border: 'none',
         color: '#0891b2',
-    });
-
-    // 通常キーボードで遊ぶ
-    const normalBtn = document.createElement('button');
-    normalBtn.className = 'kw-normal-btn';
-    normalBtn.innerHTML = '通常キーボードで遊ぶ<br><small style="opacity:0.7">速度と正確性のタイピング</small>';
-    Object.assign(normalBtn.style, {
-        ...baseBtn,
-        background: 'transparent',
-        border: '2px solid #cbd5e1',
-        color: '#64748b',
-    });
-
-    btnRow.appendChild(analogBtn);
-    btnRow.appendChild(normalBtn);
-
-    // ステータス行（接続結果メッセージ）
-    const statusEl = document.createElement('p');
-    Object.assign(statusEl.style, {
+        fontFamily: "'Audiowide', sans-serif",
         fontSize: '0.85rem',
-        color: '#94a3b8',
-        minHeight: '1.2em',
-        margin: '0',
-        fontFamily: 'system-ui, sans-serif',
+        cursor: 'pointer',
+        borderRadius: '8px',
+        transition: 'background 0.2s, opacity 0.2s',
+        
     });
+    
+    
 
-    // フルスクリーンボタン（右上固定）
+    // フルスクリーンボタン（ビューポート右上固定）
     const fsBtn = document.createElement('button');
     fsBtn.className = 'kw-fs-btn';
     fsBtn.title = 'フルスクリーン (F11)';
@@ -151,59 +115,65 @@ export function showStartScreen(app: HTMLDivElement, options: StartOptions): voi
     document.addEventListener('fullscreenchange', updateFsLabel);
 
     stage.appendChild(title);
-    stage.appendChild(lead);
-    stage.appendChild(btnRow);
-    stage.appendChild(statusEl);
-    // フルスクリーンボタンはビューポート右上に固定したいのでステージ外(app)へ
+    stage.appendChild(pressAny);
+    
+    app.appendChild(connectBtn);
     app.appendChild(fsBtn);
 
-    // 画面離脱時にドキュメントレベルのリスナーを外す
     function cleanup() {
         document.removeEventListener('keydown', keyHandler);
         document.removeEventListener('fullscreenchange', updateFsLabel);
         disposeStage();
     }
 
-    // ── アナログモード開始 ──────────────────────────────
+    // ── start（何かキー）: アナログ検出なら選択画面、なければ通常モードへ ──
+    let proceeding = false;
+    async function proceed() {
+        if (proceeding) return;
+        proceeding = true;
+        const has = await hasAuthorizedDevice();
+        cleanup();
+        if (has) onSelect();
+        else onStart('normal');
+    }
+
+    // ── アナログ接続（初回）: 成功したら選択画面へ ──
     let connecting = false;
-    async function startAnalog() {
-        if (connecting) return;
+    async function connect() {
+        if (connecting || proceeding) return;
         connecting = true;
-        analogBtn.disabled = true;
-        normalBtn.disabled = true;
-        statusEl.style.color = '#94a3b8';
-        statusEl.textContent = 'アナログキーボードに接続中…';
+        connectBtn.disabled = true;
+        
         const ok = await connectAnalog();
         if (ok) {
             cleanup();
-            onStart('analog');
+            onSelect();
         } else {
             connecting = false;
-            analogBtn.disabled = false;
-            normalBtn.disabled = false;
-            statusEl.style.color = '#dc2626';
-            statusEl.textContent = 'アナログキーボードに接続できませんでした。通常キーボードでも遊べます。';
+            connectBtn.disabled = false;
+            connectBtn.style.display = 'block';
         }
     }
-    analogBtn.addEventListener('click', startAnalog);
+    connectBtn.addEventListener('click', connect);
 
-    // ── 通常モード開始 ──────────────────────────────────
-    normalBtn.addEventListener('click', () => {
-        cleanup();
-        onStart('normal');
-    });
-
-    // F11 でフルスクリーン切替（キー入力ではゲーム開始しない＝モードは明示選択）
     const keyHandler = (e: KeyboardEvent) => {
-        if (e.key === 'F11') { e.preventDefault(); toggleFs(); }
+        if (e.key === 'F11') { e.preventDefault(); toggleFs(); return; }
+        if (e.ctrlKey || e.metaKey || e.altKey) return;
+        proceed();
     };
     document.addEventListener('keydown', keyHandler);
 
-    // 既に許可済みデバイスがあれば案内を出す
+    // 既に許可済みデバイスがあれば案内を更新
     hasAuthorizedDevice().then((has) => {
         if (has) {
-            statusEl.style.color = '#16a34a';
-            statusEl.textContent = 'アナログキーボードを検出済み。そのまま「アナログキーボードで遊ぶ」を選べます。';
+            connectBtn.style.display = 'none';
+            connectBtn.textContent = '接続済み';
+            connectBtn.disabled = true;
+        }
+        else {
+            connectBtn.style.display = 'block';
+            connectBtn.textContent = 'アナログキーボードを接続';
+            connectBtn.disabled = false;
         }
     });
 }

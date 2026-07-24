@@ -80,6 +80,27 @@ let wooting60heplus : Key[][] = [
     ]
 ];
 
+// ── ゲーム共通のデザイントークン ───────────────────────────────
+// 配色・フォントは他画面（pressureMeter / keyboardSelectScreen など）と揃える。
+const KEY_BG = '#ffffff';        // 通常時のキー面
+const KEY_BORDER = '#e2e8f0';    // スレート境界線
+const KEY_EDGE = '#cbd5e1';      // キーキャップ下端の陰
+const KEY_TEXT = '#64748b';      // キー文字（スレート）
+const BOARD_BG = '#f8fafc';      // 盤面パネル
+// 押下量の弱/普通/強（pressureMeter と同じ 青→緑→赤）
+const PRESS_WEAK = '#3b82f6';
+const PRESS_NORMAL = '#22c55e';
+const PRESS_STRONG = '#ef4444';
+
+/** 押下量(0〜1)を pressureMeter と同じ 3 段階の色に対応させる */
+function pressColor(value: number): string {
+    const t = Math.min(1, Math.max(0, value));
+    if (t <= 0) return KEY_BG;
+    if (t < 1 / 3) return PRESS_WEAK;
+    if (t < 2 / 3) return PRESS_NORMAL;
+    return PRESS_STRONG;
+}
+
 function keyboard(element: HTMLElement, layout: Key[][]): (code: string, value: number) => void
 {
     element.innerHTML = '';
@@ -87,16 +108,16 @@ function keyboard(element: HTMLElement, layout: Key[][]): (code: string, value: 
     element.style.flexDirection = 'column';
     element.style.alignItems = 'center';
     element.style.justifyContent = 'center';
-    element.style.gap = '5px';
-    element.style.padding = '10px';
-    element.style.border = '1px solid #ddd';
-    element.style.borderRadius = '5px';
-    element.style.backgroundColor = '#ddd';
-    element.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
-    element.style.fontFamily = 'Arial, sans-serif';
+    element.style.gap = '6px';
+    element.style.padding = '16px';
+    element.style.border = `1px solid ${KEY_BORDER}`;
+    element.style.borderRadius = '14px';
+    element.style.backgroundColor = BOARD_BG;
+    element.style.boxShadow = '0 6px 20px rgba(15, 23, 42, 0.08)';
+    element.style.fontFamily = "'Audiowide', sans-serif";
     element.style.fontSize = '14px';
-    element.style.color = '#333';
-    element.style.width= 'fit-content';
+    element.style.color = KEY_TEXT;
+    element.style.width = 'fit-content';
     let currentLayout = layout;
     for (let row of currentLayout)
     {
@@ -116,14 +137,19 @@ function keyboard(element: HTMLElement, layout: Key[][]): (code: string, value: 
             keyElement.style.display = 'flex';
             keyElement.style.alignItems = 'center';
             keyElement.style.justifyContent = 'center';
-            keyElement.style.height = '60px';
+            keyElement.style.height = '58px';
             keyElement.style.width = `${60 * key.width}px`;
             keyElement.style.cursor = 'pointer';
-            
-            keyElement.style.border = '1px solid #ccc';
-            keyElement.style.borderRadius = '3px';
-            keyElement.style.backgroundColor = '#ddd';
-            
+            keyElement.style.fontSize = key.display.length > 2 ? '11px' : '15px';
+            keyElement.style.letterSpacing = '0.02em';
+            keyElement.style.color = KEY_TEXT;
+            keyElement.style.border = `1px solid ${KEY_BORDER}`;
+            keyElement.style.borderRadius = '8px';
+            keyElement.style.backgroundColor = KEY_BG;
+            // キーキャップ風の下端の陰＋淡い浮き
+            keyElement.style.boxShadow = `0 2px 0 ${KEY_EDGE}, 0 3px 5px rgba(15, 23, 42, 0.06)`;
+            keyElement.style.transition = 'background-color 0.12s ease, color 0.12s ease, transform 0.06s ease';
+
             rowElement.appendChild(keyElement);
         
             
@@ -144,10 +170,21 @@ function keyboard(element: HTMLElement, layout: Key[][]): (code: string, value: 
                         const keyElement = keyElements[i] as HTMLElement;
                         if (keyElement.textContent === key.display)
                         {
-                            keyElement.style.backgroundColor = `hsl(${-value * 120+240}, 100%, 50%)`;
-                            if (value === 0)
+                            if (value <= 0)
                             {
-                                keyElement.style.backgroundColor = '#ddd';
+                                // 離した：通常のキーキャップ表示に戻す
+                                keyElement.style.backgroundColor = KEY_BG;
+                                keyElement.style.color = KEY_TEXT;
+                                keyElement.style.boxShadow = `0 2px 0 ${KEY_EDGE}, 0 3px 5px rgba(15, 23, 42, 0.06)`;
+                                keyElement.style.transform = 'translateY(0)';
+                            }
+                            else
+                            {
+                                // 押下中：押下量に応じた弱/普通/強の色で点灯し、少し沈める
+                                keyElement.style.backgroundColor = pressColor(value);
+                                keyElement.style.color = '#ffffff';
+                                keyElement.style.boxShadow = `inset 0 2px 4px rgba(15, 23, 42, 0.25)`;
+                                keyElement.style.transform = 'translateY(1px)';
                             }
                             break;
                         }

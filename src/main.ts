@@ -1,8 +1,11 @@
 import "./analogsense.js";
 import "./style.css";
-import { type AnalogSenseInput, connectAnalogDevice, hasAuthorizedDevice, SetAnalogsenseCallback } from "./AnalogsenseHandler";
+import { type AnalogSenseInput, connectAnalogDevice, hasAuthorizedDevice, startAnalogDeviceMonitor, SetAnalogsenseCallback } from "./AnalogsenseHandler";
+import { playEdgeRipple } from "./rippleEffect";
+import { checkerboardTransition } from "./transition";
 import { CaliculatePressure, SetPressureCallback } from "./calcPressure.ts";
 import { showStartScreen } from "./startScreen";
+import { showKeyboardSelectScreen } from "./keyboardSelectScreen";
 import { showTutorialScreen } from "./tutorialScreen";
 import { showGameScreen, type GameResult, type GameMode } from "./gameScreen";
 import { showResultScreen } from "./resultScreen";
@@ -31,25 +34,41 @@ SetPressureCallback((code: string, value: number) => {
 });
 
 // ── 画面遷移 ─────────────────────────────────────────────────────────────
-function goToStart(): void {
+// 各画面の描画本体（render*）と、市松模様ワイプを挟む遷移（goTo*）を分ける。
+// 初回だけワイプ無しで直接描画し、以降の画面切り替えは checkerboardTransition を通す。
+function renderStart(): void {
     showStartScreen(app, {
         connectAnalog: connectAnalogDevice,
         hasAuthorizedDevice,
+        onSelect: goToKeyboardSelect,
         onStart: goToTutorial,
     });
 }
+function goToStart(): void { checkerboardTransition(renderStart); }
 
-function goToTutorial(mode: GameMode): void {
+function renderKeyboardSelect(): void {
+    showKeyboardSelectScreen(app, {
+        connectAnalog: connectAnalogDevice,
+        onStart: goToTutorial,
+        onBack: goToStart,
+    });
+}
+function goToKeyboardSelect(): void { checkerboardTransition(renderKeyboardSelect); }
+
+function renderTutorial(mode: GameMode): void {
     showTutorialScreen(app, {
         mode,
         setPressureListener: (cb) => { pressureListener = cb; },
         clearPressureListener: () => { pressureListener = null; },
+        setRawListener: (cb) => { rawListener = cb; },
+        clearRawListener: () => { rawListener = null; },
         onComplete: () => goToGame(mode),
         onSkip: () => goToGame(mode),
     });
 }
+function goToTutorial(mode: GameMode): void { checkerboardTransition(() => renderTutorial(mode)); }
 
-function goToGame(mode: GameMode): void {
+function renderGame(mode: GameMode): void {
     showGameScreen(app, {
         mode,
         setPressureListener: (cb) => { pressureListener = cb; },
@@ -59,10 +78,18 @@ function goToGame(mode: GameMode): void {
         onFinish: (result: GameResult) => goToResult(result),
     });
 }
+function goToGame(mode: GameMode): void { checkerboardTransition(() => renderGame(mode)); }
 
-function goToResult(result: GameResult): void {
+function renderResult(result: GameResult): void {
     showResultScreen(app, result, goToStart);
 }
+function goToResult(result: GameResult): void { checkerboardTransition(() => renderResult(result)); }
+
+// ── デバイス監視: アナログキーボードが接続されたら四方から波紋 ──────────────
+startAnalogDeviceMonitor(() => {
+    playEdgeRipple();
+});
 
 // ── エントリーポイント ────────────────────────────────────────────────────
-goToStart();
+// 初回はワイプ無しで直接描画（以降の画面切り替えは goTo* がワイプを挟む）
+renderStart();

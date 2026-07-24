@@ -16,6 +16,23 @@ export interface StageOptions {
     /** fit 時の設計サイズ */
     designW?: number;
     designH?: number;
+    /** 画面遷移時の入場アニメーションを無効にする（既定は有効） */
+    noTransition?: boolean;
+}
+
+/**
+ * 画面が現れるときの入場エフェクト。opacity と blur だけを使うので、
+ * fit モードで stage に掛かっている transform: scale とは競合しない。
+ */
+function playEnterTransition(el: HTMLElement): void {
+    if (typeof el.animate !== 'function') return;
+    el.animate(
+        [
+            { opacity: 0, filter: 'blur(14px)' },
+            { opacity: 1, filter: 'blur(0px)' },
+        ],
+        { duration: 380, easing: 'cubic-bezier(0.22, 0.61, 0.36, 1)' },
+    );
 }
 
 /**
@@ -64,6 +81,7 @@ export function createStage(
         const observer = new ResizeObserver(fit);
         observer.observe(app);
         fit();
+        if (!opts.noTransition) playEnterTransition(stage);
         return { stage, dispose: () => observer.disconnect() };
     }
 
@@ -75,5 +93,6 @@ export function createStage(
         ...layout,
     });
     app.appendChild(stage);
+    if (!opts.noTransition) playEnterTransition(stage);
     return { stage, dispose: () => {} };
 }

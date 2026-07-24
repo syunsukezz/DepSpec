@@ -15,6 +15,8 @@ export interface AnalogSense {
   getDevices(): Promise<Device[]>;
   requestDevice(): Promise<Device | undefined>;
   scancodeToString(scancode: number): string;
+  /** その HID デバイスがアナログキーボードとして対応済みなら provider を返す */
+  findProviderForDevice(dev: any): unknown;
 }
 
 declare global {

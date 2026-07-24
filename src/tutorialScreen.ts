@@ -3,6 +3,7 @@ import { INSTRUCTION_LABEL, normalizeN, pressureLevel } from './phrases';
 import { playFormant } from './audio';
 import type { GameMode } from './gameScreen';
 import { createStage } from './stage';
+import { createPressureMeter } from './pressureMeter';
 
 // 正規化値の3等分境界 (phrases.ts の pressureLevel と同じ)
 const LEVEL_LOW  = 1 / 3; // これ未満 → 弱い
@@ -12,12 +13,14 @@ export interface TutorialOptions {
     mode: GameMode;
     setPressureListener: (cb: (code: string, value: number) => void) => void;
     clearPressureListener: () => void;
+    setRawListener: (cb: (code: string, value: number) => void) => void;
+    clearRawListener: () => void;
     onComplete: () => void;
     onSkip: () => void;
 }
 
 export function showTutorialScreen(app: HTMLDivElement, options: TutorialOptions): void {
-    const { mode, setPressureListener, clearPressureListener, onComplete, onSkip } = options;
+    const { mode, setPressureListener, clearPressureListener, setRawListener, clearRawListener, onComplete, onSkip } = options;
     const isAnalog = mode === 'analog';
     // 通常モードは打鍵圧の練習ステップが不要なので、タイピング練習だけ
     const STEP_RENDERERS = isAnalog
@@ -99,6 +102,16 @@ export function showTutorialScreen(app: HTMLDivElement, options: TutorialOptions
     stage.appendChild(header);
     stage.appendChild(dotsEl);
     stage.appendChild(contentEl);
+
+    // ── 押下量の常時ライブメーター（アナログのみ）───────────────
+    // メーターは calcPressure に通す前の生の押下量(0〜1)を使う。
+    // 生値は rawListener で取れるので、ステップに関係なく一度だけ張って常時更新する。
+    const meter = isAnalog ? createPressureMeter() : null;
+    if (meter) setRawListener((_c, v) => meter.update(v));
+    /** ステップ用の打鍵圧(calcPressure後)リスナーを張る */
+    function listenPressure(cb: (code: string, value: number) => void): void {
+        setPressureListener(cb);
+    }
 
     // ── ステップ管理 ───────────────────────────────────────────
     let currentStep = 0;
@@ -314,7 +327,7 @@ export function showTutorialScreen(app: HTMLDivElement, options: TutorialOptions
         card.appendChild(gaugeWrap);
         contentEl.appendChild(card);
 
-        setPressureListener((_code, value) => {
+        listenPressure((_code, value) => {
             const t = normalizeN(value);
             gauge.update(t);
             drawFaceMini(faceCanvas, value, color);
@@ -358,7 +371,7 @@ export function showTutorialScreen(app: HTMLDivElement, options: TutorialOptions
         card.appendChild(gauge.el);
         contentEl.appendChild(card);
 
-        setPressureListener((_code, value) => {
+        listenPressure((_code, value) => {
             const t = normalizeN(value);
             gauge.update(t);
             drawFaceMini(faceCanvas, value, color);
@@ -462,6 +475,8 @@ export function showTutorialScreen(app: HTMLDivElement, options: TutorialOptions
         clearTimeout(autoAdvanceTimer);
         if (stepCleanup) { stepCleanup(); stepCleanup = null; }
         clearPressureListener();
+        clearRawListener();
+        meter?.dispose();
         style.remove();
         disposeStage();
     }
