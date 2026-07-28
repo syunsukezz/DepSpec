@@ -10,6 +10,7 @@ import { showTutorialScreen } from "./tutorialScreen";
 import { showLevelSelectScreen } from "./levelSelectScreen";
 import { showGameScreen, type GameResult, type GameMode } from "./gameScreen";
 import { showResultScreen } from "./resultScreen";
+import { playMainBgm, playTutorialBgm, playResultSEThenBgm, armAutoplayUnlock } from "./bgm";
 import type { Level } from "./sentences";
 
 const app = document.getElementById("app") as HTMLDivElement;
@@ -39,6 +40,7 @@ SetPressureCallback((code: string, value: number) => {
 // 各画面の描画本体（render*）と、市松模様ワイプを挟む遷移（goTo*）を分ける。
 // 初回だけワイプ無しで直接描画し、以降の画面切り替えは checkerboardTransition を通す。
 function renderStart(): void {
+    playMainBgm();
     showStartScreen(app, {
         connectAnalog: connectAnalogDevice,
         hasAuthorizedDevice,
@@ -49,6 +51,7 @@ function renderStart(): void {
 function goToStart(): void { checkerboardTransition(renderStart); }
 
 function renderKeyboardSelect(): void {
+    playMainBgm();
     showKeyboardSelectScreen(app, {
         connectAnalog: connectAnalogDevice,
         onStart: goToTutorial,
@@ -58,6 +61,7 @@ function renderKeyboardSelect(): void {
 function goToKeyboardSelect(): void { checkerboardTransition(renderKeyboardSelect); }
 
 function renderTutorial(mode: GameMode): void {
+    playTutorialBgm();
     showTutorialScreen(app, {
         mode,
         setPressureListener: (cb) => { pressureListener = cb; },
@@ -71,6 +75,7 @@ function renderTutorial(mode: GameMode): void {
 function goToTutorial(mode: GameMode): void { checkerboardTransition(() => renderTutorial(mode)); }
 
 function renderLevelSelect(mode: GameMode): void {
+    playTutorialBgm();
     showLevelSelectScreen(app, {
         onSelect: (level: Level) => goToGame(mode, level),
         onBack: goToStart,
@@ -79,6 +84,7 @@ function renderLevelSelect(mode: GameMode): void {
 function goToLevelSelect(mode: GameMode): void { checkerboardTransition(() => renderLevelSelect(mode)); }
 
 function renderGame(mode: GameMode, level: Level): void {
+    playMainBgm(); // タイトルから続くメインBGMをそのまま継続
     showGameScreen(app, {
         mode,
         level,
@@ -92,6 +98,7 @@ function renderGame(mode: GameMode, level: Level): void {
 function goToGame(mode: GameMode, level: Level): void { checkerboardTransition(() => renderGame(mode, level)); }
 
 function renderResult(result: GameResult): void {
+    playResultSEThenBgm(); // 効果音 → 鳴り終わってからメインBGM
     showResultScreen(app, result, goToStart);
 }
 function goToResult(result: GameResult): void { checkerboardTransition(() => renderResult(result)); }
@@ -103,4 +110,5 @@ startAnalogDeviceMonitor(() => {
 
 // ── エントリーポイント ────────────────────────────────────────────────────
 // 初回はワイプ無しで直接描画（以降の画面切り替えは goTo* がワイプを挟む）
+armAutoplayUnlock(); // 自動再生がブロックされても最初の操作でBGMを再生
 renderStart();

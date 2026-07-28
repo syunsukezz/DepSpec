@@ -6,7 +6,7 @@ export type PressureInstruction = 'strong' | 'weak';
 
 
 export function normalizeN(n: number): number {
-    return Math.min(1, Math.max(0, n*3 - 2.5));
+    return Math.min(1, Math.max(0, n*3.5 - 2.7)); // 0〜1に正規化
 }
 
 // 打鍵圧のカテゴリ: 正規化値(0〜1)を3等分して 弱い / 普通 / 強い に分類する

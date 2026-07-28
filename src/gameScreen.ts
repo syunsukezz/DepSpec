@@ -35,7 +35,7 @@ export interface GameResult {
 // 例: COMBO_STEP=3, MULT_BASE=2 → x1, x2, x4, x8, ...
 const COMBO_STEP = 1;
 const MULT_BASE = 2;
-const MAX_MULT = 100000000;
+const MAX_MULT = 100;
 function comboMultiplier(combo: number): number {
     const tier = Math.floor((combo - 1) / COMBO_STEP);
     return Math.min(MULT_BASE ** tier, MAX_MULT);
