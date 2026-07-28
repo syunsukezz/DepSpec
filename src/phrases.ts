@@ -6,7 +6,7 @@ export type PressureInstruction = 'strong' | 'weak';
 
 
 export function normalizeN(n: number): number {
-    return Math.min(1, Math.max(0, (n*5 - 4) / 2));
+    return Math.min(1, Math.max(0, n*3 - 2.5));
 }
 
 // 打鍵圧のカテゴリ: 正規化値(0〜1)を3等分して 弱い / 普通 / 強い に分類する
@@ -25,38 +25,42 @@ const MAX_MARKS = 3; // 1文に付けられるアイコンの最大数
 
 export interface PhraseData {
     text: string;               // ひらがな
-    // 文字インデックス(0-based) -> 強/弱。1文に強・弱が混在してよい (最大 MAX_MARKS 個)
+    // ローマ字(キー)の位置(0-based) -> 強/弱。1文に強・弱が混在してよい (最大 MAX_MARKS 個)
+    // ※位置は「代表的な綴りで打った場合の何打鍵目か」を表す
     targets: Record<number, PressureInstruction>;
     charPressures: Record<number, number>; // ひらがな完了時の打鍵圧 (index -> N)
 }
 
 /**
- * @param withTargets false の場合は強/弱アイコンを付けない（通常キーボード用ベースライン）
  * @param level 出題するフレーズの難易度（sentences.ts の Easy/Normal/Hard）
+ * targets はローマ字の綴りが確定してから assignRomajiTargets で割り当てる。
  */
-export function generatePhrase(withTargets = true, level: Level = 'Easy'): PhraseData {
+export function generatePhrase(level: Level = 'Easy'): PhraseData {
     const pool = SENTENCES[level].texts;
     const text = pool[Math.floor(Math.random() * pool.length)];
-    const chars = [...text];
+    return { text, targets: {}, charPressures: {} };
+}
 
-    if (!withTargets) {
-        return { text, targets: {}, charPressures: {} };
-    }
+/**
+ * ローマ字(キー)の位置ごとに強/弱指定をランダムに割り当てる。
+ * @param romajiLength そのフレーズを代表的な綴りで打つときの総キー数
+ * @returns 「キーの位置(0始まり) -> 強/弱」のマップ（最大 MAX_MARKS 個）
+ */
+export function assignRomajiTargets(romajiLength: number): Record<number, PressureInstruction> {
+    const targets: Record<number, PressureInstruction> = {};
+    if (romajiLength <= 0) return targets;
 
-    // 対象の文字を重複なくランダムに最大 MAX_MARKS 個選び、各文字に強/弱を割り当てる
-    const count = Math.min(Math.floor(Math.random() * MAX_MARKS) + 1, chars.length);
-    const indices = Array.from({ length: chars.length }, (_, i) => i);
+    // 打鍵位置を重複なくランダムに最大 MAX_MARKS 個選び、各位置に強/弱を割り当てる
+    const count = Math.min(Math.floor(Math.random() * MAX_MARKS) + 1, romajiLength);
+    const indices = Array.from({ length: romajiLength }, (_, i) => i);
     for (let i = indices.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [indices[i], indices[j]] = [indices[j], indices[i]];
     }
-
-    const targets: Record<number, PressureInstruction> = {};
     for (const idx of indices.slice(0, count)) {
         targets[idx] = Math.random() < 0.5 ? 'strong' : 'weak';
     }
-
-    return { text, targets, charPressures: {} };
+    return targets;
 }
 
 /**

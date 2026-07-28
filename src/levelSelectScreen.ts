@@ -18,9 +18,9 @@ interface LevelInfo {
 }
 
 const LEVELS: LevelInfo[] = [
-    { level: 'Easy',   label: 'EASY',   desc: 'みじかいたんご',       example: 'いぬ / りんご / まうす',       color: '#22c55e' },
-    { level: 'Normal', label: 'NORMAL', desc: 'すこしながいことば',   example: 'じゃばすくりぷと / やきにくていしょく', color: '#f59e0b' },
-    { level: 'Hard',   label: 'HARD',   desc: 'ながいぶんしょう',     example: 'えーあいをもちいたにそくほこうのろぼっと',  color: '#ef4444' },
+    { level: 'Easy',   label: 'EASY',   desc: '短い単語',       example: 'いぬ / りんご / まうす',       color: '#22c55e' },
+    { level: 'Normal', label: 'NORMAL', desc: '少し長い言葉',   example: 'じゃばすくりぷと / やきにくていしょく', color: '#f59e0b' },
+    { level: 'Hard',   label: 'HARD',   desc: '長い文章',     example: 'えーあいをもちいたにそくほこうのろぼっと',  color: '#ef4444' },
 ];
 
 export function showLevelSelectScreen(app: HTMLDivElement, options: LevelSelectOptions): void {

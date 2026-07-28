@@ -1,6 +1,7 @@
 import { keygraph } from './keygraph.js';
 import {
     generatePhrase,
+    assignRomajiTargets,
     type PhraseData,
     type PressureLevel,
     INSTRUCTION_LABEL,
@@ -145,9 +146,8 @@ export function showGameScreen(
     let timerInterval = 0;
 
     // フレーズキューを初期化 (queue[0]=現在入力中のフレーズ)
-    // 通常モードは強/弱アイコンを付けない
-    queue.push(generatePhrase(isAnalog, level));
-    keygraph.build(queue[0].text);
+    queue.push(generatePhrase(level));
+    buildCurrentPhrase();
 
     // ── ヘッダー ──────────────────────────────────────
     const header = document.createElement('div');
@@ -230,8 +230,7 @@ export function showGameScreen(
         stackEl.scrollLeft = stackEl.scrollWidth;
     }
 
-    // ── 中央スペーサー（旧・吹き出しエリア）────────────
-    const spacerEl = document.createElement('div');
+   
 
     // ── ボトムエリア (横顔 + タイピング表示) ───────────
     const bottomEl = document.createElement('div');
@@ -286,11 +285,12 @@ export function showGameScreen(
     });
     typingEl.appendChild(effectLayer);
 
+    // ひらがなは参照用の小さめ表示。ローマ字をメインの大きい表示にする。
     const kanaRow = document.createElement('div');
-    kanaRow.style.cssText = 'display:flex; align-items:flex-end; flex-wrap:wrap; font-family:system-ui,sans-serif;';
+    kanaRow.style.cssText = 'display:flex; align-items:flex-end; flex-wrap:wrap; gap:0 0.1rem; font-family:system-ui,sans-serif;';
 
     const romRow = document.createElement('div');
-    romRow.style.cssText = "font-size: 1.6rem; font-family: 'Audiowide', monospace; letter-spacing: 0.05em;";
+    romRow.style.cssText = "display:flex; align-items:flex-end; flex-wrap:wrap; font-family:'Audiowide',monospace; letter-spacing:0.03em;";
 
     typingEl.appendChild(kanaRow);
     typingEl.appendChild(romRow);
@@ -317,7 +317,7 @@ export function showGameScreen(
 
     stage.appendChild(header);
     if (isAnalog) stage.appendChild(stackEl);
-    stage.appendChild(spacerEl);
+    
     stage.appendChild(bottomEl);
     stage.appendChild(keyboardWrapper);
 
@@ -343,47 +343,73 @@ export function showGameScreen(
         const done = [...(keygraph.seq_done() ?? '')];
         const candidates = [...(keygraph.seq_candidates() ?? queue[0].text)];
         const romDone = keygraph.key_done();
-        const romCandidate = keygraph.key_candidate();
+        const romCandidate = [...keygraph.key_candidate()];
         const phrase = queue[0];
 
+        // ── ひらがな: 参照用の小さめ表示（マークなし）──
         kanaRow.innerHTML = '';
-
-        // 打鍵済み文字: アイコンなし、打鍵圧でサイズ変化
         done.forEach((ch, i) => {
+            // 打鍵済みは打鍵圧でわずかにサイズ変化
             const n = phrase.charPressures[i] ?? 0.6;
             const t = normalizeN(n);
-            const size = (2 + t * 3).toFixed(2) + 'rem';
+            const size = (1.1 + t * 0.7).toFixed(2) + 'rem';
             const span = document.createElement('span');
             span.textContent = ch;
-            span.style.cssText = `font-size:${size}; color:#64748b; font-family:system-ui,sans-serif; line-height:1; align-self:flex-end;`;
+            span.style.cssText = `font-size:${size}; color:#94a3b8; font-family:system-ui,sans-serif; line-height:1; align-self:flex-end;`;
+            kanaRow.appendChild(span);
+        });
+        candidates.forEach((ch) => {
+            const span = document.createElement('span');
+            span.textContent = ch;
+            span.style.cssText = 'font-size:1.4rem; color:#64748b; font-family:system-ui,sans-serif; line-height:1; align-self:flex-end;';
             kanaRow.appendChild(span);
         });
 
-        // 未入力文字: ターゲット文字の上にアイコン表示
-        candidates.forEach((ch, j) => {
-            const originalIdx = done.length + j;
-            const instruction = phrase.targets[originalIdx];
+        // ── ローマ字: メインの大きい表示（ターゲットのローマ字にマーク）──
+        romRow.innerHTML = '';
+
+        // 打鍵済みローマ字: グレーでフラット表示（マークなし）
+        if (romDone) {
+            const wrapper = document.createElement('div');
+            wrapper.style.cssText = 'display:flex; flex-direction:column; align-items:center;';
+            const spacer = document.createElement('span');
+            spacer.innerHTML = '&nbsp;';
+            spacer.style.cssText = 'font-size:1.4rem; line-height:1.2;';
+            const keysEl = document.createElement('span');
+            keysEl.textContent = romDone;
+            keysEl.style.cssText = 'font-size:2.6rem; color:#94a3b8; line-height:1;';
+            wrapper.appendChild(spacer);
+            wrapper.appendChild(keysEl);
+            romRow.appendChild(wrapper);
+        }
+
+        // 未入力ローマ字: 1キー(ローマ字1文字)ごとに列を作り、指定があればマークを付ける
+        const doneLen = romDone.length;
+        romCandidate.forEach((ch, i) => {
+            const keyIndex = doneLen + i; // この文字が何打鍵目か
+            const instruction = phrase.targets[keyIndex];
 
             const wrapper = document.createElement('div');
             wrapper.style.cssText = 'display:flex; flex-direction:column; align-items:center;';
 
             const iconEl = document.createElement('span');
             const iconLabel = instruction ? INSTRUCTION_LABEL[instruction] : null;
-            iconEl.textContent = iconLabel ? iconLabel.symbol : '\u00A0';
-            iconEl.style.cssText = `font-size:1.2rem; color:${iconLabel ? iconLabel.color : 'transparent'}; font-weight:bold; line-height:1.2;`;
+            if (iconLabel) {
+                iconEl.textContent = iconLabel.symbol;
+                iconEl.style.cssText = `font-size:1.4rem; color:${iconLabel.color}; font-weight:bold; line-height:1.2;`;
+            } else {
+                iconEl.innerHTML = '&nbsp;';
+                iconEl.style.cssText = 'font-size:1.4rem; line-height:1.2;';
+            }
 
-            const charEl = document.createElement('span');
-            charEl.textContent = ch;
-            charEl.style.cssText = 'font-size:3rem; color:#1e293b; font-family:system-ui,sans-serif; line-height:1;';
+            const keysEl = document.createElement('span');
+            keysEl.textContent = ch;
+            keysEl.style.cssText = 'font-size:2.6rem; color:#0891b2; line-height:1;';
 
             wrapper.appendChild(iconEl);
-            wrapper.appendChild(charEl);
-            kanaRow.appendChild(wrapper);
+            wrapper.appendChild(keysEl);
+            romRow.appendChild(wrapper);
         });
-
-        romRow.innerHTML =
-            `<span style="color:#94a3b8">${romDone}</span>` +
-            `<span style="color:#0891b2">${romCandidate}</span>`;
     }
 
     function triggerEffect(ch: string, pressure: number) {
@@ -490,6 +516,14 @@ export function showGameScreen(
         refreshScore();
     }
 
+    // フレーズを keygraph に構築し、アナログ時はローマ字(キー)ごとに強/弱を割り当てる。
+    // 綴りが確定する build 後に、代表綴りの総キー数へ指定をランダム配置する。
+    function buildCurrentPhrase() {
+        const phrase = queue[0];
+        keygraph.build(phrase.text);
+        phrase.targets = isAnalog ? assignRomajiTargets(keygraph.key_candidate().length) : {};
+    }
+
     function completePhrase() {
         const phrase = queue[0];
         totalTargets += Object.keys(phrase.targets).length;
@@ -497,8 +531,8 @@ export function showGameScreen(
         refreshScore();
 
         queue.shift();
-        queue.push(generatePhrase(isAnalog, level));
-        keygraph.build(queue[0].text);
+        queue.push(generatePhrase(level));
+        buildCurrentPhrase();
 
         updateTypingDisplay();
     }
@@ -520,16 +554,12 @@ export function showGameScreen(
     const contextMenuHandler = (e: MouseEvent | Event) => e.preventDefault();
     document.addEventListener('contextmenu', contextMenuHandler);
 
-    // ── キー入力ハンドラ ──────────────────────────────
-    const keydownHandler = (e: KeyboardEvent) => {
-        if (e.ctrlKey || e.metaKey || e.altKey) return;
-        if (e.key.length !== 1) return;
-        e.preventDefault();
-
-        const key = e.key.toLowerCase();
+    // ── 入力処理（1打鍵ぶんの判定・フィードバック・表示更新）──
+    // key: 小文字1文字, pressure: その打鍵の検圧値
+    function processInput(key: string, pressure: number) {
         const charsBefore = [...(keygraph.seq_done() ?? '')].length;
+        const keyIndex = keygraph.key_done().length; // このキーが何打鍵目か（0始まり）
         if (keygraph.next(key)) {
-            const pressure = lastPressureN;
             const phrase = queue[0];
 
             if (isAnalog) {
@@ -544,15 +574,16 @@ export function showGameScreen(
                 setTimeout(() => updateKey(code, 0), 300);
             }
 
-            // keygraph.next() 後に seq_done が増えていればひらがな1文字完了
+            // ローマ字(キー)1打ごとに判定。指定があればリアルタイムでコンボ更新（アナログのみ）
+            const instruction = phrase.targets[keyIndex];
+            if (isAnalog && instruction) {
+                judgeTarget(instruction, pressure);
+            }
+
+            // seq_done が増えていればひらがな1文字完了 → かな表示のサイズ用に打鍵圧を記録
             const charsAfter = [...(keygraph.seq_done() ?? '')].length;
             if (charsAfter > charsBefore) {
                 phrase.charPressures[charsBefore] = pressure;
-                // 指定文字ならリアルタイムに判定してコンボ更新（アナログのみ）
-                const instruction = phrase.targets[charsBefore];
-                if (isAnalog && instruction) {
-                    judgeTarget(instruction, pressure);
-                }
             }
 
             if (keygraph.is_finished()) {
@@ -563,6 +594,17 @@ export function showGameScreen(
         } else {
             flashMiss();
         }
+    }
+
+    // ── キー入力ハンドラ（通常モード用）──────────────────
+    // アナログモードは keydown を使わず、底打ち検出(検圧コールバック)で入力する。
+    // → 半押し(作動点)では入力せず、入力と検圧を同じ底打ちイベントで確定できる。
+    const keydownHandler = (e: KeyboardEvent) => {
+        if (e.ctrlKey || e.metaKey || e.altKey) return;
+        if (e.key.length !== 1) return;
+        e.preventDefault();
+        if (isAnalog) return; // アナログは pressureListener 側で入力を確定する
+        processInput(e.key.toLowerCase(), lastPressureN);
     };
     document.addEventListener('keydown', keydownHandler);
 
@@ -570,14 +612,18 @@ export function showGameScreen(
     let pressureMeter: PressureMeter | null = null;
     if (isAnalog) {
         pressureMeter = createPressureMeter(); // 押下量の常時ライブメーター
-        setPressureListener((_code: string, value: number) => {
+        setPressureListener((code: string, value: number) => {
             lastPressureN = value;
             drawFace(faceCanvas, value);
-            updateKey(_code, value);
+            updateKey(code, value);
             setTimeout(() => {
-                updateKey(_code, 0);
+                updateKey(code, 0);
             }, 300);
             playFormant(value);
+            // このコールバック＝底打ち検出。入力と検圧をここで同時に確定する。
+            // code は "A" "Q" のような大文字1文字。keygraph は小文字1文字を期待。
+            const key = code.toLowerCase();
+            if (key.length === 1) processInput(key, value);
         });
 
         // ── アナログ生値（押下量 0〜1）→ ライブメーター ──────
