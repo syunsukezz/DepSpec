@@ -7,6 +7,7 @@ import {
     normalizeN,
     pressureLevel,
 } from './phrases';
+import type { Level } from './sentences';
 import { playFormant } from './audio';
 import { keyboard, wooting60heplus } from './keyboard';
 import { createStage } from './stage';
@@ -14,7 +15,6 @@ import { flashRedScreen } from './rippleEffect';
 import { createPressureMeter, type PressureMeter } from './pressureMeter';
 
 const GAME_DURATION_SEC = 60;
-const VISIBLE_BUBBLES = 2;
 
 // analog: アナログキーボード（打鍵圧あり・強弱判定あり）
 // normal: 通常キーボード（打鍵圧なし・速度と正確性だけのベースライン）
@@ -42,6 +42,7 @@ function comboMultiplier(combo: number): number {
 
 export interface GameScreenOptions {
     mode: GameMode;
+    level: Level;
     setPressureListener: (cb: (code: string, value: number) => void) => void;
     clearPressureListener: () => void;
     setRawListener: (cb: (code: string, value: number) => void) => void;
@@ -113,87 +114,13 @@ function drawFace(canvas: HTMLCanvasElement, newtonValue: number): void {
 }
 
 // -----------------------------------------------------------------------
-// 吹き出しひとつを作成
-// doneCount: アクティブ時に何文字入力済みか（グレーアウト用）
-// -----------------------------------------------------------------------
-function createBubble(phrase: PhraseData, isActive: boolean, doneCount = 0): HTMLDivElement {
-    const charSize = isActive ? '3.6rem' : '2.8rem';
-    const iconSize = isActive ? '1.4rem' : '1.1rem';
-
-    const bubble = document.createElement('div');
-    Object.assign(bubble.style, {
-        position: 'relative',
-        background: isActive ? '#eef6fa' : '#f8fafc',
-        border: isActive ? `2px solid #0891b2` : '1px solid #e2e8f0',
-        borderRadius: '14px',
-        padding: '0.8rem 1.2rem',
-        opacity: isActive ? '1' : '0.45',
-        transition: 'opacity 0.3s',
-        minHeight: '3.5rem',
-        width: '900px',
-        maxWidth: '100%',
-        display: 'flex',
-        alignItems: 'flex-end',
-    });
-
-    const charsEl = document.createElement('div');
-    Object.assign(charsEl.style, {
-        display: 'flex',
-        alignItems: 'flex-end',
-        gap: '0',
-        flexWrap: 'wrap',
-    });
-
-    const chars = [...phrase.text];
-
-    // アクティブ吹き出しは未入力文字のみ表示
-    const displayChars = isActive ? chars.slice(doneCount) : chars;
-    const indexOffset  = isActive ? doneCount : 0;
-
-    displayChars.forEach((ch, j) => {
-        const i = j + indexOffset; // 元のフレーズ内インデックス
-
-        const wrapper = document.createElement('div');
-        Object.assign(wrapper.style, {
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-        });
-
-        // アイコン: 対象文字にその文字の強/弱アイコンを表示
-        const instruction = phrase.targets[i];
-        const iconEl = document.createElement('span');
-        if (instruction) {
-            const { symbol, color, name } = INSTRUCTION_LABEL[instruction];
-            iconEl.textContent = symbol;
-            iconEl.style.cssText = `font-size:${iconSize}; color:${color}; font-weight:bold; line-height:1.2;`;
-            iconEl.title = name;
-        } else {
-            iconEl.textContent = '\u00A0';
-            iconEl.style.cssText = `font-size:${iconSize}; line-height:1.2;`;
-        }
-
-        const charEl = document.createElement('span');
-        charEl.textContent = ch;
-        charEl.style.cssText = `font-size:${charSize}; font-family:system-ui,sans-serif; color:#1e293b;`;
-
-        wrapper.appendChild(iconEl);
-        wrapper.appendChild(charEl);
-        charsEl.appendChild(wrapper);
-    });
-
-    bubble.appendChild(charsEl);
-    return bubble;
-}
-
-// -----------------------------------------------------------------------
 // メイン
 // -----------------------------------------------------------------------
 export function showGameScreen(
     app: HTMLDivElement,
     options: GameScreenOptions,
 ): void {
-    const { mode, setPressureListener, clearPressureListener, setRawListener, clearRawListener, onFinish } = options;
+    const { mode, level, setPressureListener, clearPressureListener, setRawListener, clearRawListener, onFinish } = options;
     const isAnalog = mode === 'analog';
 
     // 設計サイズ固定のステージ。中身はここに載せ、ウィンドウに合わせて拡縮する
@@ -217,9 +144,9 @@ export function showGameScreen(
     let lastPressureN = 0.6;
     let timerInterval = 0;
 
-    // フレーズキューを初期化 (queue[0]=現在, queue[1..VISIBLE_BUBBLES]=吹き出し表示分)
+    // フレーズキューを初期化 (queue[0]=現在入力中のフレーズ)
     // 通常モードは強/弱アイコンを付けない
-    for (let i = 0; i < VISIBLE_BUBBLES + 2; i++) queue.push(generatePhrase(isAnalog));
+    queue.push(generatePhrase(isAnalog, level));
     keygraph.build(queue[0].text);
 
     // ── ヘッダー ──────────────────────────────────────
@@ -303,17 +230,8 @@ export function showGameScreen(
         stackEl.scrollLeft = stackEl.scrollWidth;
     }
 
-    // ── 吹き出しエリア ────────────────────────────────
-    const bubblesEl = document.createElement('div');
-    Object.assign(bubblesEl.style, {
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'flex-end',
-        alignItems: 'center',
-        padding: '1rem 2rem',
-        gap: '0.8rem',
-        overflow: 'hidden',
-    });
+    // ── 中央スペーサー（旧・吹き出しエリア）────────────
+    const spacerEl = document.createElement('div');
 
     // ── ボトムエリア (横顔 + タイピング表示) ───────────
     const bottomEl = document.createElement('div');
@@ -399,7 +317,7 @@ export function showGameScreen(
 
     stage.appendChild(header);
     if (isAnalog) stage.appendChild(stackEl);
-    stage.appendChild(bubblesEl);
+    stage.appendChild(spacerEl);
     stage.appendChild(bottomEl);
     stage.appendChild(keyboardWrapper);
 
@@ -418,18 +336,6 @@ export function showGameScreen(
             comboBadge.style.opacity = '1';
         } else {
             comboBadge.style.opacity = '0';
-        }
-    }
-
-    function renderBubbles() {
-        bubblesEl.innerHTML = '';
-        // queue[0] = 現在入力中（吹き出しには出さず底部表示のみ）
-        // queue[1] = 次のフレーズ → 一番下の吹き出し（isActive スタイル）
-        // queue[2], queue[3] = それ以降
-        const visible = queue.slice(1, VISIBLE_BUBBLES + 1);
-        for (let i = visible.length - 1; i >= 0; i--) {
-            const bubble = createBubble(visible[i], false, 0);
-            bubblesEl.appendChild(bubble);
         }
     }
 
@@ -591,10 +497,9 @@ export function showGameScreen(
         refreshScore();
 
         queue.shift();
-        queue.push(generatePhrase(isAnalog));
+        queue.push(generatePhrase(isAnalog, level));
         keygraph.build(queue[0].text);
 
-        renderBubbles();
         updateTypingDisplay();
     }
 
@@ -651,9 +556,8 @@ export function showGameScreen(
             }
 
             if (keygraph.is_finished()) {
-                completePhrase(); // 内部で renderBubbles / updateTypingDisplay を呼ぶ
+                completePhrase(); // 内部で updateTypingDisplay を呼ぶ
             } else {
-                renderBubbles();
                 updateTypingDisplay();
             }
         } else {
@@ -693,7 +597,6 @@ export function showGameScreen(
     }
 
     // ── 初期描画 ──────────────────────────────────────
-    renderBubbles();
     updateTypingDisplay();
     timerInterval = setInterval(updateTimer, 1000);
 }

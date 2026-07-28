@@ -166,22 +166,31 @@ export function showKeyboardSelectScreen(app: HTMLDivElement, options: KeyboardS
             rightHalf.style.transform = 'scale(1)';
         }
     }
-    applyColors(null);
-
     let busy = false;
-    leftHalf.addEventListener('mouseenter', () => { if (!busy) applyColors('analog'); });
-    rightHalf.addEventListener('mouseenter', () => { if (!busy) applyColors('normal'); });
-    leftHalf.addEventListener('mouseleave', () => { if (!busy) applyColors(null); });
-    rightHalf.addEventListener('mouseleave', () => { if (!busy) applyColors(null); });
+
+    // ── フォーカス（キーボード選択）: 色ハイライトをそのまま流用 ──────────
+    let focusSide: 'analog' | 'normal' = 'analog';
+    function applyFocus(side: 'analog' | 'normal'): void {
+        focusSide = side;
+        applyColors(side);
+    }
+
+    leftHalf.addEventListener('mouseenter', () => { if (!busy) applyFocus('analog'); });
+    rightHalf.addEventListener('mouseenter', () => { if (!busy) applyFocus('normal'); });
+    // カーソルが離れても最後に選んでいた側のハイライトは残す（キーボード操作と揃える）
+    leftHalf.addEventListener('mouseleave', () => { if (!busy) applyColors(focusSide); });
+    rightHalf.addEventListener('mouseleave', () => { if (!busy) applyColors(focusSide); });
 
     function cleanup() {
+        document.removeEventListener('keydown', keyHandler);
         disposeStage();
     }
 
     // ── アナログ選択 ──────────────────────────────────────────────────
-    leftHalf.addEventListener('click', async () => {
+    async function chooseAnalog(): Promise<void> {
         if (busy) return;
         busy = true;
+        applyColors('analog');
         statusEl.style.color = 'rgba(255,255,255,0.85)';
         statusEl.textContent = 'アナログキーボードを準備中…';
         const ok = await connectAnalog();
@@ -190,22 +199,55 @@ export function showKeyboardSelectScreen(app: HTMLDivElement, options: KeyboardS
             onStart('analog');
         } else {
             busy = false;
-            applyColors(null);
+            applyColors(focusSide);
             statusEl.style.color = '#dc2626';
             statusEl.textContent = 'アナログキーボードを準備できませんでした。通常キーボードでも遊べます。';
         }
-    });
+    }
 
     // ── 通常選択 ─────────────────────────────────────────────────────
-    rightHalf.addEventListener('click', () => {
+    function chooseNormal(): void {
         if (busy) return;
         cleanup();
         onStart('normal');
-    });
+    }
+
+    leftHalf.addEventListener('click', chooseAnalog);
+    rightHalf.addEventListener('click', chooseNormal);
 
     backBtn.addEventListener('click', () => {
         if (busy) return;
         cleanup();
         onBack();
     });
+
+    // ── キーボード操作: Space/Tab で左右移動・Enter で確定 ────────────────
+    const keyHandler = (e: KeyboardEvent) => {
+        if (busy) return;
+        switch (e.key) {
+            case 'Tab':
+            case ' ':
+                e.preventDefault();
+                applyFocus(focusSide === 'analog' ? 'normal' : 'analog');
+                break;
+            case 'ArrowLeft':
+                e.preventDefault();
+                applyFocus('analog');
+                break;
+            case 'ArrowRight':
+                e.preventDefault();
+                applyFocus('normal');
+                break;
+            case 'Enter':
+                e.preventDefault();
+                if (focusSide === 'analog') chooseAnalog();
+                else chooseNormal();
+                break;
+        }
+    };
+    document.addEventListener('keydown', keyHandler);
+
+    // 初期フォーカスと操作ヒント
+    applyFocus('analog');
+    statusEl.textContent = 'Space / Tab で選択・Enter で決定';
 }

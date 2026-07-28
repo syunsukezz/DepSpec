@@ -1,3 +1,5 @@
+import SENTENCES, { type Level } from './sentences';
+
 export type PressureInstruction = 'strong' | 'weak';
 
 
@@ -28,50 +30,13 @@ export interface PhraseData {
     charPressures: Record<number, number>; // ひらがな完了時の打鍵圧 (index -> N)
 }
 
-const PHRASE_POOL: string[] = [
-    "あいうえお",
-    "かきくけこ",
-    "さしすせそ",
-    "たちつてと",
-    "なにぬねの",
-    "はひふへほ",
-    "まみむめも",
-    "らりるれろ",
-    "がぎぐげご",
-    "ざじずぜぞ",
-    "ばびぶべぼ",
-    "ぱぴぷぺぽ",
-    "こんにちは",
-    "ありがとうございます",
-    "すみません",
-    "がんばれ",
-    "さくらがさいた",
-    "なつのそら",
-    "ふゆはさむい",
-    "はるのかぜ",
-    "あきのもみじ",
-    "たいぴんぐ",
-    "にほんご",
-    "きょうはいいてんき",
-    "やまとざくら",
-    "かわのながれ",
-    "しろいくも",
-    "あおいそら",
-    "みどりのは",
-    "うみのかなた",
-    "そらにきらめく",
-    "たのしいげーむ",
-    "すばやくうつ",
-    "ちからをこめて",
-    "やさしくたたく",
-    "いきをあわせて",
-];
-
 /**
  * @param withTargets false の場合は強/弱アイコンを付けない（通常キーボード用ベースライン）
+ * @param level 出題するフレーズの難易度（sentences.ts の Easy/Normal/Hard）
  */
-export function generatePhrase(withTargets = true): PhraseData {
-    const text = PHRASE_POOL[Math.floor(Math.random() * PHRASE_POOL.length)];
+export function generatePhrase(withTargets = true, level: Level = 'Easy'): PhraseData {
+    const pool = SENTENCES[level].texts;
+    const text = pool[Math.floor(Math.random() * pool.length)];
     const chars = [...text];
 
     if (!withTargets) {

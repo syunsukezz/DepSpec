@@ -1,4 +1,3 @@
-import { keygraph } from './keygraph.js';
 import { INSTRUCTION_LABEL, normalizeN, pressureLevel } from './phrases';
 import { playFormant } from './audio';
 import type { GameMode } from './gameScreen';
@@ -22,10 +21,10 @@ export interface TutorialOptions {
 export function showTutorialScreen(app: HTMLDivElement, options: TutorialOptions): void {
     const { mode, setPressureListener, clearPressureListener, setRawListener, clearRawListener, onComplete, onSkip } = options;
     const isAnalog = mode === 'analog';
-    // 通常モードは打鍵圧の練習ステップが不要なので、タイピング練習だけ
+    // アナログは打鍵圧(強/弱)の練習ステップのみ。通常モードは教える内容が無いのでスキップ。
     const STEP_RENDERERS = isAnalog
-        ? [renderStep0, renderStep1, renderStep2, renderStep3]
-        : [renderStep0];
+        ? [renderStep1, renderStep2, renderStep3]
+        : [];
     const STEPS = STEP_RENDERERS.length;
 
     // 割合を一定に保つため等倍スケール（fit）
@@ -229,68 +228,6 @@ export function showTutorialScreen(app: HTMLDivElement, options: TutorialOptions
         ctx.fillStyle = color; ctx.fill();
     }
 
-    // ── Step 0: タイピング練習 ─────────────────────────────────
-    function renderStep0() {
-        const PRACTICE = 'あいう';
-        keygraph.build(PRACTICE);
-
-        const card = makeCard();
-        const heading = document.createElement('h2');
-        heading.textContent = 'タイピング練習';
-        heading.style.cssText = 'font-size:1.8rem; color:#0891b2; letter-spacing:0.15em; margin:0;';
-        card.appendChild(heading);
-        card.appendChild(makeDesc(`「${PRACTICE}」をローマ字で入力してください`));
-
-        const kanaRow = document.createElement('div');
-        kanaRow.style.cssText = 'display:flex; gap:0.2rem; align-items:flex-end; font-family:system-ui,sans-serif;';
-        const romRow = document.createElement('div');
-        romRow.style.cssText = "font-size:1.4rem; font-family:'Audiowide',monospace; letter-spacing:0.05em;";
-
-        card.appendChild(kanaRow);
-        card.appendChild(romRow);
-        contentEl.appendChild(card);
-
-        function updateDisplay() {
-            const done = [...(keygraph.seq_done() ?? '')];
-            const candidates = [...(keygraph.seq_candidates() ?? PRACTICE)];
-            kanaRow.innerHTML = '';
-            done.forEach(ch => {
-                const s = document.createElement('span');
-                s.textContent = ch;
-                s.style.cssText = 'font-size:3.5rem; color:#94a3b8;';
-                kanaRow.appendChild(s);
-            });
-            candidates.forEach(ch => {
-                const s = document.createElement('span');
-                s.textContent = ch;
-                s.style.cssText = 'font-size:3.5rem; color:#1e293b;';
-                kanaRow.appendChild(s);
-            });
-            romRow.innerHTML =
-                `<span style="color:#94a3b8">${keygraph.key_done()}</span>` +
-                `<span style="color:#0891b2">${keygraph.key_candidate()}</span>`;
-        }
-        updateDisplay();
-
-        function onKey(e: KeyboardEvent) {
-            if (e.ctrlKey || e.metaKey || e.altKey || e.key.length !== 1) return;
-            e.preventDefault();
-            if (keygraph.next(e.key.toLowerCase())) {
-                updateDisplay();
-                if (keygraph.is_finished()) {
-                    showSuccess(card);
-                    document.removeEventListener('keydown', onKey);
-                    scheduleAdvance();
-                }
-            } else {
-                kanaRow.style.color = '#dc2626';
-                setTimeout(() => { kanaRow.style.color = ''; }, 120);
-            }
-        }
-        document.addEventListener('keydown', onKey);
-        stepCleanup = () => document.removeEventListener('keydown', onKey);
-    }
-
     // ── Step 1: 強く ───────────────────────────────────────────
     function renderStep1() {
         const { symbol, color, name } = INSTRUCTION_LABEL['strong'];
@@ -481,5 +418,11 @@ export function showTutorialScreen(app: HTMLDivElement, options: TutorialOptions
         disposeStage();
     }
 
+    // 教えるステップが無い（通常モード）ならチュートリアルを見せずに次へ
+    if (STEPS === 0) {
+        cleanup();
+        onComplete();
+        return;
+    }
     setStep(0);
 }

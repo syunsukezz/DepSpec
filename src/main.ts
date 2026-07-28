@@ -7,8 +7,10 @@ import { CaliculatePressure, SetPressureCallback } from "./calcPressure.ts";
 import { showStartScreen } from "./startScreen";
 import { showKeyboardSelectScreen } from "./keyboardSelectScreen";
 import { showTutorialScreen } from "./tutorialScreen";
+import { showLevelSelectScreen } from "./levelSelectScreen";
 import { showGameScreen, type GameResult, type GameMode } from "./gameScreen";
 import { showResultScreen } from "./resultScreen";
+import type { Level } from "./sentences";
 
 const app = document.getElementById("app") as HTMLDivElement;
 if (!app) throw new Error("App element not found");
@@ -62,15 +64,24 @@ function renderTutorial(mode: GameMode): void {
         clearPressureListener: () => { pressureListener = null; },
         setRawListener: (cb) => { rawListener = cb; },
         clearRawListener: () => { rawListener = null; },
-        onComplete: () => goToGame(mode),
-        onSkip: () => goToGame(mode),
+        onComplete: () => goToLevelSelect(mode),
+        onSkip: () => goToLevelSelect(mode),
     });
 }
 function goToTutorial(mode: GameMode): void { checkerboardTransition(() => renderTutorial(mode)); }
 
-function renderGame(mode: GameMode): void {
+function renderLevelSelect(mode: GameMode): void {
+    showLevelSelectScreen(app, {
+        onSelect: (level: Level) => goToGame(mode, level),
+        onBack: goToStart,
+    });
+}
+function goToLevelSelect(mode: GameMode): void { checkerboardTransition(() => renderLevelSelect(mode)); }
+
+function renderGame(mode: GameMode, level: Level): void {
     showGameScreen(app, {
         mode,
+        level,
         setPressureListener: (cb) => { pressureListener = cb; },
         clearPressureListener: () => { pressureListener = null; },
         setRawListener: (cb) => { rawListener = cb; },
@@ -78,7 +89,7 @@ function renderGame(mode: GameMode): void {
         onFinish: (result: GameResult) => goToResult(result),
     });
 }
-function goToGame(mode: GameMode): void { checkerboardTransition(() => renderGame(mode)); }
+function goToGame(mode: GameMode, level: Level): void { checkerboardTransition(() => renderGame(mode, level)); }
 
 function renderResult(result: GameResult): void {
     showResultScreen(app, result, goToStart);
