@@ -220,6 +220,23 @@ export function showResultScreen(
         backBtn.style.borderColor = '#cbd5e1';
         backBtn.style.color = '#64748b';
     });
-    backBtn.addEventListener('click', () => { disposeStage(); onRestart(); });
+    // タイトルへ戻る（ボタン / Enterキー）。二重発火とリスナー残留を防ぐ。
+    let navigated = false;
+    function goBack(): void {
+        if (navigated) return;
+        navigated = true;
+        document.removeEventListener('keydown', onKeyDown);
+        disposeStage();
+        onRestart();
+    }
+    const onKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            goBack();
+        }
+    };
+    document.addEventListener('keydown', onKeyDown);
+
+    backBtn.addEventListener('click', goBack);
     stage.appendChild(backBtn);
 }

@@ -3,7 +3,7 @@ import {
     generatePhrase,
     assignRomajiTargets,
     type PhraseData,
-    type PressureLevel,
+    
     INSTRUCTION_LABEL,
     normalizeN,
     pressureLevel,
@@ -178,57 +178,8 @@ export function showGameScreen(
     header.appendChild(comboBadge);
     header.appendChild(scoreEl);
 
-    // ── 打鍵圧スタック（強/普通/弱を色で、左→右へ4行ずつ積む）──
-    const LEVEL_COLOR: Record<PressureLevel, string> = {
-        strong: '#ef4444', // 赤
-        normal: '#22c55e', // 緑
-        weak:   '#3b82f6', // 青
-    };
-    const STACK_ROWS = 4;
-    const CELL_PX = 16;
-    const CELL_GAP = 3;
-
-    const stackEl = document.createElement('div');
-    Object.assign(stackEl.style, {
-        display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'flex-start',
-        gap: `${CELL_GAP}px`,
-        height: `${STACK_ROWS * CELL_PX + (STACK_ROWS - 1) * CELL_GAP + 16}px`,
-        padding: '8px 2rem',
-        borderBottom: '1px solid #e2e8f0',
-        overflowX: 'hidden',
-        overflowY: 'hidden',
-    });
-
-    let stackFilled = 0;              // これまでに置いた四角形の総数
-    let stackColumn: HTMLDivElement | null = null; // 現在積んでいる列
-
-    function addPressureSquare(pressure: number): void {
-        const row = stackFilled % STACK_ROWS;
-        if (row === 0) {
-            // 新しい列を作る（上から下へ積む）
-            stackColumn = document.createElement('div');
-            Object.assign(stackColumn.style, {
-                display: 'flex',
-                flexDirection: 'column',
-                gap: `${CELL_GAP}px`,
-                flexShrink: '0',
-            });
-            stackEl.appendChild(stackColumn);
-        }
-        const cell = document.createElement('div');
-        Object.assign(cell.style, {
-            width: `${CELL_PX}px`,
-            height: `${CELL_PX}px`,
-            borderRadius: '3px',
-            background: LEVEL_COLOR[pressureLevel(pressure)],
-        });
-        stackColumn!.appendChild(cell);
-        stackFilled++;
-        // 右端が埋まったら最新の列が見えるよう右へスクロール
-        stackEl.scrollLeft = stackEl.scrollWidth;
-    }
+  
+    
 
    
 
@@ -316,7 +267,7 @@ export function showGameScreen(
     const updateKey = keyboard(keyboardEl, wooting60heplus);
 
     stage.appendChild(header);
-    if (isAnalog) stage.appendChild(stackEl);
+    
     
     stage.appendChild(bottomEl);
     stage.appendChild(keyboardWrapper);
@@ -564,7 +515,6 @@ export function showGameScreen(
 
             if (isAnalog) {
                 // 打鍵圧を強/普通/弱の四角形として左→右に積む
-                addPressureSquare(pressure);
                 sessionPressures.push(pressure);
             } else {
                 // 通常モードはリップルで打鍵フィードバック＋keydownでキーボード点灯
