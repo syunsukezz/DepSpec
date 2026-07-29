@@ -178,7 +178,7 @@ export function showGameScreen(
     header.appendChild(comboBadge);
     header.appendChild(scoreEl);
 
-  
+    
     
 
    
@@ -215,6 +215,8 @@ export function showGameScreen(
     `;
     document.head.appendChild(effectStyle);
 
+    
+
     // タイピング表示領域
     const typingEl = document.createElement('div');
     Object.assign(typingEl.style, {
@@ -235,6 +237,7 @@ export function showGameScreen(
         overflow: 'visible',
     });
     typingEl.appendChild(effectLayer);
+    
 
     // ひらがなは参照用の小さめ表示。ローマ字をメインの大きい表示にする。
     const kanaRow = document.createElement('div');

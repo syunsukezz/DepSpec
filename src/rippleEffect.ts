@@ -22,7 +22,7 @@ export interface EdgeRippleOptions {
 export function flashRedScreen(opts: { color?: string; duration?: number; peak?: number } = {}): void {
     const color = opts.color ?? '#ff1e1e';
     const duration = opts.duration ?? 260;
-    const peak = opts.peak ?? 0.42; // フラッシュの最大不透明度
+    const peak = opts.peak ?? 0.02; // フラッシュの最大不透明度
 
     const flash = document.createElement('div');
     Object.assign(flash.style, {

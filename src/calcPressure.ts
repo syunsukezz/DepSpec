@@ -55,7 +55,7 @@ function CaliculatePressure(code: string, value: number)
     // }
     if (isVelocity) {
       // 開始位置(StartKeyValues)からボトム(=1)までの距離 / 経過時間
-      const v = (stroke_mm /*- StartKeyValues.get(code)! * stroke_mm*/) / ms; // 平均速度（mm/ms = m/s）
+      const v = (stroke_mm - StartKeyValues.get(code)! * stroke_mm) / ms; // 平均速度（mm/ms = m/s）
       PressureCallback(code, v*0.529136+0.81);
       PressedKeys.add(code);
       return;
