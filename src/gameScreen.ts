@@ -356,9 +356,12 @@ export function showGameScreen(
                 iconEl.style.cssText = 'font-size:1.4rem; line-height:1.2;';
             }
 
+            const isCurrent = i === 0; // 今まさに打つ文字
             const keysEl = document.createElement('span');
             keysEl.textContent = ch;
-            keysEl.style.cssText = 'font-size:2.6rem; color:#0891b2; line-height:1;';
+            keysEl.style.cssText = isCurrent
+                ? 'font-size:4rem; color:#0e7490; font-weight:bold; line-height:1; text-shadow:0 2px 8px rgba(8,145,178,0.35);'
+                : 'font-size:2.6rem; color:#0891b2; line-height:1;';
 
             wrapper.appendChild(iconEl);
             wrapper.appendChild(keysEl);
