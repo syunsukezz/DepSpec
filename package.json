@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "generate:pressure": "node --experimental-strip-types scripts/generatePressureTargets.ts"
   },
   "devDependencies": {
     "typescript": "~6.0.2",
