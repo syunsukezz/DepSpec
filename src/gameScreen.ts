@@ -1,7 +1,7 @@
 import { keygraph } from './keygraph.js';
 import {
     generatePhrase,
-    assignRomajiTargets,
+    assignWordTargets,
     type PhraseData,
     INSTRUCTION_LABEL,
     normalizeN,
@@ -18,16 +18,24 @@ import { FONT_DISPLAY } from './theme';
 
 const GAME_DURATION_SEC = 60;
 
+// 基本点: フレーズ完了ではなく打鍵ごとに一致(正解)を積算する（未完のフレーズの努力も点数に反映されるように）
+const KEY_POINTS = 10;
+
+// 残り問題数ゲージの目安総数（時間切れが本来の終了条件のため、これに達しても継続する）
+const TOTAL_PHRASES = 20;
+
 // analog: アナログキーボード（打鍵圧あり・強弱判定あり）
 // normal: 通常キーボード（打鍵圧なし・速度と正確性だけのベースライン）
 export type GameMode = 'analog' | 'normal';
 
 export interface GameResult {
     mode: GameMode;
+    level: Level;
     phrasesCompleted: number;
     pressureClears: number;
     totalTargets: number;      // 完了フレーズ内の指定アイコン総数
     pressures: number[];       // 全打鍵の打鍵圧(N値・アナログのみ)
+    baseScore: number;         // 打鍵ごとに積算した基本点
     expressionScore: number;   // コンボ倍率込みの表現点
     maxCombo: number;          // セッション最大コンボ
 }
@@ -64,15 +72,16 @@ export function showGameScreen(
 
     // 設計サイズ固定のステージ。中身はここに載せ、ウィンドウに合わせて拡縮する
     // 割合を一定に保つため等倍スケール（fit）
+    // 行: ヘッダー / 進捗ゲージ / タイピング表示(可変) / キーボード(固定)
     const { stage, dispose: disposeStage } = createStage(app, {
         display: 'grid',
-        // アナログはヘッダー直下に打鍵圧スタックの帯を挟む
-        gridTemplateRows: isAnalog ? 'auto auto 1fr 200px auto' : 'auto 1fr 200px auto',
+        gridTemplateRows: 'auto auto 1fr 200px',
     }, { fit: true, designW: 1060, designH: 1000 });
 
     // ── 状態 ──────────────────────────────────────────
     let queue: PhraseData[] = [];
     let phrasesCompleted = 0;
+    let baseScore = 0;                 // 打鍵ごとに積算した基本点
     let pressureClears = 0;
     let totalTargets = 0;              // 完了フレーズ内の指定アイコン総数
     let combo = 0;                     // 指定の連続クリア数
@@ -115,6 +124,25 @@ export function showGameScreen(
     header.appendChild(timerEl);
     header.appendChild(comboBadge);
     header.appendChild(scoreEl);
+
+    // ── 進捗ゲージ (残り問題数の目安) ───────────────────
+    const progressWrap = document.createElement('div');
+    Object.assign(progressWrap.style, {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.6rem',
+        padding: '0.4rem 2rem',
+        borderBottom: '1px solid #e2e8f0',
+    });
+    const progressLabel = document.createElement('div');
+    progressLabel.style.cssText = `font-size:0.75rem; color:#94a3b8; font-family:${FONT_DISPLAY}; white-space:nowrap;`;
+    const progressTrack = document.createElement('div');
+    progressTrack.style.cssText = 'flex:1; height:8px; background:#e2e8f0; border-radius:4px; overflow:hidden;';
+    const progressFill = document.createElement('div');
+    progressFill.style.cssText = 'height:100%; width:0%; background:#0891b2; border-radius:4px; transition:width 0.3s ease;';
+    progressTrack.appendChild(progressFill);
+    progressWrap.appendChild(progressLabel);
+    progressWrap.appendChild(progressTrack);
 
     // ── ボトムエリア (横顔 + タイピング表示) ───────────
     const bottomEl = document.createElement('div');
@@ -200,16 +228,25 @@ export function showGameScreen(
     const updateKey = keyboard(keyboardEl, wooting60heplus);
 
     stage.appendChild(header);
+    stage.appendChild(progressWrap);
     stage.appendChild(bottomEl);
     stage.appendChild(keyboardWrapper);
 
     // ── ヘルパー ──────────────────────────────────────
     function getScore() {
-        return phrasesCompleted * 100 + expressionScore;
+        return baseScore + expressionScore;
     }
 
     function refreshScore() {
         scoreEl.textContent = `${getScore()} pt`;
+    }
+
+    // 残り問題数ゲージの更新。TOTAL_PHRASES はあくまで目安で、超えても時間切れまで続行する
+    function updateProgress() {
+        const remaining = Math.max(0, TOTAL_PHRASES - phrasesCompleted);
+        const ratio = Math.min(1, phrasesCompleted / TOTAL_PHRASES);
+        progressFill.style.width = `${ratio * 100}%`;
+        progressLabel.textContent = `のこり ${remaining} 問`;
     }
 
     function updateComboBadge() {
@@ -401,12 +438,12 @@ export function showGameScreen(
         refreshScore();
     }
 
-    // フレーズを keygraph に構築し、アナログ時はローマ字(キー)ごとに強/弱を割り当てる。
-    // 綴りが確定する build 後に、代表綴りの総キー数へ指定をランダム配置する。
+    // フレーズを keygraph に構築し、アナログ時は単語(フレーズ)全体の語感から強/弱を1つ決めて
+    // 代表綴りの全キー位置に敷く（マークは単語の文字全ての上に表示される）。
     function buildCurrentPhrase() {
         const phrase = queue[0];
         keygraph.build(phrase.text);
-        phrase.targets = isAnalog ? assignRomajiTargets(keygraph.key_candidate().length) : {};
+        phrase.targets = isAnalog ? assignWordTargets(phrase.text, keygraph.key_candidate().length) : {};
     }
 
     function completePhrase() {
@@ -414,6 +451,7 @@ export function showGameScreen(
         totalTargets += Object.keys(phrase.targets).length;
         phrasesCompleted++;
         refreshScore();
+        updateProgress();
 
         queue.shift();
         queue.push(generatePhrase(level));
@@ -431,7 +469,7 @@ export function showGameScreen(
         if (timeLeft <= 0) {
             clearInterval(timerInterval);
             cleanup();
-            onFinish({ mode, phrasesCompleted, pressureClears, totalTargets, pressures: sessionPressures, expressionScore, maxCombo });
+            onFinish({ mode, level, phrasesCompleted, pressureClears, totalTargets, pressures: sessionPressures, baseScore, expressionScore, maxCombo });
         }
     }
 
@@ -446,6 +484,11 @@ export function showGameScreen(
         const keyIndex = keygraph.key_done().length; // このキーが何打鍵目か（0始まり）
         if (keygraph.next(key)) {
             const phrase = queue[0];
+
+            // 打鍵ごとに一致(正解)を積算する基本点。未完のフレーズでもここまでの
+            // 打鍵は無駄にならない（タイマー切れで途中終了しても得点に反映される）
+            baseScore += KEY_POINTS;
+            refreshScore();
 
             if (isAnalog) {
                 // 打鍵圧を強/普通/弱の四角形として左→右に積む
@@ -528,5 +571,6 @@ export function showGameScreen(
 
     // ── 初期描画 ──────────────────────────────────────
     updateTypingDisplay();
+    updateProgress();
     timerInterval = setInterval(updateTimer, 1000);
 }

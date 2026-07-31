@@ -2,6 +2,7 @@ import type { GameResult } from './gameScreen';
 import { normalizeN, pressureLevel, type PressureLevel } from './phrases';
 import { createStage } from './stage';
 import { FONT_DISPLAY, PRESS_LEVEL_COLOR } from './theme';
+import { recordScore, type RankingEntry } from './ranking';
 
 // 称号の閾値（調整可能）
 const PRECISION_HIGH = 0.7;  // 追従率がこれ以上 → 精度「高」
@@ -57,19 +58,65 @@ function computeStats(result: GameResult): ExpressionStats {
     return { sd, precision, counts, total, title: adjective + noun };
 }
 
+/** ランキング欄（この端末内・localStorage）。今回のスコアの行をハイライトする */
+function renderRanking(stage: HTMLDivElement, ranking: RankingEntry[], current: RankingEntry): void {
+    const wrap = document.createElement('div');
+    Object.assign(wrap.style, {
+        display: 'flex', flexDirection: 'column', gap: '0.35rem',
+        width: '420px', maxWidth: '100%',
+        fontFamily: 'system-ui, sans-serif',
+    });
+
+    const head = document.createElement('div');
+    head.textContent = 'ランキング（この端末内）';
+    head.style.cssText = 'font-size:0.8rem; color:#94a3b8; letter-spacing:0.1em;';
+    wrap.appendChild(head);
+
+    ranking.slice(0, 5).forEach((entry, i) => {
+        const isCurrent = entry === current;
+
+        const row = document.createElement('div');
+        row.style.cssText =
+            'display:flex; align-items:center; gap:0.6rem; padding:0.25rem 0.6rem; border-radius:6px;' +
+            (isCurrent ? 'background:#ecfeff; border:1px solid #0891b2;' : '');
+
+        const rank = document.createElement('span');
+        rank.textContent = `${i + 1}`;
+        rank.style.cssText = `width:1.6rem; text-align:center; font-family:${FONT_DISPLAY}; color:#0891b2; font-size:0.95rem;`;
+
+        const sc = document.createElement('span');
+        sc.textContent = `${entry.score} pt`;
+        sc.style.cssText = `flex:1; font-size:0.9rem; color:${isCurrent ? '#0e7490' : '#334155'}; font-weight:${isCurrent ? '700' : '400'};`;
+
+        const tag = document.createElement('span');
+        tag.textContent = `${entry.mode === 'analog' ? 'アナログ' : '通常'} / ${entry.level}`;
+        tag.style.cssText = 'font-size:0.75rem; color:#94a3b8;';
+
+        row.appendChild(rank);
+        row.appendChild(sc);
+        row.appendChild(tag);
+        wrap.appendChild(row);
+    });
+
+    stage.appendChild(wrap);
+}
+
 export function showResultScreen(
     app: HTMLDivElement,
     result: GameResult,
     onRestart: () => void,
 ): void {
-    const { mode, phrasesCompleted, expressionScore } = result;
-    const baseScore = phrasesCompleted * 100;
+    const { mode, level, phrasesCompleted, baseScore, expressionScore } = result;
     const score = baseScore + expressionScore;
 
     // アナログモードかつ打鍵データがある場合のみ表現評価を出す
     const showExpression = mode === 'analog' && result.pressures.length > 0;
 
-    // 割合を一定に保つため等倍スケール（fit）
+    // 今回のスコアをローカルランキングに記録
+    const currentEntry: RankingEntry = { score, mode, level, date: new Date().toISOString() };
+    const ranking = recordScore(currentEntry);
+
+    // 割合を一定に保つため等倍スケール（fit）。ランキング欄の分、通常より縦に長め
     const { stage, dispose: disposeStage } = createStage(app, {
         display: 'flex',
         flexDirection: 'column',
@@ -78,7 +125,7 @@ export function showResultScreen(
         fontFamily: FONT_DISPLAY,
         gap: '1.6rem',
         position: 'relative',
-    }, { fit: true, designW: 1000, designH: 760 });
+    }, { fit: true, designW: 1000, designH: 840 });
 
     // タイトル
     const heading = document.createElement('h2');
@@ -195,6 +242,8 @@ export function showResultScreen(
         detail.innerHTML = `タイプしたフレーズ数: <span style="color:#0891b2">${phrasesCompleted}</span>`;
         stage.appendChild(detail);
     }
+
+    renderRanking(stage, ranking, currentEntry);
 
     // タイトルへ戻るボタン（左下）
     const backBtn = document.createElement('button');
