@@ -1,15 +1,16 @@
 import type { GameResult } from './gameScreen';
 import { normalizeN, pressureLevel, type PressureLevel } from './phrases';
 import { createStage } from './stage';
+import { FONT_DISPLAY, PRESS_LEVEL_COLOR } from './theme';
 
 // 称号の閾値（調整可能）
 const PRECISION_HIGH = 0.7;  // 追従率がこれ以上 → 精度「高」
 const SD_WIDE        = 0.15; // 標準偏差がこれ以上 → レンジ「広」
 
 const LEVEL_META: Record<PressureLevel, { label: string; color: string }> = {
-    weak:   { label: '弱', color: '#3b82f6' },
-    normal: { label: '普通', color: '#22c55e' },
-    strong: { label: '強', color: '#ef4444' },
+    weak:   { label: '弱', color: PRESS_LEVEL_COLOR.weak },
+    normal: { label: '普通', color: PRESS_LEVEL_COLOR.normal },
+    strong: { label: '強', color: PRESS_LEVEL_COLOR.strong },
 };
 
 interface ExpressionStats {
@@ -74,7 +75,7 @@ export function showResultScreen(
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        fontFamily: "'Audiowide', sans-serif",
+        fontFamily: FONT_DISPLAY,
         gap: '1.6rem',
         position: 'relative',
     }, { fit: true, designW: 1000, designH: 760 });
@@ -206,7 +207,7 @@ export function showResultScreen(
         background: 'transparent',
         border: '2px solid #cbd5e1',
         color: '#64748b',
-        fontFamily: "'Audiowide', sans-serif",
+        fontFamily: FONT_DISPLAY,
         fontSize: '0.85rem',
         cursor: 'pointer',
         borderRadius: '6px',

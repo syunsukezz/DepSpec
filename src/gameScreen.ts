@@ -3,7 +3,6 @@ import {
     generatePhrase,
     assignRomajiTargets,
     type PhraseData,
-    
     INSTRUCTION_LABEL,
     normalizeN,
     pressureLevel,
@@ -14,6 +13,8 @@ import { keyboard, wooting60heplus } from './keyboard';
 import { createStage } from './stage';
 import { flashRedScreen } from './rippleEffect';
 import { createPressureMeter, type PressureMeter } from './pressureMeter';
+import { drawFace } from './faceDraw';
+import { FONT_DISPLAY } from './theme';
 
 const GAME_DURATION_SEC = 60;
 
@@ -49,69 +50,6 @@ export interface GameScreenOptions {
     setRawListener: (cb: (code: string, value: number) => void) => void;
     clearRawListener: () => void;
     onFinish: (result: GameResult) => void;
-}
-
-// -----------------------------------------------------------------------
-// 横顔キャラクター描画
-// 打鍵圧 強 → 300° (60° の口開き), 弱 → 350° (10° の口開き)
-// -----------------------------------------------------------------------
-function drawFace(canvas: HTMLCanvasElement, newtonValue: number): void {
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const W = canvas.width;
-    const H = canvas.height;
-    ctx.clearRect(0, 0, W, H);
-
-    // 線形正規化: 0.6N〜3.0N → 0〜1
-    const t = normalizeN(newtonValue);
-
-    // 弧の角度: t=1(強) → 300°, t=0(弱) → 350°
-    const arcDeg = 350 - t * 50;
-    const gapDeg = 360 - arcDeg;
-    const gapRad = (gapDeg / 2) * (Math.PI / 180);
-
-    const cx = W / 2;
-    const cy = H / 2;
-    const r = Math.min(W, H) * 0.38;
-
-    // 顔の輪郭弧（口部分が右側）
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, gapRad, 2 * Math.PI - gapRad, false);
-    ctx.strokeStyle = '#0891b2';
-    ctx.lineWidth = 6;
-    ctx.lineCap = 'round';
-    ctx.stroke();
-
-    // 弧の端点から中心への線（口の上唇・下唇）
-    const p1x = cx + r * Math.cos(gapRad);
-    const p1y = cy + r * Math.sin(gapRad);
-    const p2x = cx + r * Math.cos(-gapRad);
-    const p2y = cy + r * Math.sin(-gapRad);
-
-    ctx.beginPath();
-    ctx.moveTo(p1x, p1y);
-    ctx.lineTo(cx, cy);
-    ctx.lineTo(p2x, p2y);
-    ctx.strokeStyle = '#0891b2';
-    ctx.lineWidth = 6;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.stroke();
-
-    // 目（右上側）
-    const eyeX = cx + r * 0.28;
-    const eyeY = cy - r * 0.32;
-    ctx.beginPath();
-    ctx.arc(eyeX, eyeY, r * 0.07, 0, 2 * Math.PI);
-    ctx.fillStyle = '#0891b2';
-    ctx.fill();
-
-    // 打鍵圧インジケータ（小さいテキスト）
-    ctx.fillStyle = '#64748b88';
-    ctx.font = `${W * 0.08}px Audiowide, sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.fillText(`${newtonValue.toFixed(1)}N`, cx, H - 8);
 }
 
 // -----------------------------------------------------------------------
@@ -157,7 +95,7 @@ export function showGameScreen(
         alignItems: 'center',
         padding: '0.8rem 2rem',
         borderBottom: '1px solid #e2e8f0',
-        fontFamily: "'Audiowide', sans-serif",
+        fontFamily: FONT_DISPLAY,
     });
 
     const timerEl = document.createElement('div');
@@ -178,11 +116,6 @@ export function showGameScreen(
     header.appendChild(comboBadge);
     header.appendChild(scoreEl);
 
-    
-    
-
-   
-
     // ── ボトムエリア (横顔 + タイピング表示) ───────────
     const bottomEl = document.createElement('div');
     Object.assign(bottomEl.style, {
@@ -199,7 +132,7 @@ export function showGameScreen(
     faceCanvas.width = 180;
     faceCanvas.height = 180;
     faceCanvas.style.flexShrink = '0';
-    drawFace(faceCanvas, lastPressureN);
+    drawFace(faceCanvas, lastPressureN, { showLabel: true });
 
     // エフェクト用 CSS
     const effectStyle = document.createElement('style');
@@ -214,8 +147,6 @@ export function showGameScreen(
         }
     `;
     document.head.appendChild(effectStyle);
-
-    
 
     // タイピング表示領域
     const typingEl = document.createElement('div');
@@ -237,7 +168,6 @@ export function showGameScreen(
         overflow: 'visible',
     });
     typingEl.appendChild(effectLayer);
-    
 
     // ひらがなは参照用の小さめ表示。ローマ字をメインの大きい表示にする。
     const kanaRow = document.createElement('div');
@@ -270,8 +200,6 @@ export function showGameScreen(
     const updateKey = keyboard(keyboardEl, wooting60heplus);
 
     stage.appendChild(header);
-    
-    
     stage.appendChild(bottomEl);
     stage.appendChild(keyboardWrapper);
 
@@ -570,7 +498,7 @@ export function showGameScreen(
         pressureMeter = createPressureMeter(); // 押下量の常時ライブメーター
         setPressureListener((code: string, value: number) => {
             lastPressureN = value;
-            drawFace(faceCanvas, value);
+            drawFace(faceCanvas, value, { showLabel: true });
             updateKey(code, value);
             setTimeout(() => {
                 updateKey(code, 0);

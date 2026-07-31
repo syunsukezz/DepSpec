@@ -1,5 +1,6 @@
 import type { GameMode } from './gameScreen';
 import { createStage } from './stage';
+import { FONT_DISPLAY } from './theme';
 
 export interface StartOptions {
     /** アナログキーボードに接続（必要ならダイアログ）。接続できたら true */
@@ -21,7 +22,7 @@ export function showStartScreen(app: HTMLDivElement, options: StartOptions): voi
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        fontFamily: "'Audiowide', sans-serif",
+        fontFamily: FONT_DISPLAY,
         gap: '2rem',
     }, { fit: true, designW: 900, designH: 680 });
 
@@ -72,15 +73,12 @@ export function showStartScreen(app: HTMLDivElement, options: StartOptions): voi
         background: 'transparent',
         border: 'none',
         color: '#0891b2',
-        fontFamily: "'Audiowide', sans-serif",
+        fontFamily: FONT_DISPLAY,
         fontSize: '0.85rem',
         cursor: 'pointer',
         borderRadius: '8px',
         transition: 'background 0.2s, opacity 0.2s',
-        
     });
-    
-    
 
     // フルスクリーンボタン（ビューポート右上固定）
     const fsBtn = document.createElement('button');
@@ -98,7 +96,7 @@ export function showStartScreen(app: HTMLDivElement, options: StartOptions): voi
         background: 'transparent',
         border: '1px solid #cbd5e1',
         color: '#64748b',
-        fontFamily: "'Audiowide', sans-serif",
+        fontFamily: FONT_DISPLAY,
         fontSize: '0.75rem',
         cursor: 'pointer',
         borderRadius: '4px',
@@ -116,7 +114,6 @@ export function showStartScreen(app: HTMLDivElement, options: StartOptions): voi
 
     stage.appendChild(title);
     stage.appendChild(pressAny);
-    
     app.appendChild(connectBtn);
     app.appendChild(fsBtn);
 

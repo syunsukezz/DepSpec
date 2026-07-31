@@ -2,17 +2,14 @@ import SENTENCES, { type Level } from './sentences';
 
 export type PressureInstruction = 'strong' | 'weak';
 
-
-
-
 export function normalizeN(n: number): number {
     return Math.min(1, Math.max(0, n*3.5 - 2.7)); // 0〜1に正規化
 }
 
 // 打鍵圧のカテゴリ: 正規化値(0〜1)を3等分して 弱い / 普通 / 強い に分類する
 export type PressureLevel = 'weak' | 'normal' | 'strong';
-const LEVEL_LOW  = 1 / 3; // これ未満 → 弱い
-const LEVEL_HIGH = 2 / 3; // これ以上 → 強い
+export const LEVEL_LOW  = 1 / 3; // これ未満 → 弱い
+export const LEVEL_HIGH = 2 / 3; // これ以上 → 強い
 
 export function pressureLevel(n: number): PressureLevel {
     const t = normalizeN(n);
