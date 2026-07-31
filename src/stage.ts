@@ -1,9 +1,16 @@
 // 各画面の土台。2つのモードを持つ:
 //  - fill (既定): app をウィンドウいっぱいに広げ、中身も幅・高さ100%。ヘッダーや
-//    ボタンをウィンドウ幅に追従させたい画面（ゲーム/リザルト等）向け。
+//    ボタンをウィンドウ幅に追従させたい画面（キーボード選択等）向け。
 //  - fit: 設計サイズ固定のステージを transform: scale で等倍拡縮。中身の割合が
-//    ウィンドウサイズに左右されない。タイトル画面のように「見た目の比率を一定に
-//    保ちたい」画面向け。
+//    崩れない「見た目の比率を一定に保ちたい」画面向け。
+//
+// fit のスケールは「横幅」だけを基準にする（縦横比を min(w/W, h/H) で決めていた
+// 従来方式だと、ウィンドウが縦長のときに文字がウィンドウ幅に対して不必要に小さく
+// なってしまっていた）。横幅基準で拡大した結果、縦がウィンドウに収まらない場合は
+// クリップして崩れさせるのではなくスクロールできるようにする。
+// 極端な横長ウィンドウで文字が際限なく巨大化/微小化しないよう、スケールの上下限は設ける。
+const MIN_FIT_SCALE = 0.35;
+const MAX_FIT_SCALE = 1.75;
 
 export interface Stage {
     stage: HTMLDivElement;
@@ -47,11 +54,13 @@ export function createStage(
     app.removeAttribute('style');
     Object.assign(app.style, {
         display: 'flex',
-        alignItems: 'center',
+        alignItems: opts.fit ? 'safe center' : 'center',
         justifyContent: 'center',
         width: '100%',
         height: '100%',
-        overflow: 'hidden',
+        overflowX: 'hidden',
+        // fit は横幅基準スケールにするため、縦が収まりきらない場合がある → スクロール可能にする
+        overflowY: opts.fit ? 'auto' : 'hidden',
     });
 
     const stage = document.createElement('div');
@@ -75,7 +84,8 @@ export function createStage(
         app.appendChild(stage);
 
         const fit = () => {
-            const scale = Math.min(app.clientWidth / W, app.clientHeight / H);
+            const raw = app.clientWidth / W;
+            const scale = Math.min(MAX_FIT_SCALE, Math.max(MIN_FIT_SCALE, raw));
             stage.style.transform = `scale(${scale})`;
         };
         const observer = new ResizeObserver(fit);

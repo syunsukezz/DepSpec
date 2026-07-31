@@ -82,7 +82,7 @@ export function showGameScreen(
     const { stage, dispose: disposeStage } = createStage(app, {
         display: 'grid',
         gridTemplateRows: 'auto auto 1fr 200px',
-    }, { fit: true, designW: 1060, designH: 1000 });
+    }, { fit: true, designW: 1060, designH: 650 });
 
     // ── 状態 ──────────────────────────────────────────
     let queue: PhraseData[] = [];
