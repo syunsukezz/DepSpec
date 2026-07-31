@@ -41,10 +41,20 @@ export interface GameResult {
 const COMBO_STEP = 1;
 const MULT_BASE = 2;
 const MAX_MULT = 100;
-function comboMultiplier(combo: number): number {
-    const tier = Math.floor((combo - 1) / COMBO_STEP);
-    return Math.min(MULT_BASE ** tier, MAX_MULT);
+function comboTier(combo: number): number {
+    return Math.floor((combo - 1) / COMBO_STEP);
 }
+function comboMultiplier(combo: number): number {
+    return Math.min(MULT_BASE ** comboTier(combo), MAX_MULT);
+}
+
+// コンボが伸びるほどクリアSEのピッチを上げる（倍率が上がるほど手応えが分かりやすいように）
+const SE_PITCH_BASE = 1.0;
+const SE_PITCH_STEP = 0.05;
+const SE_PITCH_MAX = 2.0;
+
+// 倍率が最大の状態でさらにコンボを継続すると、1コンボごとにボーナスタイムが伸びる
+const MAX_COMBO_BONUS_SEC = 0.5;
 
 export interface GameScreenOptions {
     mode: GameMode;
@@ -111,14 +121,23 @@ export function showGameScreen(
     scoreEl.style.cssText = 'font-size: 1.4rem; color: #ca8a04;';
     scoreEl.textContent = '0 pt';
 
-    // コンボバッジ（中央・コンボ2以上で表示）
-    const comboBadge = document.createElement('div');
-    comboBadge.style.cssText =
-        'font-size: 1.4rem; color: #f59e0b; letter-spacing: 0.08em; opacity: 0;' +
-        'transition: opacity 0.2s, transform 0.12s ease-out;';
+    // コンボ表示（中央・コンボ2以上で表示）。倍率はスコアと切り離し、大きく目立たせる。
+    // コンボ数(小)＋倍率(大・段階が上がるほど拡大、最大倍率で発光)の2段構成。
+    const comboWrap = document.createElement('div');
+    comboWrap.style.cssText =
+        'display:flex; flex-direction:column; align-items:center; line-height:1; opacity:0;' +
+        'transition: opacity 0.2s;';
+    const comboCountEl = document.createElement('div');
+    comboCountEl.style.cssText = 'font-size:0.85rem; color:#94a3b8; letter-spacing:0.08em;';
+    const comboMultEl = document.createElement('div');
+    comboMultEl.style.cssText =
+        'font-size: 1.6rem; color: #f59e0b; letter-spacing: 0.04em; font-weight: 700;' +
+        'transition: font-size 0.15s ease-out, color 0.15s ease-out, text-shadow 0.15s ease-out, transform 0.12s ease-out;';
+    comboWrap.appendChild(comboCountEl);
+    comboWrap.appendChild(comboMultEl);
 
     header.appendChild(timerEl);
-    header.appendChild(comboBadge);
+    header.appendChild(comboWrap);
     header.appendChild(scoreEl);
 
     // ── 進捗ゲージ (残り時間) ───────────────────────────
@@ -248,11 +267,25 @@ export function showGameScreen(
     }
 
     function updateComboBadge() {
-        if (combo >= 2) {
-            comboBadge.textContent = `${combo} COMBO ×${comboMultiplier(combo)}`;
-            comboBadge.style.opacity = '1';
+        if (combo < 2) {
+            comboWrap.style.opacity = '0';
+            return;
+        }
+        comboWrap.style.opacity = '1';
+        comboCountEl.textContent = `${combo} COMBO`;
+
+        const mult = comboMultiplier(combo);
+        const atMax = mult === MAX_MULT;
+        // 倍率の段階が上がるほど文字を大きくする（直感的に「伸びている」と分かるように）
+        const size = Math.min(1.6 + comboTier(combo) * 0.3, 3.6);
+        comboMultEl.textContent = `×${mult}`;
+        comboMultEl.style.fontSize = `${size}rem`;
+        if (atMax) {
+            comboMultEl.style.color = '#dc2626';
+            comboMultEl.style.textShadow = '0 0 12px rgba(220,38,38,0.6)';
         } else {
-            comboBadge.style.opacity = '0';
+            comboMultEl.style.color = '#f59e0b';
+            comboMultEl.style.textShadow = 'none';
         }
     }
 
@@ -386,15 +419,22 @@ export function showGameScreen(
     }
 
     const clearSound = new Audio('/maou_se_system48.mp3');
-    function playClearSound() {
+    // preservesPitch を切ることで、playbackRate を上げたときに実際にピッチが上がるようにする
+    // （既定では速度だけ変えてピッチを保つブラウザが多いため）
+    clearSound.preservesPitch = false;
+    (clearSound as any).mozPreservesPitch = false;
+    (clearSound as any).webkitPreservesPitch = false;
+    function playClearSound(combo: number) {
         clearSound.currentTime = 0;
+        // コンボが伸びるほど再生速度(=ピッチ)を上げ、繋がっている手応えを音でも伝える
+        clearSound.playbackRate = Math.min(SE_PITCH_BASE + combo * SE_PITCH_STEP, SE_PITCH_MAX);
         clearSound.play().catch(() => {});
     }
 
     // 指定クリア時の加点ポップ（表現点＋コンボ倍率）
     function showComboGain(gained: number, mult: number) {
-        comboBadge.style.transform = 'scale(1.25)';
-        setTimeout(() => { comboBadge.style.transform = 'scale(1)'; }, 120);
+        comboMultEl.style.transform = 'scale(1.25)';
+        setTimeout(() => { comboMultEl.style.transform = 'scale(1)'; }, 120);
 
         const pop = document.createElement('div');
         pop.textContent = mult > 1 ? `+${gained} ×${mult}` : `+${gained}`;
@@ -427,8 +467,13 @@ export function showGameScreen(
             const gained = 50 * mult;
             expressionScore += gained;
             pressureClears++;
-            playClearSound();
+            playClearSound(combo);
             showComboGain(gained, mult);
+            // 倍率が最大に達した状態でコンボを継続すると、1コンボごとにボーナスタイムが伸びる
+            if (mult === MAX_MULT) {
+                timeLeft += MAX_COMBO_BONUS_SEC;
+                updateTimeDisplay();
+            }
         } else {
             combo = 0;
         }
@@ -457,13 +502,22 @@ export function showGameScreen(
         updateTypingDisplay();
     }
 
+    // タイマー表示の更新。timeLeft は最大コンボのボーナスで小数になりうるので表示前に切り捨てる
+    function updateTimeDisplay() {
+        const shown = Math.max(0, Math.floor(timeLeft));
+        const m = Math.floor(shown / 60);
+        const s = shown % 60;
+        timerEl.textContent = `${m}:${s.toString().padStart(2, '0')}`;
+        timerEl.style.color = timeLeft <= 30 ? '#dc2626' : '#0891b2';
+    }
+
     function updateTimer() {
         timeLeft--;
-        const m = Math.floor(timeLeft / 60);
-        const s = timeLeft % 60;
-        timerEl.textContent = `${m}:${s.toString().padStart(2, '0')}`;
+
+        updateTimeDisplay();
         if (timeLeft <= 30) timerEl.style.color = '#dc2626';
         updateTimeGauge();
+      
         if (timeLeft <= 0) {
             clearInterval(timerInterval);
             cleanup();
