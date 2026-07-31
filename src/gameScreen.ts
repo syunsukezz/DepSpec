@@ -1,7 +1,6 @@
 import { keygraph } from './keygraph.js';
 import {
     generatePhrase,
-    assignWordTargets,
     type PhraseData,
     INSTRUCTION_LABEL,
     normalizeN,
@@ -438,12 +437,12 @@ export function showGameScreen(
         refreshScore();
     }
 
-    // フレーズを keygraph に構築し、アナログ時は単語(フレーズ)全体の語感から強/弱を1つ決めて
-    // 代表綴りの全キー位置に敷く（マークは単語の文字全ての上に表示される）。
+    // フレーズを keygraph に構築する。打鍵圧指定(phrase.targets)は sentences.ts に
+    // 事前計算済みのものが generatePhrase 経由で既に入っている。通常モードはマーク非表示にする。
     function buildCurrentPhrase() {
         const phrase = queue[0];
         keygraph.build(phrase.text);
-        phrase.targets = isAnalog ? assignWordTargets(phrase.text, keygraph.key_candidate().length) : {};
+        if (!isAnalog) phrase.targets = {};
     }
 
     function completePhrase() {
