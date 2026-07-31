@@ -1,12 +1,10 @@
-import { INSTRUCTION_LABEL, normalizeN, pressureLevel } from './phrases';
+import { INSTRUCTION_LABEL, normalizeN, pressureLevel, LEVEL_LOW, LEVEL_HIGH } from './phrases';
 import { playFormant } from './audio';
 import type { GameMode } from './gameScreen';
 import { createStage } from './stage';
 import { createPressureMeter } from './pressureMeter';
-
-// 正規化値の3等分境界 (phrases.ts の pressureLevel と同じ)
-const LEVEL_LOW  = 1 / 3; // これ未満 → 弱い
-const LEVEL_HIGH = 2 / 3; // これ以上 → 強い
+import { drawFace } from './faceDraw';
+import { FONT_DISPLAY, PRESS_WEAK, PRESS_STRONG } from './theme';
 
 export interface TutorialOptions {
     mode: GameMode;
@@ -31,7 +29,7 @@ export function showTutorialScreen(app: HTMLDivElement, options: TutorialOptions
     const { stage, dispose: disposeStage } = createStage(app, {
         display: 'flex',
         flexDirection: 'column',
-        fontFamily: "'Audiowide', sans-serif",
+        fontFamily: FONT_DISPLAY,
     }, { fit: true, designW: 1000, designH: 720 });
 
     const style = document.createElement('style');
@@ -67,7 +65,7 @@ export function showTutorialScreen(app: HTMLDivElement, options: TutorialOptions
     skipBtn.className = 'tut-skip-btn';
     Object.assign(skipBtn.style, {
         background: 'transparent', border: 'none', color: '#94a3b8',
-        fontFamily: "'Audiowide', sans-serif", fontSize: '0.85rem',
+        fontFamily: FONT_DISPLAY, fontSize: '0.85rem',
         cursor: 'pointer', transition: 'color 0.2s',
     });
     skipBtn.addEventListener('click', () => { cleanup(); onSkip(); });
@@ -184,7 +182,7 @@ export function showTutorialScreen(app: HTMLDivElement, options: TutorialOptions
         const fill = document.createElement('div');
         Object.assign(fill.style, {
             height: '100%', width: '0%', borderRadius: '9px',
-            background: 'linear-gradient(90deg, #3b82f6, #ef4444)',
+            background: `linear-gradient(90deg, ${PRESS_WEAK}, ${PRESS_STRONG})`,
             transition: 'width 0.08s ease-out',
         });
         outer.appendChild(fill);
@@ -205,27 +203,9 @@ export function showTutorialScreen(app: HTMLDivElement, options: TutorialOptions
         container.appendChild(el);
     }
 
-    // 顔描画（tutorialScreen 内）
+    /** tutorialScreen 用の小さめ横顔（本編と同じ描画ロジックを faceDraw.ts で共有） */
     function drawFaceMini(canvas: HTMLCanvasElement, newtonValue: number, color = '#0891b2'): void {
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-        const W = canvas.width, H = canvas.height;
-        ctx.clearRect(0, 0, W, H);
-        const t = normalizeN(newtonValue);
-        const gapRad = ((360 - (350 - t * 50)) / 2) * (Math.PI / 180);
-        const cx = W / 2, cy = H / 2;
-        const r = Math.min(W, H) * 0.38;
-        ctx.beginPath();
-        ctx.arc(cx, cy, r, gapRad, 2 * Math.PI - gapRad, false);
-        ctx.strokeStyle = color; ctx.lineWidth = 4; ctx.lineCap = 'round'; ctx.stroke();
-        const p1x = cx + r * Math.cos(gapRad), p1y = cy + r * Math.sin(gapRad);
-        const p2x = cx + r * Math.cos(-gapRad), p2y = cy + r * Math.sin(-gapRad);
-        ctx.beginPath();
-        ctx.moveTo(p1x, p1y); ctx.lineTo(cx, cy); ctx.lineTo(p2x, p2y);
-        ctx.strokeStyle = color; ctx.lineWidth = 4; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.stroke();
-        ctx.beginPath();
-        ctx.arc(cx + r * 0.28, cy - r * 0.32, r * 0.08, 0, 2 * Math.PI);
-        ctx.fillStyle = color; ctx.fill();
+        drawFace(canvas, newtonValue, { color, lineWidth: 4, eyeRadiusRatio: 0.08 });
     }
 
     // ── Step 1: 強く ───────────────────────────────────────────

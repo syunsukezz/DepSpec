@@ -1,5 +1,6 @@
 import type { Level } from './sentences';
 import { createStage } from './stage';
+import { FONT_DISPLAY } from './theme';
 
 export interface LevelSelectOptions {
     /** レベルを選んでゲームへ */
@@ -32,7 +33,7 @@ export function showLevelSelectScreen(app: HTMLDivElement, options: LevelSelectO
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        fontFamily: "'Audiowide', sans-serif",
+        fontFamily: FONT_DISPLAY,
         gap: '2rem',
     }, { fit: true, designW: 900, designH: 680 });
 
@@ -145,7 +146,7 @@ export function showLevelSelectScreen(app: HTMLDivElement, options: LevelSelectO
         background: 'transparent',
         border: 'none',
         color: '#94a3b8',
-        fontFamily: "'Audiowide', sans-serif",
+        fontFamily: FONT_DISPLAY,
         fontSize: '0.85rem',
         cursor: 'pointer',
     });

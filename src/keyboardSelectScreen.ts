@@ -1,5 +1,6 @@
 import type { GameMode } from './gameScreen';
 import { createStage } from './stage';
+import { FONT_DISPLAY } from './theme';
 
 export interface KeyboardSelectOptions {
     /** アナログ接続（既に許可済みなのでリッスン開始のみ・冪等） */
@@ -39,7 +40,7 @@ export function showKeyboardSelectScreen(app: HTMLDivElement, options: KeyboardS
         justifyContent: 'center',
         gap: '0.8rem',
         cursor: 'pointer',
-        fontFamily: "'Audiowide', sans-serif",
+        fontFamily: FONT_DISPLAY,
         textAlign: 'center',
         padding: '0 1.5rem',
         transition: 'color 0.25s ease, transform 0.25s ease',
@@ -87,7 +88,7 @@ export function showKeyboardSelectScreen(app: HTMLDivElement, options: KeyboardS
         fontSize: '1.6rem',
         letterSpacing: '0.15em',
         margin: '0',
-        fontFamily: "'Audiowide', sans-serif",
+        fontFamily: FONT_DISPLAY,
         pointerEvents: 'none',
         transition: 'color 0.25s ease',
     });
@@ -117,7 +118,7 @@ export function showKeyboardSelectScreen(app: HTMLDivElement, options: KeyboardS
         left: '1.5rem',
         background: 'transparent',
         border: 'none',
-        fontFamily: "'Audiowide', sans-serif",
+        fontFamily: FONT_DISPLAY,
         fontSize: '0.85rem',
         cursor: 'pointer',
         transition: 'color 0.25s ease',

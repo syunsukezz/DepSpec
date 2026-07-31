@@ -3,16 +3,8 @@
 // 弱/普通/強の3段階で色が変わり、境界(1/3・2/3)に目盛り線を引く。
 // ゲーム・チュートリアル共通で使う。
 
-type PressureLevel = 'weak' | 'normal' | 'strong';
-
-const LEVEL_COLOR: Record<PressureLevel, string> = {
-    strong: '#ef4444', // 赤
-    normal: '#22c55e', // 緑
-    weak:   '#3b82f6', // 青
-};
-
-const LEVEL_LOW = 1 / 3;
-const LEVEL_HIGH = 2 / 3;
+import { LEVEL_LOW, LEVEL_HIGH, type PressureLevel } from './phrases';
+import { PRESS_LEVEL_COLOR, FONT_DISPLAY } from './theme';
 
 export interface PressureMeter {
     /** 押下量(0〜1の生値。AnalogsenseHandler で取れる値をそのまま)を反映する */
@@ -51,7 +43,7 @@ export function createPressureMeter(): PressureMeter {
     const caption = document.createElement('div');
     caption.textContent = '押下量';
     caption.style.cssText =
-        "font-size:0.7rem; letter-spacing:0.15em; color:#94a3b8; font-family:'Audiowide',sans-serif;";
+        `font-size:0.7rem; letter-spacing:0.15em; color:#94a3b8; font-family:${FONT_DISPLAY};`;
 
     // 縦トラック
     const track = document.createElement('div');
@@ -73,7 +65,7 @@ export function createPressureMeter(): PressureMeter {
         right: '0',
         bottom: '0',
         height: '0%',
-        background: LEVEL_COLOR.weak,
+        background: PRESS_LEVEL_COLOR.weak,
         borderRadius: '15px',
         transition: 'height 0.06s linear, background 0.12s ease',
     });
@@ -97,7 +89,7 @@ export function createPressureMeter(): PressureMeter {
     const readout = document.createElement('div');
     readout.textContent = '0%';
     readout.style.cssText =
-        "font-size:0.85rem; color:#64748b; font-family:'Audiowide',sans-serif; min-width:3em; text-align:center;";
+        `font-size:0.85rem; color:#64748b; font-family:${FONT_DISPLAY}; min-width:3em; text-align:center;`;
 
     wrap.appendChild(caption);
     wrap.appendChild(track);
@@ -108,7 +100,7 @@ export function createPressureMeter(): PressureMeter {
         update(pressure: number): void {
             const t = Math.min(1, Math.max(0, pressure));
             fill.style.height = `${t * 100}%`;
-            fill.style.background = LEVEL_COLOR[levelOf(t)];
+            fill.style.background = PRESS_LEVEL_COLOR[levelOf(t)];
             readout.textContent = `${Math.round(t * 100)}%`;
         },
         dispose(): void {

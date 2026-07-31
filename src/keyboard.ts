@@ -1,3 +1,5 @@
+import { FONT_DISPLAY, PRESS_WEAK, PRESS_NORMAL, PRESS_STRONG } from './theme';
+
 interface Key
 {
     code: string;
@@ -87,10 +89,6 @@ const KEY_BORDER = '#e2e8f0';    // スレート境界線
 const KEY_EDGE = '#cbd5e1';      // キーキャップ下端の陰
 const KEY_TEXT = '#64748b';      // キー文字（スレート）
 const BOARD_BG = '#f8fafc';      // 盤面パネル
-// 押下量の弱/普通/強（pressureMeter と同じ 青→緑→赤）
-const PRESS_WEAK = '#3b82f6';
-const PRESS_NORMAL = '#22c55e';
-const PRESS_STRONG = '#ef4444';
 
 /** 押下量(0〜1)を pressureMeter と同じ 3 段階の色に対応させる */
 function pressColor(value: number): string {
@@ -114,7 +112,7 @@ function keyboard(element: HTMLElement, layout: Key[][]): (code: string, value: 
     element.style.borderRadius = '14px';
     element.style.backgroundColor = BOARD_BG;
     element.style.boxShadow = '0 6px 20px rgba(15, 23, 42, 0.08)';
-    element.style.fontFamily = "'Audiowide', sans-serif";
+    element.style.fontFamily = FONT_DISPLAY;
     element.style.fontSize = '14px';
     element.style.color = KEY_TEXT;
     element.style.width = 'fit-content';
@@ -151,8 +149,6 @@ function keyboard(element: HTMLElement, layout: Key[][]): (code: string, value: 
             keyElement.style.transition = 'background-color 0.12s ease, color 0.12s ease, transform 0.06s ease';
 
             rowElement.appendChild(keyElement);
-        
-            
         }
     }
     return function updateKeyValue(code: string, value: number): void

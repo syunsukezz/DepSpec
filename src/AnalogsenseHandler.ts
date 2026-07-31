@@ -6,9 +6,7 @@ interface AnalogSenseInput {
     timestamp: number;
 }
 
-let AnalogsenseCallback: (inputs: AnalogSenseInput[]) => void = (inputs: AnalogSenseInput[]) => {
-    console.log("Received inputs:", inputs);
-};
+let AnalogsenseCallback: (inputs: AnalogSenseInput[]) => void = () => {};
 
 function SetAnalogsenseCallback(callback: (inputs: AnalogSenseInput[]) => void) {
     AnalogsenseCallback = callback;
