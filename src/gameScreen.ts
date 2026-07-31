@@ -20,9 +20,6 @@ const GAME_DURATION_SEC = 60;
 // 基本点: フレーズ完了ではなく打鍵ごとに一致(正解)を積算する（未完のフレーズの努力も点数に反映されるように）
 const KEY_POINTS = 10;
 
-// 残り問題数ゲージの目安総数（時間切れが本来の終了条件のため、これに達しても継続する）
-const TOTAL_PHRASES = 20;
-
 // analog: アナログキーボード（打鍵圧あり・強弱判定あり）
 // normal: 通常キーボード（打鍵圧なし・速度と正確性だけのベースライン）
 export type GameMode = 'analog' | 'normal';
@@ -124,24 +121,24 @@ export function showGameScreen(
     header.appendChild(comboBadge);
     header.appendChild(scoreEl);
 
-    // ── 進捗ゲージ (残り問題数の目安) ───────────────────
-    const progressWrap = document.createElement('div');
-    Object.assign(progressWrap.style, {
+    // ── 進捗ゲージ (残り時間) ───────────────────────────
+    const timeGaugeWrap = document.createElement('div');
+    Object.assign(timeGaugeWrap.style, {
         display: 'flex',
         alignItems: 'center',
         gap: '0.6rem',
         padding: '0.4rem 2rem',
         borderBottom: '1px solid #e2e8f0',
     });
-    const progressLabel = document.createElement('div');
-    progressLabel.style.cssText = `font-size:0.75rem; color:#94a3b8; font-family:${FONT_DISPLAY}; white-space:nowrap;`;
-    const progressTrack = document.createElement('div');
-    progressTrack.style.cssText = 'flex:1; height:8px; background:#e2e8f0; border-radius:4px; overflow:hidden;';
-    const progressFill = document.createElement('div');
-    progressFill.style.cssText = 'height:100%; width:0%; background:#0891b2; border-radius:4px; transition:width 0.3s ease;';
-    progressTrack.appendChild(progressFill);
-    progressWrap.appendChild(progressLabel);
-    progressWrap.appendChild(progressTrack);
+    const timeGaugeLabel = document.createElement('div');
+    timeGaugeLabel.style.cssText = `font-size:0.75rem; color:#94a3b8; font-family:${FONT_DISPLAY}; white-space:nowrap;`;
+    const timeGaugeTrack = document.createElement('div');
+    timeGaugeTrack.style.cssText = 'flex:1; height:8px; background:#e2e8f0; border-radius:4px; overflow:hidden;';
+    const timeGaugeFill = document.createElement('div');
+    timeGaugeFill.style.cssText = 'height:100%; width:100%; background:#0891b2; border-radius:4px; transition:width 1s linear, background 0.2s ease;';
+    timeGaugeTrack.appendChild(timeGaugeFill);
+    timeGaugeWrap.appendChild(timeGaugeLabel);
+    timeGaugeWrap.appendChild(timeGaugeTrack);
 
     // ── ボトムエリア (横顔 + タイピング表示) ───────────
     const bottomEl = document.createElement('div');
@@ -227,7 +224,7 @@ export function showGameScreen(
     const updateKey = keyboard(keyboardEl, wooting60heplus);
 
     stage.appendChild(header);
-    stage.appendChild(progressWrap);
+    stage.appendChild(timeGaugeWrap);
     stage.appendChild(bottomEl);
     stage.appendChild(keyboardWrapper);
 
@@ -240,12 +237,14 @@ export function showGameScreen(
         scoreEl.textContent = `${getScore()} pt`;
     }
 
-    // 残り問題数ゲージの更新。TOTAL_PHRASES はあくまで目安で、超えても時間切れまで続行する
-    function updateProgress() {
-        const remaining = Math.max(0, TOTAL_PHRASES - phrasesCompleted);
-        const ratio = Math.min(1, phrasesCompleted / TOTAL_PHRASES);
-        progressFill.style.width = `${ratio * 100}%`;
-        progressLabel.textContent = `のこり ${remaining} 問`;
+    // 残り時間ゲージの更新
+    function updateTimeGauge() {
+        const ratio = Math.max(0, timeLeft / GAME_DURATION_SEC);
+        timeGaugeFill.style.width = `${ratio * 100}%`;
+        timeGaugeFill.style.background = timeLeft <= 30 ? '#dc2626' : '#0891b2';
+        const m = Math.floor(Math.max(0, timeLeft) / 60);
+        const s = Math.max(0, timeLeft) % 60;
+        timeGaugeLabel.textContent = `のこり ${m}:${s.toString().padStart(2, '0')}`;
     }
 
     function updateComboBadge() {
@@ -450,7 +449,6 @@ export function showGameScreen(
         totalTargets += Object.keys(phrase.targets).length;
         phrasesCompleted++;
         refreshScore();
-        updateProgress();
 
         queue.shift();
         queue.push(generatePhrase(level));
@@ -465,6 +463,7 @@ export function showGameScreen(
         const s = timeLeft % 60;
         timerEl.textContent = `${m}:${s.toString().padStart(2, '0')}`;
         if (timeLeft <= 30) timerEl.style.color = '#dc2626';
+        updateTimeGauge();
         if (timeLeft <= 0) {
             clearInterval(timerInterval);
             cleanup();
@@ -570,6 +569,6 @@ export function showGameScreen(
 
     // ── 初期描画 ──────────────────────────────────────
     updateTypingDisplay();
-    updateProgress();
+    updateTimeGauge();
     timerInterval = setInterval(updateTimer, 1000);
 }
