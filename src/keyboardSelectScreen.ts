@@ -47,19 +47,24 @@ export function showKeyboardSelectScreen(app: HTMLDivElement, options: KeyboardS
         userSelect: 'none',
     };
 
+    // 見出し・キャプションの文字サイズは画面横幅に追従させる（fill モードは transform で
+    // 拡縮しないため、clamp(min, vw, max) で自前のフルードタイポグラフィにする）
+    const TITLE_SIZE = 'clamp(1.1rem, 4vw, 2.2rem)';
+    const CAPTION_SIZE = 'clamp(0.7rem, 1.6vw, 1rem)';
+
     // 左：アナログ
     const leftHalf = document.createElement('div');
     Object.assign(leftHalf.style, halfBase);
     leftHalf.innerHTML =
-        '<div style="font-size:2rem; letter-spacing:0.12em;">▲ アナログキーボード</div>' +
-        '<div style="font-size:0.95rem; opacity:0.75; font-family:system-ui,sans-serif;">打鍵圧で強弱・音・可視化あり</div>';
+        `<div style="font-size:${TITLE_SIZE}; letter-spacing:0.12em;">▲ アナログキーボード</div>` +
+        `<div style="font-size:${CAPTION_SIZE}; opacity:0.75; font-family:system-ui,sans-serif;">打鍵圧で強弱・音・可視化あり</div>`;
 
     // 右：通常
     const rightHalf = document.createElement('div');
     Object.assign(rightHalf.style, halfBase);
     rightHalf.innerHTML =
-        '<div style="font-size:2rem; letter-spacing:0.12em;">通常キーボード</div>' +
-        '<div style="font-size:0.95rem; opacity:0.75; font-family:system-ui,sans-serif;">速度と正確性のタイピング</div>';
+        `<div style="font-size:${TITLE_SIZE}; letter-spacing:0.12em;">通常キーボード</div>` +
+        `<div style="font-size:${CAPTION_SIZE}; opacity:0.75; font-family:system-ui,sans-serif;">速度と正確性のタイピング</div>`;
 
     // 中央の仕切り線
     const divider = document.createElement('div');
@@ -85,7 +90,7 @@ export function showKeyboardSelectScreen(app: HTMLDivElement, options: KeyboardS
         left: '0',
         right: '0',
         textAlign: 'center',
-        fontSize: '1.6rem',
+        fontSize: 'clamp(1.1rem, 3vw, 1.8rem)',
         letterSpacing: '0.15em',
         margin: '0',
         fontFamily: FONT_DISPLAY,
@@ -101,7 +106,7 @@ export function showKeyboardSelectScreen(app: HTMLDivElement, options: KeyboardS
         left: '0',
         right: '0',
         textAlign: 'center',
-        fontSize: '0.85rem',
+        fontSize: 'clamp(0.65rem, 1.4vw, 0.95rem)',
         minHeight: '1.2em',
         margin: '0',
         fontFamily: 'system-ui, sans-serif',
@@ -119,7 +124,7 @@ export function showKeyboardSelectScreen(app: HTMLDivElement, options: KeyboardS
         background: 'transparent',
         border: 'none',
         fontFamily: FONT_DISPLAY,
-        fontSize: '0.85rem',
+        fontSize: 'clamp(0.65rem, 1.3vw, 0.9rem)',
         cursor: 'pointer',
         transition: 'color 0.25s ease',
         zIndex: '2',

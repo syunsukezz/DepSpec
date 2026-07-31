@@ -35,7 +35,7 @@ export function showLevelSelectScreen(app: HTMLDivElement, options: LevelSelectO
         justifyContent: 'center',
         fontFamily: FONT_DISPLAY,
         gap: '2rem',
-    }, { fit: true, designW: 900, designH: 680 });
+    }, { fit: true, designW: 900, designH: 520 });
 
     const style = document.createElement('style');
     style.textContent = `

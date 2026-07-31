@@ -30,7 +30,7 @@ export function showTutorialScreen(app: HTMLDivElement, options: TutorialOptions
         display: 'flex',
         flexDirection: 'column',
         fontFamily: FONT_DISPLAY,
-    }, { fit: true, designW: 1000, designH: 720 });
+    }, { fit: true, designW: 1000, designH: 580 });
 
     const style = document.createElement('style');
     style.textContent = `

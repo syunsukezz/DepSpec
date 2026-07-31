@@ -125,7 +125,7 @@ export function showResultScreen(
         fontFamily: FONT_DISPLAY,
         gap: '1.6rem',
         position: 'relative',
-    }, { fit: true, designW: 1000, designH: 840 });
+    }, { fit: true, designW: 1000, designH: 660 });
 
     // タイトル
     const heading = document.createElement('h2');
