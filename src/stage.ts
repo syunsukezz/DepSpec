@@ -10,7 +10,7 @@
 // クリップして崩れさせるのではなくスクロールできるようにする。
 // 極端な横長ウィンドウで文字が際限なく巨大化/微小化しないよう、スケールの上下限は設ける。
 const MIN_FIT_SCALE = 0.35;
-const MAX_FIT_SCALE = 1.75;
+const MAX_FIT_SCALE = 2.5;
 
 export interface Stage {
     stage: HTMLDivElement;
