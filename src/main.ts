@@ -112,3 +112,13 @@ startAnalogDeviceMonitor(() => {
 // 初回はワイプ無しで直接描画（以降の画面切り替えは goTo* がワイプを挟む）
 armAutoplayUnlock(); // 自動再生がブロックされても最初の操作でBGMを再生
 renderStart();
+
+// ── テスト用: アナログキーボードエミュレータ(開発ビルドのみ) ──────────────
+// 実機のアナログキーボードやWebHIDの許可ダイアログを使わずに打鍵圧をテストできる
+// よう、devtools コンソールや自動化スクリプトから `installAnalogKeyboardEmulator()`
+// を呼べるようにする。本番ビルドには含まれない。
+if (import.meta.env.DEV) {
+    import("./analogKeyboardEmulator").then(({ installAnalogKeyboardEmulator }) => {
+        (window as unknown as { installAnalogKeyboardEmulator: typeof installAnalogKeyboardEmulator }).installAnalogKeyboardEmulator = installAnalogKeyboardEmulator;
+    });
+}
