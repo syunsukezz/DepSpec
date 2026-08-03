@@ -56,6 +56,27 @@ npm run preview  # ビルド結果をローカルでプレビュー
 | `stage.ts` / `transition.ts` / `rippleEffect.ts` | 画面レイアウトの土台・画面遷移演出・エフェクト |
 | `audio.ts` / `bgm.ts` | 打鍵圧フォルマント合成音 / BGM・効果音の再生管理 |
 
+## テスト用: アナログキーボードエミュレータ
+
+実機のアナログキーボードや WebHID の許可ダイアログがなくても打鍵圧をシミュレートできるよう、
+[`src/analogKeyboardEmulator.ts`](src/analogKeyboardEmulator.ts) に `window.analogsense` の
+テスト用差し替え実装を用意しています（開発ビルドのみ・本番ビルドには含まれません）。
+
+```bash
+npm run dev  # 開発サーバーを起動
+```
+
+devtools コンソールや自動化スクリプトから次のように呼び出します。
+
+```js
+const { emulator } = installAnalogKeyboardEmulator();
+await emulator.pressAndRelease("A");                          // 標準的な速さで底打ち
+await emulator.pressAndRelease("A", { targetNewton: 1.2 });   // 特定の打鍵圧を再現
+```
+
+`autoRampOnKeyEvents`（既定 true）により、通常のキー入力（自動化ツールが送るキー入力も含む）を
+そのままアナログ入力として扱うこともできます。
+
 ## 補足
 
 - `plan.md` は初期の実装仕様メモです。実装が先行して更新されていない箇所があるため、現状の挙動と食い違う場合は本 README とソースコードを優先してください。

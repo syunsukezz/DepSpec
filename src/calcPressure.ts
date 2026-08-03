@@ -12,6 +12,7 @@ let PressureCallback: (code: string, value: number) => void = () => {};
 const stroke_mm = 4; // キーのストローク距離（ミリメートル）
 const ReleaseThreshold = 0.2; // キーが戻ったとみなす値の閾値
 const fallbackNewton = 0.81; // 開始を取り逃した高速打鍵の既定値（速度0相当＝ v*係数+0.81 の切片）
+const SpeedToNewtonSlope = 0.529136; // 速度(m/s)→Newton相当値の変換係数
 
 function CaliculatePressure(code: string, value: number)
 {
@@ -43,7 +44,7 @@ function CaliculatePressure(code: string, value: number)
     const ms = performance.now() - startTime;
     // 開始位置(StartKeyValues)からボトム(=1)までの距離 / 経過時間
     const v = (stroke_mm - StartKeyValues.get(code)! * stroke_mm) / ms; // 平均速度（mm/ms = m/s）
-    PressureCallback(code, v*0.529136+0.81);
+    PressureCallback(code, v*SpeedToNewtonSlope+fallbackNewton);
     PressedKeys.add(code);
     return;
   }
@@ -59,4 +60,11 @@ function SetPressureCallback(callback: (code: string, value: number) => void) {
   PressureCallback = callback;
 }
 
-export { CaliculatePressure, SetPressureCallback };
+export {
+  CaliculatePressure,
+  SetPressureCallback,
+  stroke_mm,
+  ReleaseThreshold,
+  fallbackNewton,
+  SpeedToNewtonSlope,
+};
