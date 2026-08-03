@@ -12,8 +12,10 @@ import { keyboard, wooting60heplus } from './keyboard';
 import { createStage } from './stage';
 import { flashRedScreen } from './rippleEffect';
 import { createPressureMeter, type PressureMeter } from './pressureMeter';
+import { createPressureGraph, type PressureGraph } from './pressureGraph';
+import { shakeScreen } from './screenShake';
 import { drawFace } from './faceDraw';
-import { FONT_DISPLAY } from './theme';
+import { FONT_DISPLAY, PRESS_LEVEL_COLOR } from './theme';
 
 const GAME_DURATION_SEC = 60;
 
@@ -79,10 +81,12 @@ export function showGameScreen(
     // 設計サイズ固定のステージ。中身はここに載せ、ウィンドウに合わせて拡縮する
     // 割合を一定に保つため等倍スケール（fit）
     // 行: ヘッダー / 進捗ゲージ / タイピング表示(可変) / キーボード(固定)
+    const STAGE_W = 1060;
+    const STAGE_H = 650;
     const { stage, dispose: disposeStage } = createStage(app, {
         display: 'grid',
         gridTemplateRows: 'auto auto 1fr 200px',
-    }, { fit: true, designW: 1060, designH: 650 });
+    }, { fit: true, designW: STAGE_W, designH: STAGE_H });
 
     // ── 状態 ──────────────────────────────────────────
     let queue: PhraseData[] = [];
@@ -241,6 +245,13 @@ export function showGameScreen(
 
     keyboardWrapper.appendChild(keyboardEl);
     const updateKey = keyboard(keyboardEl, wooting60heplus);
+
+    // 打鍵圧のライブグラフ（折れ線、ステージ背景に薄く重ねる。アナログモードのみ）
+    let pressureGraph: PressureGraph | null = null;
+    if (isAnalog) {
+        pressureGraph = createPressureGraph(PRESS_LEVEL_COLOR.strong, STAGE_W, STAGE_H);
+        stage.appendChild(pressureGraph.element);
+    }
 
     stage.appendChild(header);
     stage.appendChild(timeGaugeWrap);
@@ -410,6 +421,40 @@ export function showGameScreen(
         pop.textContent = ch;
         effectLayer.appendChild(pop);
         pop.addEventListener('animationend', () => pop.remove());
+    }
+
+    // 打鍵圧(正規化値0〜1)に応じた擬音。境界値は「これ以下」で判定し、それを超えたら次の擬音になる
+    function onomatopoeiaFor(t: number): string {
+        if (t <= 0.1) return 'スッ';
+        if (t <= 0.3) return 'コト';
+        if (t <= 0.5) return 'カタ';
+        if (t <= 0.7) return 'ガタ!!!';
+        return 'ド!!!!!';
+    }
+
+    // アナログモードの打鍵圧フィードバック: 従来の3分割(弱/普通/強)で色分けした擬音をポップさせる
+    function triggerPressureBurst(pressure: number) {
+        const t = normalizeN(pressure);
+        const color = PRESS_LEVEL_COLOR[pressureLevel(pressure)];
+
+        const burst = document.createElement('div');
+        Object.assign(burst.style, {
+            position: 'absolute',
+            left: '50%',
+            bottom: '3.5rem',
+            transform: 'translateX(-50%)',
+            fontSize: `${1.6 + t * 2.2}rem`,
+            color,
+            fontFamily: FONT_DISPLAY,
+            fontWeight: 'bold',
+            textShadow: `0 0 12px ${color}`,
+            animation: `kw-char-pop ${0.4 + t * 0.2}s ease-out forwards`,
+            pointerEvents: 'none',
+            whiteSpace: 'nowrap',
+        });
+        burst.textContent = onomatopoeiaFor(t);
+        effectLayer.appendChild(burst);
+        burst.addEventListener('animationend', () => burst.remove());
     }
 
     function flashMiss() {
@@ -599,15 +644,19 @@ export function showGameScreen(
                 updateKey(code, 0);
             }, 300);
             playFormant(value);
+            // 打鍵圧の強さに応じた画面揺れ・擬音エフェクト
+            shakeScreen(app, normalizeN(value));
+            triggerPressureBurst(value);
             // このコールバック＝底打ち検出。入力と検圧をここで同時に確定する。
             // code は "A" "Q" のような大文字1文字。keygraph は小文字1文字を期待。
             const key = code.toLowerCase();
             if (key.length === 1) processInput(key, value);
         });
 
-        // ── アナログ生値（押下量 0〜1）→ ライブメーター ──────
+        // ── アナログ生値（押下量 0〜1）→ ライブメーター・ライブグラフ ──────
         setRawListener((_code: string, value: number) => {
             pressureMeter?.update(value);
+            pressureGraph?.push(value);
         });
     }
 
@@ -616,6 +665,7 @@ export function showGameScreen(
         document.removeEventListener('keydown', keydownHandler);
         document.removeEventListener('contextmenu', contextMenuHandler);
         pressureMeter?.dispose();
+        pressureGraph?.dispose();
         disposeStage();
         clearPressureListener();
         clearRawListener();
