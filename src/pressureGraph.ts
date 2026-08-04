@@ -7,6 +7,7 @@
 import { normalizeN } from './phrases';
 
 const WINDOW_MS = 6000; // 表示する時間幅(ミリ秒)。この幅を過ぎたサンプルは左に流れて消える
+const DECAY_MS = 150; // 打鍵の瞬間だけ値を立ち上げ、この時間で基線(0)まで減衰させる
 const GRAPH_OPACITY = 0.1;
 const LINE_WIDTH = 4;
 
@@ -58,14 +59,29 @@ export function createPressureGraph(
                 const xOf = (t: number) => width - ((now - t) / WINDOW_MS) * width;
                 const yOf = (v: number) => height - normalizeN(v) * height;
 
+                // 打鍵の瞬間にだけ値を立ち上げ、DECAY_MS で基線(0)まで下ろす。
+                // 直前の値をずっと保持しないよう、打鍵の合間は常に基線(0)に戻す。
+                const windowStart = now - WINDOW_MS;
                 ctx.beginPath();
-                ctx.moveTo(xOf(samples[0].t), yOf(samples[0].v));
-                for (let i = 1; i < samples.length; i++) {
-                    ctx.lineTo(xOf(samples[i].t), yOf(samples[i].v));
+                ctx.moveTo(xOf(windowStart), yOf(0));
+                let lastT = windowStart;
+                for (const s of samples) {
+                    if (s.t > lastT) ctx.lineTo(xOf(s.t), yOf(0)); // 次の打鍵まで基線を維持
+                    ctx.lineTo(xOf(s.t), yOf(s.v)); // 打鍵の瞬間に立ち上がる
+
+                    const decayEndT = s.t + DECAY_MS;
+                    if (decayEndT <= now) {
+                        ctx.lineTo(xOf(decayEndT), yOf(0)); // 減衰完了、基線へ
+                        lastT = decayEndT;
+                    } else {
+                        // 減衰中: 現在時刻での補間値まで描いて今回のフレームは終了
+                        const frac = (now - s.t) / DECAY_MS;
+                        ctx.lineTo(xOf(now), yOf(s.v * (1 - frac)));
+                        lastT = now;
+                    }
                 }
-                // 直近値を現在時刻まで延長し、打鍵がない間も線が右端(現在)まで届くようにする
-                const lastValue = samples[samples.length - 1].v;
-                ctx.lineTo(width, yOf(lastValue));
+                if (now > lastT) ctx.lineTo(xOf(now), yOf(0));
+
                 ctx.strokeStyle = color;
                 ctx.lineWidth = LINE_WIDTH;
                 ctx.lineJoin = 'round';
