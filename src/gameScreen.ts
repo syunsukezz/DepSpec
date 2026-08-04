@@ -432,16 +432,26 @@ export function showGameScreen(
         return 'ド!!!!!';
     }
 
+    // 擬音の表示位置をランダムにばらつかせる範囲（typingEl 基準の%とrem）
+    const BURST_LEFT_MIN = 15;
+    const BURST_LEFT_MAX = 85;
+    const BURST_BOTTOM_MIN = 2.5;
+    const BURST_BOTTOM_MAX = 5;
+
     // アナログモードの打鍵圧フィードバック: 従来の3分割(弱/普通/強)で色分けした擬音をポップさせる
     function triggerPressureBurst(pressure: number) {
         const t = normalizeN(pressure);
         const color = PRESS_LEVEL_COLOR[pressureLevel(pressure)];
 
+        // 毎回同じ場所に出ると単調で重なりやすいので、表示位置をランダムにする
+        const left = BURST_LEFT_MIN + Math.random() * (BURST_LEFT_MAX - BURST_LEFT_MIN);
+        const bottom = BURST_BOTTOM_MIN + Math.random() * (BURST_BOTTOM_MAX - BURST_BOTTOM_MIN);
+
         const burst = document.createElement('div');
         Object.assign(burst.style, {
             position: 'absolute',
-            left: '50%',
-            bottom: '3.5rem',
+            left: `${left}%`,
+            bottom: `${bottom}rem`,
             transform: 'translateX(-50%)',
             fontSize: `${1.6 + t * 2.2}rem`,
             color,
