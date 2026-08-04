@@ -37,9 +37,6 @@ const LEVELS: LevelInfo[] = [
 // 測定した打鍵圧(弱/普通/強) -> 選ぶ難易度
 const LEVEL_INDEX_BY_PRESSURE: Record<PressureLevel, number> = { weak: 0, normal: 1, strong: 2 };
 
-// 確定までの間、選ばれた難易度を見せておく時間
-const CONFIRM_DELAY_MS = 500;
-
 export function showLevelSelectScreen(app: HTMLDivElement, options: LevelSelectOptions): void {
     const { mode, setPressureListener, clearPressureListener, setRawListener, clearRawListener, onSelect, onBack } = options;
     const isAnalog = mode === 'analog';
@@ -65,8 +62,11 @@ export function showLevelSelectScreen(app: HTMLDivElement, options: LevelSelectO
             box-shadow: 0 12px 30px rgba(0,0,0,0.12);
         }
         .kw-level-card.kw-hit {
-            transform: scale(1.08);
-            box-shadow: 0 16px 36px rgba(0,0,0,0.18);
+            animation: kw-level-hit 0.3s ease-out;
+        }
+        @keyframes kw-level-hit {
+            0%   { transform: scale(1.1); box-shadow: 0 16px 36px rgba(0,0,0,0.18); }
+            100% { transform: scale(1); box-shadow: none; }
         }
     `;
     document.head.appendChild(style);
@@ -212,7 +212,7 @@ export function showLevelSelectScreen(app: HTMLDivElement, options: LevelSelectO
     // 操作ヒント
     const hint = document.createElement('p');
     hint.textContent = isAnalog
-        ? 'キーを打った強さで難易度が決まります（弱く=EASY・強く=HARD）／Space・Tab・Enter でも選べます'
+        ? 'キーを打った強さで難易度を選び、Enter で決定（弱く=EASY・強く=HARD／打ち直して選び直せます）'
         : 'Space / Tab で選択・Enter で決定';
     Object.assign(hint.style, {
         fontSize: '0.85rem',
@@ -287,10 +287,14 @@ export function showLevelSelectScreen(app: HTMLDivElement, options: LevelSelectO
 
         setPressureListener((_code: string, value: number) => {
             if (busy) return;
+            // 打鍵圧はプレビュー(フォーカス移動)のみ。確定は Enter(または既存のクリック)で行う。
+            // 何度でも打ち直して選び直せるようにする。
             const index = LEVEL_INDEX_BY_PRESSURE[pressureLevel(value)];
             applyFocus(index);
-            cards[index].classList.add('kw-hit');
-            setTimeout(() => confirmLevel(index), CONFIRM_DELAY_MS);
+            const card = cards[index];
+            card.classList.remove('kw-hit');
+            void card.offsetWidth; // アニメーションを再トリガーするための reflow
+            card.classList.add('kw-hit');
         });
     }
 
