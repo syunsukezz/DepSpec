@@ -247,8 +247,10 @@ export function showGameScreen(
     const updateKey = keyboard(keyboardEl, wooting60heplus);
 
     // 打鍵圧のライブグラフ（折れ線、ステージ背景に薄く重ねる。アナログモードのみ）
+    // position:absolute で重ねるため、基準となる stage 側を relative にしておく
     let pressureGraph: PressureGraph | null = null;
     if (isAnalog) {
+        stage.style.position = 'relative';
         pressureGraph = createPressureGraph(PRESS_LEVEL_COLOR.strong, STAGE_W, STAGE_H);
         stage.appendChild(pressureGraph.element);
     }
@@ -647,16 +649,17 @@ export function showGameScreen(
             // 打鍵圧の強さに応じた画面揺れ・擬音エフェクト
             shakeScreen(app, normalizeN(value));
             triggerPressureBurst(value);
+            // ライブグラフは calcPressure の結果(底打ち毎のNewton相当値)をそのまま渡す
+            pressureGraph?.push(value);
             // このコールバック＝底打ち検出。入力と検圧をここで同時に確定する。
             // code は "A" "Q" のような大文字1文字。keygraph は小文字1文字を期待。
             const key = code.toLowerCase();
             if (key.length === 1) processInput(key, value);
         });
 
-        // ── アナログ生値（押下量 0〜1）→ ライブメーター・ライブグラフ ──────
+        // ── アナログ生値（押下量 0〜1）→ ライブメーター ──────────────
         setRawListener((_code: string, value: number) => {
             pressureMeter?.update(value);
-            pressureGraph?.push(value);
         });
     }
 
