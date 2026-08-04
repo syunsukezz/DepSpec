@@ -6,7 +6,9 @@
 // ランタイム(phrases.ts の生成フォールバック)と、事前計算スクリプト
 // (scripts/generatePressureTargets.ts)の両方から参照する純粋関数のみを置く。
 
-export type PressureInstruction = 'strong' | 'weak';
+// 'normal'(普通)は語感ヒューリスティックからは決まらず、人が手動で指定した場合にのみ使う
+// (pressureSpec.ts の "/M" マーク)。
+export type PressureInstruction = 'strong' | 'normal' | 'weak';
 
 const DAKUON = new Set(['が','ぎ','ぐ','げ','ご','ざ','じ','ず','ぜ','ぞ','だ','ぢ','づ','で','ど','ば','び','ぶ','べ','ぼ','ゔ']);
 const HANDAKUON = new Set(['ぱ','ぴ','ぷ','ぺ','ぽ']);
