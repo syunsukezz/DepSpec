@@ -2,6 +2,7 @@ import { keygraph } from './keygraph.js';
 import {
     generatePhrase,
     type PhraseData,
+    type PressureInstruction,
     INSTRUCTION_LABEL,
     normalizeN,
     pressureLevel,
@@ -513,10 +514,11 @@ export function showGameScreen(
     }
 
     // 指定文字1つを判定してコンボ・表現点を更新
-    function judgeTarget(instruction: 'strong' | 'weak', pressure: number) {
+    function judgeTarget(instruction: PressureInstruction, pressure: number) {
         const level = pressureLevel(pressure);
         const cleared = (instruction === 'strong' && level !== 'weak')
-                     || (instruction === 'weak' && level !== 'strong');
+                     || (instruction === 'weak' && level !== 'strong')
+                     || (instruction === 'normal' && level === 'normal');
         if (cleared) {
             combo++;
             if (combo > maxCombo) maxCombo = combo;
