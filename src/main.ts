@@ -77,6 +77,11 @@ function goToTutorial(mode: GameMode): void { checkerboardTransition(() => rende
 function renderLevelSelect(mode: GameMode): void {
     playTutorialBgm();
     showLevelSelectScreen(app, {
+        mode,
+        setPressureListener: (cb) => { pressureListener = cb; },
+        clearPressureListener: () => { pressureListener = null; },
+        setRawListener: (cb) => { rawListener = cb; },
+        clearRawListener: () => { rawListener = null; },
         onSelect: (level: Level) => goToGame(mode, level),
         onBack: goToStart,
     });
