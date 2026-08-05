@@ -9,7 +9,6 @@ import {
 } from './phrases';
 import type { Level } from './sentences';
 import { playFormant } from './audio';
-import { keyboard, wooting60heplus } from './keyboard';
 import { createStage } from './stage';
 import { flashRedScreen } from './rippleEffect';
 import { createPressureMeter, type PressureMeter } from './pressureMeter';
@@ -81,12 +80,12 @@ export function showGameScreen(
 
     // 設計サイズ固定のステージ。中身はここに載せ、ウィンドウに合わせて拡縮する
     // 割合を一定に保つため等倍スケール（fit）
-    // 行: ヘッダー / 進捗ゲージ / タイピング表示(可変) / キーボード(固定)
+    // 行: ヘッダー / 進捗ゲージ / タイピング表示(可変)
     const STAGE_W = 1060;
     const STAGE_H = 650;
     const { stage, dispose: disposeStage } = createStage(app, {
         display: 'grid',
-        gridTemplateRows: 'auto auto 1fr 200px',
+        gridTemplateRows: 'auto auto 1fr',
     }, { fit: true, designW: STAGE_W, designH: STAGE_H });
 
     // ── 状態 ──────────────────────────────────────────
@@ -231,22 +230,6 @@ export function showGameScreen(
     if (isAnalog) bottomEl.appendChild(faceCanvas);
     bottomEl.appendChild(typingEl);
 
-    // ── キーボードエリア ───────────────────────────────
-    const keyboardWrapper = document.createElement('div');
-    Object.assign(keyboardWrapper.style, {
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        background: '#ffffff',
-        padding: '30px 0',
-    });
-
-    const keyboardEl = document.createElement('div');
-    keyboardEl.style.transformOrigin = 'center center';
-
-    keyboardWrapper.appendChild(keyboardEl);
-    const updateKey = keyboard(keyboardEl, wooting60heplus);
-
     // 打鍵圧のライブグラフ（折れ線、ステージ背景に薄く重ねる。アナログモードのみ）
     // position:absolute で重ねるため、基準となる stage 側を relative にしておく
     let pressureGraph: PressureGraph | null = null;
@@ -259,7 +242,6 @@ export function showGameScreen(
     stage.appendChild(header);
     stage.appendChild(timeGaugeWrap);
     stage.appendChild(bottomEl);
-    stage.appendChild(keyboardWrapper);
 
     // ── ヘルパー ──────────────────────────────────────
     function getScore() {
@@ -605,11 +587,8 @@ export function showGameScreen(
                 // 打鍵圧を強/普通/弱の四角形として左→右に積む
                 sessionPressures.push(pressure);
             } else {
-                // 通常モードはリップルで打鍵フィードバック＋keydownでキーボード点灯
+                // 通常モードはリップルで打鍵フィードバック
                 triggerEffect(key, pressure);
-                const code = key.toUpperCase();
-                updateKey(code, 1);
-                setTimeout(() => updateKey(code, 0), 300);
             }
 
             // ローマ字(キー)1打ごとに判定。指定があればリアルタイムでコンボ更新（アナログのみ）
@@ -653,10 +632,6 @@ export function showGameScreen(
         setPressureListener((code: string, value: number) => {
             lastPressureN = value;
             drawFace(faceCanvas, value, { showLabel: true });
-            updateKey(code, value);
-            setTimeout(() => {
-                updateKey(code, 0);
-            }, 300);
             playFormant(value);
             // 打鍵圧の強さに応じた画面揺れ・擬音エフェクト
             shakeScreen(app, normalizeN(value));
