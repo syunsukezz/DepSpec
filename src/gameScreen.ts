@@ -2,6 +2,7 @@ import { keygraph } from './keygraph.js';
 import {
     generatePhrase,
     INSTRUCTION_LABEL,
+    resetPhraseSequence,
     type PhraseData,
     type PressureInstruction,
     normalizeN,
@@ -113,6 +114,8 @@ export function showGameScreen(
     let timerInterval = 0;
 
     // フレーズキューを初期化 (queue[0]=現在入力中のフレーズ)
+    // 台本は場面の流れがあるため、セッション開始のたびに登録順の先頭から出題し直す
+    resetPhraseSequence(level);
     queue.push(generatePhrase(level));
     buildCurrentPhrase();
 
@@ -226,6 +229,10 @@ export function showGameScreen(
     });
     typingEl.appendChild(effectLayer);
 
+    // 漢字混じりの原文（表示専用。フレーズ単位の静的な表示で、打鍵の進捗には連動しない）
+    const sourceTextRow = document.createElement('div');
+    sourceTextRow.style.cssText = 'font-size:1rem; color:#334155; font-family:system-ui,sans-serif; line-height:1.4;';
+
     // ひらがなは参照用の小さめ表示。ローマ字をメインの大きい表示にする。
     const kanaRow = document.createElement('div');
     kanaRow.style.cssText = 'display:flex; align-items:flex-end; flex-wrap:wrap; gap:0 0.1rem; font-family:system-ui,sans-serif;';
@@ -233,6 +240,7 @@ export function showGameScreen(
     const romRow = document.createElement('div');
     romRow.style.cssText = "display:flex; align-items:flex-end; flex-wrap:wrap; font-family:'Audiowide',monospace; letter-spacing:0.03em;";
 
+    typingEl.appendChild(sourceTextRow);
     typingEl.appendChild(kanaRow);
     typingEl.appendChild(romRow);
 
@@ -301,6 +309,9 @@ export function showGameScreen(
         const romDone = keygraph.key_done();
         const romCandidate = [...keygraph.key_candidate()];
         const phrase = queue[0];
+
+        // ── 漢字混じりの原文（表示専用・フレーズ全体を静的に出すだけ）──
+        sourceTextRow.textContent = phrase.displayText;
 
         // ── ひらがな: 参照用の小さめ表示（マークなし）──
         kanaRow.innerHTML = '';

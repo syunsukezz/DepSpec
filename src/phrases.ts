@@ -21,11 +21,21 @@ export function pressureLevel(n: number): PressureLevel {
 }
 
 export interface PhraseData {
-    text: string;               // ひらがな
+    text: string;               // ひらがな(タイピング用)
+    displayText: string;        // 漢字混じり文(表示専用。タイピングには使わない)
     // ローマ字(キー)の位置(0-based) -> 強/普通/弱。sentences.ts の "かな/マーク" 表記
     // (pressureSpec.ts) をパースしたもの。マークの無い区間は targets に含まれない。
     targets: Record<number, PressureInstruction>;
     charPressures: Record<number, number>; // ひらがな完了時の打鍵圧 (index -> N)
+}
+
+// 台本には場面ごとの流れがあるため、ランダムではなく WORD_LISTS に登録された順番で
+// 出題する。レベルごとに次に出す位置を覚えておき、末尾まで行ったら先頭に戻る。
+const phraseCursor: Record<Level, number> = { Easy: 0, Normal: 0, Hard: 0 };
+
+/** レベルの出題順を先頭に戻す。新しいゲームセッションの開始時に呼ぶ想定。 */
+export function resetPhraseSequence(level: Level): void {
+    phraseCursor[level] = 0;
 }
 
 /**
@@ -34,8 +44,9 @@ export interface PhraseData {
  */
 export function generatePhrase(level: Level = 'Easy'): PhraseData {
     const pool = SENTENCES[level].phrases;
-    const seed = pool[Math.floor(Math.random() * pool.length)];
-    return { text: seed.text, targets: { ...seed.targets }, charPressures: {} };
+    const seed = pool[phraseCursor[level]];
+    phraseCursor[level] = (phraseCursor[level] + 1) % pool.length;
+    return { text: seed.text, displayText: seed.displayText, targets: { ...seed.targets }, charPressures: {} };
 }
 
 /**
