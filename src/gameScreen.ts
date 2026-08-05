@@ -3,7 +3,6 @@ import {
     generatePhrase,
     type PhraseData,
     type PressureInstruction,
-    INSTRUCTION_LABEL,
     normalizeN,
     pressureLevel,
 } from './phrases';
@@ -21,6 +20,12 @@ const GAME_DURATION_SEC = 60;
 
 // 基本点: フレーズ完了ではなく打鍵ごとに一致(正解)を積算する（未完のフレーズの努力も点数に反映されるように）
 const KEY_POINTS = 10;
+
+// 指定文字のマーク表示: 強く(strong)/弱く(weak)は区別せず同じ記号にする。
+// 文脈からプレイヤー自身が「強く打つべきか弱く打つべきか」を察するゲーム性のため、
+// 打つまでどちらが正解かは分からないようにする。普通(normal)は無印(マーク非表示)のまま。
+const MYSTERY_MARK_SYMBOL = '◆';
+const MYSTERY_MARK_COLOR = '#7c3aed';
 
 // analog: アナログキーボード（打鍵圧あり・強弱判定あり）
 // normal: 通常キーボード（打鍵圧なし・速度と正確性だけのベースライン）
@@ -339,10 +344,11 @@ export function showGameScreen(
             wrapper.style.cssText = 'display:flex; flex-direction:column; align-items:center;';
 
             const iconEl = document.createElement('span');
-            const iconLabel = instruction ? INSTRUCTION_LABEL[instruction] : null;
-            if (iconLabel) {
-                iconEl.textContent = iconLabel.symbol;
-                iconEl.style.cssText = `font-size:1.4rem; color:${iconLabel.color}; font-weight:bold; line-height:1.2;`;
+            // 強く/弱くは同じ記号で示し、どちらが正解かは打つまで分からないようにする。普通(無指定)はマーク無し。
+            const showMark = instruction === 'strong' || instruction === 'weak';
+            if (showMark) {
+                iconEl.textContent = MYSTERY_MARK_SYMBOL;
+                iconEl.style.cssText = `font-size:1.4rem; color:${MYSTERY_MARK_COLOR}; font-weight:bold; line-height:1.2;`;
             } else {
                 iconEl.innerHTML = '&nbsp;';
                 iconEl.style.cssText = 'font-size:1.4rem; line-height:1.2;';

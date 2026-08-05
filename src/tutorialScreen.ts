@@ -303,44 +303,32 @@ export function showTutorialScreen(app: HTMLDivElement, options: TutorialOptions
 
     // ── Step 3: 打鍵圧マークの説明 ─────────────────────────────
     function renderStep3() {
-        const strong = INSTRUCTION_LABEL['strong'];
-        const weak = INSTRUCTION_LABEL['weak'];
+        const MYSTERY_MARK_SYMBOL = '◆';
+        const MYSTERY_MARK_COLOR = '#7c3aed';
 
         const card = makeCard();
         const heading = document.createElement('h2');
         heading.textContent = '打鍵圧マーク';
         heading.style.cssText = 'font-size:1.8rem; color:#0891b2; letter-spacing:0.15em; margin:0;';
         card.appendChild(heading);
-        card.appendChild(makeDesc('ゲームでは文字の上にマークが付きます。指示どおりの打鍵圧で打つとボーナス点です。'));
+        card.appendChild(makeDesc('ゲームでは文字の上に◆マークが付くことがあります。強く打つべきか弱く打つべきかは表示されません。文章の意味やトーンから自分で判断して打ってください。'));
 
-        // 2種類のマークの凡例
+        // マークの凡例（強弱の区別はしない）
         const legend = document.createElement('div');
-        legend.style.cssText = 'display:flex; gap:3rem; font-family:system-ui,sans-serif;';
-        ([
-            { m: strong, desc: 'この字を強く打つ' },
-            { m: weak,   desc: 'この字を弱く打つ' },
-        ] as const).forEach(({ m, desc }) => {
-            const item = document.createElement('div');
-            item.style.cssText = 'display:flex; flex-direction:column; align-items:center; gap:0.3rem;';
-            const sym = document.createElement('div');
-            sym.textContent = m.symbol;
-            sym.style.cssText = `font-size:2.6rem; color:${m.color}; font-weight:bold; line-height:1;`;
-            const nm = document.createElement('div');
-            nm.textContent = m.name;
-            nm.style.cssText = `font-size:1.3rem; color:${m.color};`;
-            const ds = document.createElement('div');
-            ds.textContent = desc;
-            ds.style.cssText = 'font-size:0.9rem; color:#64748b;';
-            item.appendChild(sym);
-            item.appendChild(nm);
-            item.appendChild(ds);
-            legend.appendChild(item);
-        });
+        legend.style.cssText = 'display:flex; flex-direction:column; align-items:center; gap:0.3rem; font-family:system-ui,sans-serif;';
+        const sym = document.createElement('div');
+        sym.textContent = MYSTERY_MARK_SYMBOL;
+        sym.style.cssText = `font-size:2.6rem; color:${MYSTERY_MARK_COLOR}; font-weight:bold; line-height:1;`;
+        const ds = document.createElement('div');
+        ds.textContent = 'この字は強くor弱く、どちらかで打つ（正解は打つまで分からない）';
+        ds.style.cssText = 'font-size:0.9rem; color:#64748b;';
+        legend.appendChild(sym);
+        legend.appendChild(ds);
         card.appendChild(legend);
 
         // ゲームと同じ見た目のフレーズ見本（対象文字の上にマーク）
         const exampleText = 'さくらがさいた';
-        const marks: Record<number, 'strong' | 'weak'> = { 0: 'strong', 4: 'weak' };
+        const markedIndices = new Set([0, 4]);
         const exampleRow = document.createElement('div');
         exampleRow.style.cssText =
             'display:flex; align-items:flex-end; gap:0; padding:0.6rem 1.2rem;' +
@@ -349,11 +337,9 @@ export function showTutorialScreen(app: HTMLDivElement, options: TutorialOptions
             const wrap = document.createElement('div');
             wrap.style.cssText = 'display:flex; flex-direction:column; align-items:center;';
             const icon = document.createElement('span');
-            const mk = marks[i];
-            if (mk) {
-                const lbl = INSTRUCTION_LABEL[mk];
-                icon.textContent = lbl.symbol;
-                icon.style.cssText = `font-size:1.3rem; color:${lbl.color}; font-weight:bold; line-height:1.2;`;
+            if (markedIndices.has(i)) {
+                icon.textContent = MYSTERY_MARK_SYMBOL;
+                icon.style.cssText = `font-size:1.3rem; color:${MYSTERY_MARK_COLOR}; font-weight:bold; line-height:1.2;`;
             } else {
                 icon.textContent = ' ';
                 icon.style.cssText = 'font-size:1.3rem; line-height:1.2;';
@@ -367,7 +353,7 @@ export function showTutorialScreen(app: HTMLDivElement, options: TutorialOptions
         });
         card.appendChild(exampleRow);
 
-        card.appendChild(makeDesc('指定どおりに打てると +50pt。連続で決めるとコンボで倍増します。'));
+        card.appendChild(makeDesc('正解の打鍵圧で打てると +50pt。連続で決めるとコンボで倍増します。'));
 
         // 続行プロンプト（何かキーで開始）
         const prompt = document.createElement('div');
