@@ -28,13 +28,23 @@ export interface PhraseData {
     charPressures: Record<number, number>; // ひらがな完了時の打鍵圧 (index -> N)
 }
 
+// 台本には場面ごとの流れがあるため、ランダムではなく WORD_LISTS に登録された順番で
+// 出題する。レベルごとに次に出す位置を覚えておき、末尾まで行ったら先頭に戻る。
+const phraseCursor: Record<Level, number> = { Easy: 0, Normal: 0, Hard: 0 };
+
+/** レベルの出題順を先頭に戻す。新しいゲームセッションの開始時に呼ぶ想定。 */
+export function resetPhraseSequence(level: Level): void {
+    phraseCursor[level] = 0;
+}
+
 /**
  * @param level 出題するフレーズの難易度（sentences.ts の Easy/Normal/Hard）
  * targets は sentences.ts の WORD_LISTS に埋め込まれた指定をパースしたものをそのまま使う。
  */
 export function generatePhrase(level: Level = 'Easy'): PhraseData {
     const pool = SENTENCES[level].phrases;
-    const seed = pool[Math.floor(Math.random() * pool.length)];
+    const seed = pool[phraseCursor[level]];
+    phraseCursor[level] = (phraseCursor[level] + 1) % pool.length;
     return { text: seed.text, targets: { ...seed.targets }, charPressures: {} };
 }
 

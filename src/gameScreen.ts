@@ -1,6 +1,7 @@
 import { keygraph } from './keygraph.js';
 import {
     generatePhrase,
+    resetPhraseSequence,
     type PhraseData,
     type PressureInstruction,
     INSTRUCTION_LABEL,
@@ -103,6 +104,8 @@ export function showGameScreen(
     let timerInterval = 0;
 
     // フレーズキューを初期化 (queue[0]=現在入力中のフレーズ)
+    // 台本は場面の流れがあるため、セッション開始のたびに登録順の先頭から出題し直す
+    resetPhraseSequence(level);
     queue.push(generatePhrase(level));
     buildCurrentPhrase();
 
