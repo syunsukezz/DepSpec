@@ -1,10 +1,10 @@
 import { keygraph } from './keygraph.js';
 import {
     generatePhrase,
+    INSTRUCTION_LABEL,
     resetPhraseSequence,
     type PhraseData,
     type PressureInstruction,
-    INSTRUCTION_LABEL,
     normalizeN,
     pressureLevel,
 } from './phrases';
@@ -22,6 +22,14 @@ const GAME_DURATION_SEC = 60;
 
 // 基本点: フレーズ完了ではなく打鍵ごとに一致(正解)を積算する（未完のフレーズの努力も点数に反映されるように）
 const KEY_POINTS = 10;
+
+// 指定文字のマーク表示: 強く(strong)/弱く(weak)は区別せず同じ記号にする。
+// 文脈からプレイヤー自身が「強く打つべきか弱く打つべきか」を察するゲーム性のため、
+// 打つまでどちらが正解かは分からないようにする。普通(normal)は無印(マーク非表示)のまま。
+// 打鍵圧の指定通りに打てた（クリアした）文字だけは、答え合わせとして打鍵後に
+// 本来の強く(▲)/弱く(▼)マークへ戻す(INSTRUCTION_LABEL を使う)。
+const MYSTERY_MARK_SYMBOL = '◆';
+const MYSTERY_MARK_COLOR = '#7c3aed';
 
 // analog: アナログキーボード（打鍵圧あり・強弱判定あり）
 // normal: 通常キーボード（打鍵圧なし・速度と正確性だけのベースライン）
@@ -91,6 +99,8 @@ export function showGameScreen(
 
     // ── 状態 ──────────────────────────────────────────
     let queue: PhraseData[] = [];
+    // 打鍵圧の指定通りに打ててクリアした文字(キー位置)の答え合わせマーク。現在のフレーズぶんのみ保持。
+    let revealedMarks: Record<number, PressureInstruction> = {};
     let phrasesCompleted = 0;
     let baseScore = 0;                 // 打鍵ごとに積算した基本点
     let pressureClears = 0;
@@ -325,20 +335,31 @@ export function showGameScreen(
         // ── ローマ字: メインの大きい表示（ターゲットのローマ字にマーク）──
         romRow.innerHTML = '';
 
-        // 打鍵済みローマ字: グレーでフラット表示（マークなし）
-        if (romDone) {
+        // 打鍵済みローマ字: グレーでフラット表示。指定通りに打ててクリアした文字だけ
+        // 答え合わせとして本来の強く(▲)/弱く(▼)マークを表示する。
+        [...romDone].forEach((ch, keyIndex) => {
             const wrapper = document.createElement('div');
             wrapper.style.cssText = 'display:flex; flex-direction:column; align-items:center;';
-            const spacer = document.createElement('span');
-            spacer.innerHTML = '&nbsp;';
-            spacer.style.cssText = 'font-size:1.4rem; line-height:1.2;';
+
+            const revealed = revealedMarks[keyIndex];
+            const iconEl = document.createElement('span');
+            if (revealed) {
+                const label = INSTRUCTION_LABEL[revealed];
+                iconEl.textContent = label.symbol;
+                iconEl.style.cssText = `font-size:1.4rem; color:${label.color}; font-weight:bold; line-height:1.2;`;
+            } else {
+                iconEl.innerHTML = '&nbsp;';
+                iconEl.style.cssText = 'font-size:1.4rem; line-height:1.2;';
+            }
+
             const keysEl = document.createElement('span');
-            keysEl.textContent = romDone;
+            keysEl.textContent = ch;
             keysEl.style.cssText = 'font-size:2.6rem; color:#94a3b8; line-height:1;';
-            wrapper.appendChild(spacer);
+
+            wrapper.appendChild(iconEl);
             wrapper.appendChild(keysEl);
             romRow.appendChild(wrapper);
-        }
+        });
 
         // 未入力ローマ字: 1キー(ローマ字1文字)ごとに列を作り、指定があればマークを付ける
         const doneLen = romDone.length;
@@ -350,10 +371,11 @@ export function showGameScreen(
             wrapper.style.cssText = 'display:flex; flex-direction:column; align-items:center;';
 
             const iconEl = document.createElement('span');
-            const iconLabel = instruction ? INSTRUCTION_LABEL[instruction] : null;
-            if (iconLabel) {
-                iconEl.textContent = iconLabel.symbol;
-                iconEl.style.cssText = `font-size:1.4rem; color:${iconLabel.color}; font-weight:bold; line-height:1.2;`;
+            // 強く/弱くは同じ記号で示し、どちらが正解かは打つまで分からないようにする。普通(無指定)はマーク無し。
+            const showMark = instruction === 'strong' || instruction === 'weak';
+            if (showMark) {
+                iconEl.textContent = MYSTERY_MARK_SYMBOL;
+                iconEl.style.cssText = `font-size:1.4rem; color:${MYSTERY_MARK_COLOR}; font-weight:bold; line-height:1.2;`;
             } else {
                 iconEl.innerHTML = '&nbsp;';
                 iconEl.style.cssText = 'font-size:1.4rem; line-height:1.2;';
@@ -506,8 +528,8 @@ export function showGameScreen(
         pop.addEventListener('animationend', () => pop.remove());
     }
 
-    // 指定文字1つを判定してコンボ・表現点を更新
-    function judgeTarget(instruction: PressureInstruction, pressure: number) {
+    // 指定文字1つを判定してコンボ・表現点を更新。クリアできたかを呼び出し側に返す(答え合わせ表示用)。
+    function judgeTarget(instruction: PressureInstruction, pressure: number): boolean {
         const level = pressureLevel(pressure);
         const cleared = (instruction === 'strong' && level !== 'weak')
                      || (instruction === 'weak' && level !== 'strong')
@@ -531,6 +553,7 @@ export function showGameScreen(
         }
         updateComboBadge();
         refreshScore();
+        return cleared;
     }
 
     // フレーズを keygraph に構築する。打鍵圧指定(phrase.targets)は sentences.ts に
@@ -539,6 +562,7 @@ export function showGameScreen(
         const phrase = queue[0];
         keygraph.build(phrase.text);
         if (!isAnalog) phrase.targets = {};
+        revealedMarks = {}; // 新しいフレーズなので答え合わせマークもリセット
     }
 
     function completePhrase() {
@@ -605,7 +629,11 @@ export function showGameScreen(
             // ローマ字(キー)1打ごとに判定。指定があればリアルタイムでコンボ更新（アナログのみ）
             const instruction = phrase.targets[keyIndex];
             if (isAnalog && instruction) {
-                judgeTarget(instruction, pressure);
+                const cleared = judgeTarget(instruction, pressure);
+                // 指定通りに打ててクリアした強く/弱くの文字だけ、答え合わせとして本来のマークを見せる
+                if (cleared && instruction !== 'normal') {
+                    revealedMarks[keyIndex] = instruction;
+                }
             }
 
             // seq_done が増えていればひらがな1文字完了 → かな表示のサイズ用に打鍵圧を記録
