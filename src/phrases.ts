@@ -21,7 +21,8 @@ export function pressureLevel(n: number): PressureLevel {
 }
 
 export interface PhraseData {
-    text: string;               // ひらがな
+    text: string;               // ひらがな(タイピング用)
+    displayText: string;        // 漢字混じり文(表示専用。タイピングには使わない)
     // ローマ字(キー)の位置(0-based) -> 強/普通/弱。sentences.ts の "かな/マーク" 表記
     // (pressureSpec.ts) をパースしたもの。マークの無い区間は targets に含まれない。
     targets: Record<number, PressureInstruction>;
@@ -35,7 +36,7 @@ export interface PhraseData {
 export function generatePhrase(level: Level = 'Easy'): PhraseData {
     const pool = SENTENCES[level].phrases;
     const seed = pool[Math.floor(Math.random() * pool.length)];
-    return { text: seed.text, targets: { ...seed.targets }, charPressures: {} };
+    return { text: seed.text, displayText: seed.displayText, targets: { ...seed.targets }, charPressures: {} };
 }
 
 /**
