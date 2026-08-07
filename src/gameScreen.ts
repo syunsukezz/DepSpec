@@ -230,18 +230,15 @@ export function showGameScreen(
     typingEl.appendChild(effectLayer);
 
     // 漢字混じりの原文（表示専用。フレーズ単位の静的な表示で、打鍵の進捗には連動しない）
+    // ひらがな表示は廃止したため、これがプレイヤーが読むメインの参照テキストになる。
+    // そのため小さな補助表示ではなく、はっきり読める大きさで表示する。
     const sourceTextRow = document.createElement('div');
-    sourceTextRow.style.cssText = 'font-size:1rem; color:#334155; font-family:system-ui,sans-serif; line-height:1.4;';
-
-    // ひらがなは参照用の小さめ表示。ローマ字をメインの大きい表示にする。
-    const kanaRow = document.createElement('div');
-    kanaRow.style.cssText = 'display:flex; align-items:flex-end; flex-wrap:wrap; gap:0 0.1rem; font-family:system-ui,sans-serif;';
+    sourceTextRow.style.cssText = 'font-size:2rem; font-weight:600; color:#334155; font-family:system-ui,sans-serif; line-height:1.4;';
 
     const romRow = document.createElement('div');
     romRow.style.cssText = "display:flex; align-items:flex-end; flex-wrap:wrap; font-family:'Audiowide',monospace; letter-spacing:0.03em;";
 
     typingEl.appendChild(sourceTextRow);
-    typingEl.appendChild(kanaRow);
     typingEl.appendChild(romRow);
 
     // 横顔は打鍵圧フィードバック用なのでアナログモードのみ表示
@@ -304,33 +301,13 @@ export function showGameScreen(
     }
 
     function updateTypingDisplay() {
-        const done = [...(keygraph.seq_done() ?? '')];
-        const candidates = [...(keygraph.seq_candidates() ?? queue[0].text)];
         const romDone = keygraph.key_done();
         const romCandidate = [...keygraph.key_candidate()];
         const phrase = queue[0];
 
         // ── 漢字混じりの原文（表示専用・フレーズ全体を静的に出すだけ）──
+        // ひらがな表示は廃止したため、これがプレイヤーにとってのメイン参照テキストになる。
         sourceTextRow.textContent = phrase.displayText;
-
-        // ── ひらがな: 参照用の小さめ表示（マークなし）──
-        kanaRow.innerHTML = '';
-        done.forEach((ch, i) => {
-            // 打鍵済みは打鍵圧でわずかにサイズ変化
-            const n = phrase.charPressures[i] ?? 0.6;
-            const t = normalizeN(n);
-            const size = (1.1 + t * 0.7).toFixed(2) + 'rem';
-            const span = document.createElement('span');
-            span.textContent = ch;
-            span.style.cssText = `font-size:${size}; color:#94a3b8; font-family:system-ui,sans-serif; line-height:1; align-self:flex-end;`;
-            kanaRow.appendChild(span);
-        });
-        candidates.forEach((ch) => {
-            const span = document.createElement('span');
-            span.textContent = ch;
-            span.style.cssText = 'font-size:1.4rem; color:#64748b; font-family:system-ui,sans-serif; line-height:1; align-self:flex-end;';
-            kanaRow.appendChild(span);
-        });
 
         // ── ローマ字: メインの大きい表示（ターゲットのローマ字にマーク）──
         romRow.innerHTML = '';
@@ -486,8 +463,9 @@ export function showGameScreen(
     }
 
     function flashMiss() {
-        kanaRow.style.color = '#dc2626';
-        setTimeout(() => { kanaRow.style.color = ''; }, 120);
+        // ひらがな行の廃止に伴い、ミス時の赤フラッシュは原文(sourceTextRow)に適用する
+        sourceTextRow.style.color = '#dc2626';
+        setTimeout(() => { sourceTextRow.style.color = '#334155'; }, 120);
         flashRedScreen(); // ミス時に画面全体を赤くフラッシュ
     }
 
