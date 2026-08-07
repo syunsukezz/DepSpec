@@ -10,6 +10,7 @@
 // (Mは語感からは自動で決まらないため、ここでは strong(U)/weak(L) のみ提案する)
 
 import { computeWordPressureInstruction } from '../src/pressureHeuristic.ts';
+import { pairPressureWords } from '../src/pressureSpec.ts';
 import { WORD_LISTS } from '../src/sentences.ts';
 
 const API_URL = 'https://morpheme.xamrai.com/api/';
@@ -58,7 +59,10 @@ async function suggestSpec(text: string): Promise<string> {
 }
 
 async function main() {
-    const allSpecs = [...new Set(Object.values(WORD_LISTS).flat())];
+    // WORD_LISTS は [表示文, 指定, 表示文, 指定, ...] の交互配列なので、指定(奇数番目)だけを見る
+    const allSpecs = [...new Set(
+        Object.values(WORD_LISTS).flatMap(list => pairPressureWords(list).map(p => p.spec)),
+    )];
     const unmarked = allSpecs.filter(spec => !spec.includes('/'));
 
     console.log(`対象フレーズ数: ${allSpecs.length} (うち未指定: ${unmarked.length})`);
