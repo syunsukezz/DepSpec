@@ -65,14 +65,89 @@ type L24<S extends string> = L23<S> extends never ? never : Done<L23<S> & string
 export type ValidSpec<S extends string> =
     L24<S> extends never ? never : Done<L24<S> & string> extends true ? S : never;
 
+// pressureWords には [表示文, 指定, 表示文, 指定, ...] のように、漢字混じりの表示文と
+// 打鍵圧指定を交互に並べた配列を渡す。表示文と指定を別々の配列で持つと、文の区切りを
+// 変えるたびに両方をズレなく直す必要があり事故りやすいため、隣接するペアとして書く。
+//
+// 型レベルでは「先頭から2要素ずつ取り出し、奇数番目(指定)だけ ValidSpec で検証する」処理を
+// 上の ValidSpec と同じ理由(自己再帰をジェネリック推論の中で直接呼ぶと有効な値まで never に
+// 潰れる問題)で、段ごとに named な型として書き下している。1段で1ペア(2要素)を消費する。
+// レベルごとの最大フレーズ数(現状36件)を超えないよう、余裕を見て40段まで許容する。
+type PStep<S extends readonly string[]> =
+    S extends readonly [string, infer Spec extends string, ...infer Rest extends readonly string[]]
+        ? ValidSpec<Spec> extends never ? never : Rest
+        : S;
+type PDone<S extends readonly string[]> = S extends readonly [] ? true : false;
+
+type P0<S extends readonly string[]> = S;
+type P1<S extends readonly string[]> = P0<S> extends never ? never : PDone<P0<S>> extends true ? P0<S> : PStep<P0<S>> extends never ? never : PStep<P0<S>>;
+type P2<S extends readonly string[]> = P1<S> extends never ? never : PDone<P1<S>> extends true ? P1<S> : PStep<P1<S>> extends never ? never : PStep<P1<S>>;
+type P3<S extends readonly string[]> = P2<S> extends never ? never : PDone<P2<S>> extends true ? P2<S> : PStep<P2<S>> extends never ? never : PStep<P2<S>>;
+type P4<S extends readonly string[]> = P3<S> extends never ? never : PDone<P3<S>> extends true ? P3<S> : PStep<P3<S>> extends never ? never : PStep<P3<S>>;
+type P5<S extends readonly string[]> = P4<S> extends never ? never : PDone<P4<S>> extends true ? P4<S> : PStep<P4<S>> extends never ? never : PStep<P4<S>>;
+type P6<S extends readonly string[]> = P5<S> extends never ? never : PDone<P5<S>> extends true ? P5<S> : PStep<P5<S>> extends never ? never : PStep<P5<S>>;
+type P7<S extends readonly string[]> = P6<S> extends never ? never : PDone<P6<S>> extends true ? P6<S> : PStep<P6<S>> extends never ? never : PStep<P6<S>>;
+type P8<S extends readonly string[]> = P7<S> extends never ? never : PDone<P7<S>> extends true ? P7<S> : PStep<P7<S>> extends never ? never : PStep<P7<S>>;
+type P9<S extends readonly string[]> = P8<S> extends never ? never : PDone<P8<S>> extends true ? P8<S> : PStep<P8<S>> extends never ? never : PStep<P8<S>>;
+type P10<S extends readonly string[]> = P9<S> extends never ? never : PDone<P9<S>> extends true ? P9<S> : PStep<P9<S>> extends never ? never : PStep<P9<S>>;
+type P11<S extends readonly string[]> = P10<S> extends never ? never : PDone<P10<S>> extends true ? P10<S> : PStep<P10<S>> extends never ? never : PStep<P10<S>>;
+type P12<S extends readonly string[]> = P11<S> extends never ? never : PDone<P11<S>> extends true ? P11<S> : PStep<P11<S>> extends never ? never : PStep<P11<S>>;
+type P13<S extends readonly string[]> = P12<S> extends never ? never : PDone<P12<S>> extends true ? P12<S> : PStep<P12<S>> extends never ? never : PStep<P12<S>>;
+type P14<S extends readonly string[]> = P13<S> extends never ? never : PDone<P13<S>> extends true ? P13<S> : PStep<P13<S>> extends never ? never : PStep<P13<S>>;
+type P15<S extends readonly string[]> = P14<S> extends never ? never : PDone<P14<S>> extends true ? P14<S> : PStep<P14<S>> extends never ? never : PStep<P14<S>>;
+type P16<S extends readonly string[]> = P15<S> extends never ? never : PDone<P15<S>> extends true ? P15<S> : PStep<P15<S>> extends never ? never : PStep<P15<S>>;
+type P17<S extends readonly string[]> = P16<S> extends never ? never : PDone<P16<S>> extends true ? P16<S> : PStep<P16<S>> extends never ? never : PStep<P16<S>>;
+type P18<S extends readonly string[]> = P17<S> extends never ? never : PDone<P17<S>> extends true ? P17<S> : PStep<P17<S>> extends never ? never : PStep<P17<S>>;
+type P19<S extends readonly string[]> = P18<S> extends never ? never : PDone<P18<S>> extends true ? P18<S> : PStep<P18<S>> extends never ? never : PStep<P18<S>>;
+type P20<S extends readonly string[]> = P19<S> extends never ? never : PDone<P19<S>> extends true ? P19<S> : PStep<P19<S>> extends never ? never : PStep<P19<S>>;
+type P21<S extends readonly string[]> = P20<S> extends never ? never : PDone<P20<S>> extends true ? P20<S> : PStep<P20<S>> extends never ? never : PStep<P20<S>>;
+type P22<S extends readonly string[]> = P21<S> extends never ? never : PDone<P21<S>> extends true ? P21<S> : PStep<P21<S>> extends never ? never : PStep<P21<S>>;
+type P23<S extends readonly string[]> = P22<S> extends never ? never : PDone<P22<S>> extends true ? P22<S> : PStep<P22<S>> extends never ? never : PStep<P22<S>>;
+type P24<S extends readonly string[]> = P23<S> extends never ? never : PDone<P23<S>> extends true ? P23<S> : PStep<P23<S>> extends never ? never : PStep<P23<S>>;
+type P25<S extends readonly string[]> = P24<S> extends never ? never : PDone<P24<S>> extends true ? P24<S> : PStep<P24<S>> extends never ? never : PStep<P24<S>>;
+type P26<S extends readonly string[]> = P25<S> extends never ? never : PDone<P25<S>> extends true ? P25<S> : PStep<P25<S>> extends never ? never : PStep<P25<S>>;
+type P27<S extends readonly string[]> = P26<S> extends never ? never : PDone<P26<S>> extends true ? P26<S> : PStep<P26<S>> extends never ? never : PStep<P26<S>>;
+type P28<S extends readonly string[]> = P27<S> extends never ? never : PDone<P27<S>> extends true ? P27<S> : PStep<P27<S>> extends never ? never : PStep<P27<S>>;
+type P29<S extends readonly string[]> = P28<S> extends never ? never : PDone<P28<S>> extends true ? P28<S> : PStep<P28<S>> extends never ? never : PStep<P28<S>>;
+type P30<S extends readonly string[]> = P29<S> extends never ? never : PDone<P29<S>> extends true ? P29<S> : PStep<P29<S>> extends never ? never : PStep<P29<S>>;
+type P31<S extends readonly string[]> = P30<S> extends never ? never : PDone<P30<S>> extends true ? P30<S> : PStep<P30<S>> extends never ? never : PStep<P30<S>>;
+type P32<S extends readonly string[]> = P31<S> extends never ? never : PDone<P31<S>> extends true ? P31<S> : PStep<P31<S>> extends never ? never : PStep<P31<S>>;
+type P33<S extends readonly string[]> = P32<S> extends never ? never : PDone<P32<S>> extends true ? P32<S> : PStep<P32<S>> extends never ? never : PStep<P32<S>>;
+type P34<S extends readonly string[]> = P33<S> extends never ? never : PDone<P33<S>> extends true ? P33<S> : PStep<P33<S>> extends never ? never : PStep<P33<S>>;
+type P35<S extends readonly string[]> = P34<S> extends never ? never : PDone<P34<S>> extends true ? P34<S> : PStep<P34<S>> extends never ? never : PStep<P34<S>>;
+type P36<S extends readonly string[]> = P35<S> extends never ? never : PDone<P35<S>> extends true ? P35<S> : PStep<P35<S>> extends never ? never : PStep<P35<S>>;
+type P37<S extends readonly string[]> = P36<S> extends never ? never : PDone<P36<S>> extends true ? P36<S> : PStep<P36<S>> extends never ? never : PStep<P36<S>>;
+type P38<S extends readonly string[]> = P37<S> extends never ? never : PDone<P37<S>> extends true ? P37<S> : PStep<P37<S>> extends never ? never : PStep<P37<S>>;
+type P39<S extends readonly string[]> = P38<S> extends never ? never : PDone<P38<S>> extends true ? P38<S> : PStep<P38<S>> extends never ? never : PStep<P38<S>>;
+type P40<S extends readonly string[]> = P39<S> extends never ? never : PDone<P39<S>> extends true ? P39<S> : PStep<P39<S>> extends never ? never : PStep<P39<S>>;
+
+/** S(交互配列)の指定(奇数番目)が全てValidSpecを満たし、かつ要素数が偶数(ペアが揃っている)なら S 自身、そうでなければ never。 */
+type ValidInterleaved<S extends readonly string[]> =
+    P40<S> extends never ? never : PDone<P40<S>> extends true ? S : never;
+
 /**
- * 文字列リテラル配列の各要素が ValidSpec を満たすことを型レベルで強制するヘルパー。
- * 不正な書式の要素があると、その要素で tsc がコンパイルエラーになる。
+ * [表示文, 指定, 表示文, 指定, ...] の交互配列を受け取るヘルパー。
+ * 奇数番目(指定)の要素が ValidSpec の書式を満たさない場合や、要素数が奇数(ペアが
+ * 揃っていない)場合に tsc がコンパイルエラーにする。
  */
 export function pressureWords<const T extends readonly string[]>(
-    list: T & { [K in keyof T]: ValidSpec<T[K]> }
+    list: T & ValidInterleaved<T>
 ): T {
     return list;
+}
+
+export interface PressureWordPair {
+    displayText: string; // 漢字混じりの表示文
+    spec: string;         // 打鍵圧指定付きのひらがな("かな/マーク" 形式)
+}
+
+/** pressureWords で作った交互配列を [表示文, 指定] のペア配列に変換する。 */
+export function pairPressureWords(list: readonly string[]): PressureWordPair[] {
+    const pairs: PressureWordPair[] = [];
+    for (let i = 0; i < list.length; i += 2) {
+        pairs.push({ displayText: list[i], spec: list[i + 1] });
+    }
+    return pairs;
 }
 
 export interface ParsedPhrase {
