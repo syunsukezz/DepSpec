@@ -26,8 +26,9 @@ function callIfSet(fn: KeyListener | null, code: string, value: number): void {
 }
 
 SetAnalogsenseCallback((inputs: AnalogSenseInput[]) => {
+    const shiftPressed = inputs.some(input => input.key === "Shift"&& input.value > 0.5);
     inputs.forEach(input => {
-        CaliculatePressure(input.key, input.value);
+        CaliculatePressure(input.key, input.value, shiftPressed);
         callIfSet(rawListener, input.key, input.value);
     });
 });
