@@ -123,9 +123,9 @@ export function showResultScreen(
         alignItems: 'center',
         justifyContent: 'center',
         fontFamily: FONT_DISPLAY,
-        gap: '1.6rem',
+        gap: '1.1rem',
         position: 'relative',
-    }, { fit: true, designW: 1000, designH: 660 });
+    }, { fit: true, designW: 1000, designH: 580 });
 
     // タイトル
     const heading = document.createElement('h2');
@@ -213,28 +213,13 @@ export function showResultScreen(
         });
         stage.appendChild(distEl);
 
-        // レンジ(SD)・精度
-        const metricsEl = document.createElement('div');
-        metricsEl.style.cssText = 'display:flex; gap:2.5rem; font-family:system-ui,sans-serif;';
-        const rangeM = document.createElement('div');
-        rangeM.style.cssText = 'text-align:center;';
-        rangeM.innerHTML =
-            `<div style="font-size:0.75rem; color:#94a3b8;">レンジ(SD)</div>` +
-            `<div style="font-size:1.4rem; color:#1e293b;">${stats.sd.toFixed(2)}</div>`;
-        const precM = document.createElement('div');
-        precM.style.cssText = 'text-align:center;';
-        precM.innerHTML =
-            `<div style="font-size:0.75rem; color:#94a3b8;">コントロール精度</div>` +
-            `<div style="font-size:1.4rem; color:#1e293b;">${Math.round(stats.precision * 100)}%</div>`;
+        // 最大コンボ
         const comboM = document.createElement('div');
-        comboM.style.cssText = 'text-align:center;';
+        comboM.style.cssText = 'text-align:center; font-family:system-ui,sans-serif;';
         comboM.innerHTML =
             `<div style="font-size:0.75rem; color:#94a3b8;">最大コンボ</div>` +
             `<div style="font-size:1.4rem; color:#f59e0b;">${result.maxCombo}</div>`;
-        metricsEl.appendChild(rangeM);
-        metricsEl.appendChild(precM);
-        metricsEl.appendChild(comboM);
-        stage.appendChild(metricsEl);
+        stage.appendChild(comboM);
     } else {
         // 通常モード等：純タイピングの内訳
         const detail = document.createElement('div');
