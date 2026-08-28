@@ -303,32 +303,39 @@ export function showTutorialScreen(app: HTMLDivElement, options: TutorialOptions
 
     // ── Step 3: 打鍵圧マークの説明 ─────────────────────────────
     function renderStep3() {
-        const MYSTERY_MARK_SYMBOL = '◆';
-        const MYSTERY_MARK_COLOR = '#7c3aed';
+        const strong = INSTRUCTION_LABEL['strong']; // ▲ 強く（赤）
+        const weak = INSTRUCTION_LABEL['weak'];     // ▼ 弱く（青）
 
         const card = makeCard();
         const heading = document.createElement('h2');
         heading.textContent = '打鍵圧マーク';
         heading.style.cssText = 'font-size:1.8rem; color:#0891b2; letter-spacing:0.15em; margin:0;';
         card.appendChild(heading);
-        card.appendChild(makeDesc('ゲームでは文字の上に◆マークが付くことがあります。強く打つべきか弱く打つべきかは表示されません。文章の意味やトーンから自分で判断して打ってください。'));
+        card.appendChild(makeDesc('ゲームでは文字の上にマークが付くことがあります。▲は強く、▼は弱く打ってください。マークの無い字はふつうに打てばOKです。'));
 
-        // マークの凡例（強弱の区別はしない）
+        // マークの凡例（▲=強く / ▼=弱く）
         const legend = document.createElement('div');
-        legend.style.cssText = 'display:flex; flex-direction:column; align-items:center; gap:0.3rem; font-family:system-ui,sans-serif;';
-        const sym = document.createElement('div');
-        sym.textContent = MYSTERY_MARK_SYMBOL;
-        sym.style.cssText = `font-size:2.6rem; color:${MYSTERY_MARK_COLOR}; font-weight:bold; line-height:1;`;
-        const ds = document.createElement('div');
-        ds.textContent = 'この字は強くor弱く、どちらかで打つ（正解は打つまで分からない）';
-        ds.style.cssText = 'font-size:0.9rem; color:#64748b;';
-        legend.appendChild(sym);
-        legend.appendChild(ds);
+        legend.style.cssText = 'display:flex; gap:1.6rem; justify-content:center; font-family:system-ui,sans-serif;';
+        const makeLegendItem = (label: typeof strong) => {
+            const item = document.createElement('div');
+            item.style.cssText = 'display:flex; flex-direction:column; align-items:center; gap:0.3rem;';
+            const sym = document.createElement('div');
+            sym.textContent = label.symbol;
+            sym.style.cssText = `font-size:2.6rem; color:${label.color}; font-weight:bold; line-height:1;`;
+            const ds = document.createElement('div');
+            ds.textContent = `${label.name}打つ`;
+            ds.style.cssText = `font-size:0.9rem; color:${label.color};`;
+            item.appendChild(sym);
+            item.appendChild(ds);
+            return item;
+        };
+        legend.appendChild(makeLegendItem(strong));
+        legend.appendChild(makeLegendItem(weak));
         card.appendChild(legend);
 
-        // ゲームと同じ見た目のフレーズ見本（対象文字の上にマーク）
+        // ゲームと同じ見た目のフレーズ見本（対象文字の上にマーク）。▲と▼を1つずつ示す。
         const exampleText = 'さくらがさいた';
-        const markedIndices = new Set([0, 4]);
+        const marks: Record<number, typeof strong> = { 0: strong, 4: weak };
         const exampleRow = document.createElement('div');
         exampleRow.style.cssText =
             'display:flex; align-items:flex-end; gap:0; padding:0.6rem 1.2rem;' +
@@ -337,9 +344,10 @@ export function showTutorialScreen(app: HTMLDivElement, options: TutorialOptions
             const wrap = document.createElement('div');
             wrap.style.cssText = 'display:flex; flex-direction:column; align-items:center;';
             const icon = document.createElement('span');
-            if (markedIndices.has(i)) {
-                icon.textContent = MYSTERY_MARK_SYMBOL;
-                icon.style.cssText = `font-size:1.3rem; color:${MYSTERY_MARK_COLOR}; font-weight:bold; line-height:1.2;`;
+            const mark = marks[i];
+            if (mark) {
+                icon.textContent = mark.symbol;
+                icon.style.cssText = `font-size:1.3rem; color:${mark.color}; font-weight:bold; line-height:1.2;`;
             } else {
                 icon.textContent = ' ';
                 icon.style.cssText = 'font-size:1.3rem; line-height:1.2;';
