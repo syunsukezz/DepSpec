@@ -5,7 +5,6 @@ import { playEdgeRipple } from "./rippleEffect";
 import { checkerboardTransition } from "./transition";
 import { CaliculatePressure, SetPressureCallback } from "./calcPressure.ts";
 import { showStartScreen } from "./startScreen";
-import { showKeyboardSelectScreen } from "./keyboardSelectScreen";
 import { showTutorialScreen } from "./tutorialScreen";
 import { showLevelSelectScreen } from "./levelSelectScreen";
 import { showGameScreen, type GameResult, type GameMode } from "./gameScreen";
@@ -45,21 +44,10 @@ function renderStart(): void {
     showStartScreen(app, {
         connectAnalog: connectAnalogDevice,
         hasAuthorizedDevice,
-        onSelect: goToKeyboardSelect,
         onStart: goToTutorial,
     });
 }
 function goToStart(): void { checkerboardTransition(renderStart); }
-
-function renderKeyboardSelect(): void {
-    playMainBgm();
-    showKeyboardSelectScreen(app, {
-        connectAnalog: connectAnalogDevice,
-        onStart: goToTutorial,
-        onBack: goToStart,
-    });
-}
-function goToKeyboardSelect(): void { checkerboardTransition(renderKeyboardSelect); }
 
 function renderTutorial(mode: GameMode): void {
     playTutorialBgm();
