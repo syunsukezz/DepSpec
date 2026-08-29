@@ -16,13 +16,17 @@ import { createPressureMeter, type PressureMeter } from './pressureMeter';
 import { createPressureGraph, type PressureGraph } from './pressureGraph';
 import { shakeScreen } from './screenShake';
 import { drawFace } from './faceDraw';
-import { FONT_DISPLAY, PRESS_LEVEL_COLOR } from './theme';
+import { FONT_DISPLAY, FONT_LEVEL, PRESS_LEVEL_COLOR } from './theme';
 import type { NameChar } from './playerName';
 
 const GAME_DURATION_SEC = 60;
 
 // 基本点: フレーズ完了ではなく打鍵ごとに一致(正解)を積算する（未完のフレーズの努力も点数に反映されるように）
 const KEY_POINTS = 10;
+
+// ローマ字表示の文字サイズ（通常/現在打つ文字）
+const ROMAJI_SIZE = '1.8rem';
+const ROMAJI_CURRENT_SIZE = '2.8rem';
 
 // 指定文字のマーク表示: 強く(strong)には▲、弱く(weak)には▼を、打鍵前から常に表示する
 // (INSTRUCTION_LABEL を使う)。普通(normal)は無印(マーク非表示)のまま。
@@ -326,9 +330,14 @@ export function showGameScreen(
                 iconEl.style.cssText = 'font-size:1.4rem; line-height:1.2;';
             }
 
+            // 打鍵済みキーは名前入力画面と同様、打鍵圧に応じてフォントを切り替える
+            // （通常キーボードは打鍵圧に意味がないため常に normal 扱い）
+            const level = isAnalog ? pressureLevel(phrase.keyPressures[keyIndex] ?? 0) : 'normal';
+            const font = FONT_LEVEL[level];
+
             const keysEl = document.createElement('span');
             keysEl.textContent = ch;
-            keysEl.style.cssText = 'font-size:2.6rem; color:#94a3b8; line-height:1;';
+            keysEl.style.cssText = `font-size:${ROMAJI_SIZE}; color:#94a3b8; line-height:1; font-family:${font.family}; font-weight:${font.weight};`;
 
             wrapper.appendChild(iconEl);
             wrapper.appendChild(keysEl);
@@ -359,8 +368,8 @@ export function showGameScreen(
             const keysEl = document.createElement('span');
             keysEl.textContent = ch;
             keysEl.style.cssText = isCurrent
-                ? 'font-size:4rem; color:#0e7490; font-weight:bold; line-height:1; text-shadow:0 2px 8px rgba(8,145,178,0.35);'
-                : 'font-size:2.6rem; color:#0891b2; line-height:1;';
+                ? `font-size:${ROMAJI_CURRENT_SIZE}; color:#0e7490; font-weight:bold; line-height:1; text-shadow:0 2px 8px rgba(8,145,178,0.35);`
+                : `font-size:${ROMAJI_SIZE}; color:#0891b2; line-height:1;`;
 
             wrapper.appendChild(iconEl);
             wrapper.appendChild(keysEl);
@@ -595,6 +604,8 @@ export function showGameScreen(
             if (isAnalog) {
                 // 打鍵圧を強/普通/弱の四角形として左→右に積む
                 sessionPressures.push(pressure);
+                // ローマ字表示のフォント切り替え用に、このキーの打鍵圧を記録
+                phrase.keyPressures[keyIndex] = pressure;
             } else {
                 // 通常モードはリップルで打鍵フィードバック
                 triggerEffect(key, pressure);

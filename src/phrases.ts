@@ -27,6 +27,7 @@ export interface PhraseData {
     // (pressureSpec.ts) をパースしたもの。マークの無い区間は targets に含まれない。
     targets: Record<number, PressureInstruction>;
     charPressures: Record<number, number>; // ひらがな完了時の打鍵圧 (index -> N)
+    keyPressures: Record<number, number>; // ローマ字キー完了時の打鍵圧 (キー番号 -> N。ローマ字表示のフォント切り替え用)
 }
 
 // 台本には場面ごとの流れがあるため、ランダムではなく WORD_LISTS に登録された順番で
@@ -46,7 +47,7 @@ export function generatePhrase(level: Level = 'Easy'): PhraseData {
     const pool = SENTENCES[level].phrases;
     const seed = pool[phraseCursor[level]];
     phraseCursor[level] = (phraseCursor[level] + 1) % pool.length;
-    return { text: seed.text, displayText: seed.displayText, targets: { ...seed.targets }, charPressures: {} };
+    return { text: seed.text, displayText: seed.displayText, targets: { ...seed.targets }, charPressures: {}, keyPressures: {} };
 }
 
 /**
