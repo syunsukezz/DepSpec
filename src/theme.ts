@@ -16,3 +16,10 @@ export const PRESS_LEVEL_COLOR: Record<PressureLevel, string> = {
     normal: PRESS_NORMAL,
     strong: PRESS_STRONG,
 };
+
+// 打鍵圧に応じた名前表示フォント（弱=Klee One / 普通=Noto Sans JP / 強=Noto Serif JP）
+export const FONT_LEVEL: Record<PressureLevel, { family: string; weight: number }> = {
+    weak: { family: "'Klee One', cursive", weight: 400 },
+    normal: { family: "'Noto Sans JP', sans-serif", weight: 400 },
+    strong: { family: "'Noto Serif JP', serif", weight: 900 },
+};
