@@ -92,7 +92,7 @@ export function showStartScreen(app: HTMLDivElement, options: StartOptions): voi
 
     // 「Enterで開始」案内
     const hint = document.createElement('p');
-    hint.textContent = 'Press Enter to start・Press Backspace to delete';
+    hint.textContent = 'Type your name to start';
     Object.assign(hint.style, {
         fontSize: '1rem',
         color: '#475569',
