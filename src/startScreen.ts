@@ -75,7 +75,7 @@ export function showStartScreen(app: HTMLDivElement, options: StartOptions): voi
     });
 
     const placeholder = document.createElement('span');
-    placeholder.textContent = 'なまえをにゅうりょく';
+    placeholder.textContent = 'Type your name...';
     Object.assign(placeholder.style, {
         fontSize: '1.3rem',
         color: '#cbd5e1',
@@ -92,7 +92,7 @@ export function showStartScreen(app: HTMLDivElement, options: StartOptions): voi
 
     // 「Enterで開始」案内
     const hint = document.createElement('p');
-    hint.textContent = 'Enterで開始・Backspaceで削除';
+    hint.textContent = 'Press Enter to start・Press Backspace to delete';
     Object.assign(hint.style, {
         fontSize: '1rem',
         color: '#475569',

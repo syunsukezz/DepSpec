@@ -101,7 +101,7 @@ function playLevelCutIn(app: HTMLDivElement, info: LevelInfo, onDone: () => void
     });
 
     const sub = document.createElement('div');
-    sub.textContent = 'けってい！';
+    sub.textContent = 'Game Start!';
     Object.assign(sub.style, {
         fontFamily: FONT_DISPLAY,
         fontSize: '1.1rem',
@@ -160,7 +160,7 @@ function showCardLevelSelect(app: HTMLDivElement, options: LevelSelectOptions): 
     document.head.appendChild(style);
 
     const heading = document.createElement('h2');
-    heading.textContent = 'レベルをえらぶ';
+    heading.textContent = 'Choose Difficulty';
     Object.assign(heading.style, {
         fontSize: '2rem',
         letterSpacing: '0.15em',
@@ -246,7 +246,7 @@ function showCardLevelSelect(app: HTMLDivElement, options: LevelSelectOptions): 
     }
 
     const backBtn = document.createElement('button');
-    backBtn.textContent = '← もどる';
+    backBtn.textContent = '← Back';
     Object.assign(backBtn.style, {
         position: 'fixed',
         bottom: '1.5rem',
@@ -370,7 +370,7 @@ function showHammerLevelSelect(app: HTMLDivElement, options: LevelSelectOptions)
     });
 
     const hint = document.createElement('p');
-    hint.textContent = 'スペースキーを打った強さで難易度が決まります';
+    hint.textContent = '難易度に応じた打鍵圧でスペースキーを打つ';
     Object.assign(hint.style, {
         fontSize: '0.85rem',
         color: '#94a3b8',
