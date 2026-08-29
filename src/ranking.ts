@@ -3,11 +3,13 @@
 
 import type { GameMode } from './gameScreen';
 import type { Level } from './sentences';
+import { coerceNameChars, type NameChar } from './playerName';
 
 export interface RankingEntry {
     score: number;
     mode: GameMode;
     level: Level;
+    name: NameChar[];
     date: string; // ISO文字列（記録日時・現在エントリの識別にも使う）
 }
 
@@ -19,7 +21,9 @@ function loadAll(): RankingEntry[] {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (!raw) return [];
         const parsed = JSON.parse(raw);
-        return Array.isArray(parsed) ? parsed : [];
+        if (!Array.isArray(parsed)) return [];
+        // 過去バージョン(name無し・name:string)のエントリも壊れず読めるよう補正する
+        return parsed.map((e) => ({ ...e, name: coerceNameChars(e?.name) }));
     } catch {
         return [];
     }

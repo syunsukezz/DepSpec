@@ -1,18 +1,30 @@
 import type { GameMode } from './gameScreen';
 import { createStage } from './stage';
 import { FONT_DISPLAY } from './theme';
+import { pressureLevel, type PressureLevel } from './phrases';
+import { appendStyledName, type NameChar } from './playerName';
 
 export interface StartOptions {
     /** アナログキーボードに接続（必要ならダイアログ）。接続できたら true */
     connectAnalog: () => Promise<boolean>;
     /** 既に許可済みのアナログデバイスがあるか */
     hasAuthorizedDevice: () => Promise<boolean>;
-    /** モードを選んでゲームへ */
-    onStart: (mode: GameMode) => void;
+    setPressureListener: (cb: (code: string, value: number) => void) => void;
+    clearPressureListener: () => void;
+    setRawListener: (cb: (code: string, value: number) => void) => void;
+    clearRawListener: () => void;
+    /** 名前(文字ごとに打鍵圧を持つ)を入力してEnterでゲームへ */
+    onStart: (mode: GameMode, name: NameChar[]) => void;
 }
 
+const MAX_NAME_LENGTH = 12;
+
 export function showStartScreen(app: HTMLDivElement, options: StartOptions): void {
-    const { connectAnalog, hasAuthorizedDevice, onStart } = options;
+    const {
+        connectAnalog, hasAuthorizedDevice,
+        setPressureListener, clearPressureListener, setRawListener, clearRawListener,
+        onStart,
+    } = options;
 
     // タイトル画面は割合を一定に保ちたいので等倍スケール（fit）
     const { stage, dispose: disposeStage } = createStage(app, {
@@ -31,6 +43,7 @@ export function showStartScreen(app: HTMLDivElement, options: StartOptions): voi
             50%       { text-shadow: 0 0 40px #0891b288, 0 0 80px #0891b244; }
         }
         @keyframes kw-pulse { 0%,100% { opacity: 0.35; } 50% { opacity: 1; } }
+        @keyframes kw-blink { 0%,49% { opacity: 1; } 50%,100% { opacity: 0; } }
         .kw-connect-btn:hover:not(:disabled) { background: rgba(8,145,178,0.08) !important; }
         .kw-fs-btn:hover { background: rgba(0,0,0,0.05) !important; }
         .kw-ghost-link:hover { color: #0891b2 !important; }
@@ -46,16 +59,44 @@ export function showStartScreen(app: HTMLDivElement, options: StartOptions): voi
         color: '#0891b2',
         animation: 'kw-glow 3s ease-in-out infinite',
         userSelect: 'none',
-        margin: '0 0 1rem 0',
+        margin: '0 0 0.5rem 0',
     });
 
-    // 「Press any key」案内（主導線。許可済みデバイスがあれば暗黙でアナログ開始）
-    const pressAny = document.createElement('p');
-    pressAny.textContent = 'Press any key to start';
-    Object.assign(pressAny.style, {
-        fontSize: '1.1rem',
+    // ── 名前表示エリア（打鍵圧に応じてフォントが変わる） ─────────────────
+    const nameDisplay = document.createElement('div');
+    Object.assign(nameDisplay.style, {
+        display: 'flex',
+        alignItems: 'baseline',
+        justifyContent: 'center',
+        minHeight: '3.2rem',
+        fontSize: '2.4rem',
+        color: '#334155',
+        userSelect: 'none',
+    });
+
+    const placeholder = document.createElement('span');
+    placeholder.textContent = 'なまえをにゅうりょく';
+    Object.assign(placeholder.style, {
+        fontSize: '1.3rem',
+        color: '#cbd5e1',
+        fontFamily: 'system-ui, sans-serif',
+    });
+
+    const cursor = document.createElement('span');
+    cursor.textContent = '|';
+    Object.assign(cursor.style, {
+        animation: 'kw-blink 1s step-end infinite',
+        color: '#0891b2',
+        marginLeft: '0.1rem',
+    });
+
+    // 「Enterで開始」案内
+    const hint = document.createElement('p');
+    hint.textContent = 'Enterで開始・Backspaceで削除';
+    Object.assign(hint.style, {
+        fontSize: '1rem',
         color: '#475569',
-        letterSpacing: '0.15em',
+        letterSpacing: '0.1em',
         margin: '0',
         animation: 'kw-pulse 2s ease-in-out infinite',
     });
@@ -139,79 +180,116 @@ export function showStartScreen(app: HTMLDivElement, options: StartOptions): voi
     document.addEventListener('fullscreenchange', updateFsLabel);
 
     stage.appendChild(title);
-    stage.appendChild(pressAny);
+    stage.appendChild(nameDisplay);
+    stage.appendChild(hint);
     stage.appendChild(statusEl);
     stage.appendChild(normalLink);
     app.appendChild(connectBtn);
     app.appendChild(fsBtn);
 
+    // ── 名前の状態と描画 ──────────────────────────────────────────────
+    const chars: NameChar[] = [];
+    let usingAnalog = false;
+    let submitted = false;
+
+    function renderName(): void {
+        nameDisplay.innerHTML = '';
+        if (chars.length === 0) {
+            nameDisplay.appendChild(placeholder);
+        } else {
+            appendStyledName(nameDisplay, chars);
+        }
+        nameDisplay.appendChild(cursor);
+    }
+    renderName();
+
+    function appendChar(ch: string, level: PressureLevel): void {
+        if (submitted || chars.length >= MAX_NAME_LENGTH) return;
+        chars.push({ ch, level });
+        renderName();
+    }
+    function deleteChar(): void {
+        if (submitted || chars.length === 0) return;
+        chars.pop();
+        renderName();
+    }
+    function submit(): void {
+        if (submitted || chars.length === 0) return;
+        submitted = true;
+        const mode: GameMode = usingAnalog ? 'analog' : 'normal';
+        cleanup();
+        onStart(mode, [...chars]);
+    }
+
     function cleanup() {
         document.removeEventListener('keydown', keyHandler);
         document.removeEventListener('fullscreenchange', updateFsLabel);
+        clearPressureListener();
+        clearRawListener();
         disposeStage();
     }
 
-    // ── start（何かキー）: 許可済みならアナログへ、なければ通常モードへ ──
-    let proceeding = false;
-    async function proceed() {
-        if (proceeding) return;
-        proceeding = true;
-        const has = await hasAuthorizedDevice();
-        if (has) {
-            const ok = await connectAnalog(); // 許可済みなのでダイアログなし・即時
-            cleanup();
-            onStart(ok ? 'analog' : 'normal');
-        } else {
-            cleanup();
-            onStart('normal');
-        }
+    // ── アナログ入力の有効化（許可済みデバイスへの接続 / 手動接続共通） ──
+    function activateAnalog(): void {
+        usingAnalog = true;
+        connectBtn.style.display = 'none';
+        statusEl.textContent = 'アナログキーボード接続済み';
+        statusEl.style.display = 'block';
+        normalLink.style.display = 'block';
+        setPressureListener((code: string, value: number) => {
+            if (submitted) return;
+            if (code === 'Enter') { submit(); return; }
+            if (code === 'Backspace') { deleteChar(); return; }
+            if (code === 'Space') { appendChar(' ', pressureLevel(value)); return; }
+            if (code.length === 1) { appendChar(code.toLowerCase(), pressureLevel(value)); return; }
+        });
+        setRawListener(() => {}); // アナログ入力中もライブメーター等は今回不要（受け口だけ確保）
     }
 
-    // ── アナログ接続（初回）: 成功したらそのままアナログモードで開始 ──
+    // ── アナログ接続（初回・手動）: 成功したらアナログ入力へ切り替える ──
     let connecting = false;
     async function connect() {
-        if (connecting || proceeding) return;
+        if (connecting || usingAnalog) return;
         connecting = true;
         connectBtn.disabled = true;
-
         const ok = await connectAnalog();
         if (ok) {
-            cleanup();
-            onStart('analog');
+            activateAnalog();
         } else {
             connecting = false;
             connectBtn.disabled = false;
-            connectBtn.style.display = 'block';
         }
     }
     connectBtn.addEventListener('click', connect);
 
     // ── 通常キーボードへの控えめな切り替え ──────────────────────────
     normalLink.addEventListener('click', () => {
-        if (proceeding) return;
-        cleanup();
-        onStart('normal');
+        if (submitted) return;
+        usingAnalog = false;
+        clearPressureListener();
+        clearRawListener();
+        normalLink.style.display = 'none';
+        statusEl.style.display = 'none';
     });
 
+    // ── 通常モード用: ネイティブkeydownで文字を確定する ────────────────
     const keyHandler = (e: KeyboardEvent) => {
         if (e.key === 'F11') { e.preventDefault(); toggleFs(); return; }
+        if (usingAnalog) return; // アナログはpressureListener側で確定する
         if (e.target instanceof HTMLButtonElement) return; // ボタンのネイティブ操作と競合させない
         if (e.ctrlKey || e.metaKey || e.altKey) return;
-        proceed();
+        if (e.key === 'Enter') { e.preventDefault(); submit(); return; }
+        if (e.key === 'Backspace') { e.preventDefault(); deleteChar(); return; }
+        if (e.key.length === 1) { e.preventDefault(); appendChar(e.key, 'normal'); return; }
     };
     document.addEventListener('keydown', keyHandler);
 
-    // 既に許可済みデバイスがあれば、アナログを主導線にして案内を切り替える
-    hasAuthorizedDevice().then((has) => {
+    // 既に許可済みデバイスがあれば、ダイアログ無しでそのままアナログ入力を有効化する
+    hasAuthorizedDevice().then(async (has) => {
+        if (submitted) return;
         if (has) {
-            connectBtn.style.display = 'none';
-            statusEl.textContent = 'アナログキーボード接続済み';
-            statusEl.style.display = 'block';
-            normalLink.style.display = 'block';
-        } else {
-            connectBtn.style.display = 'block';
-            connectBtn.textContent = 'アナログキーボードを接続';
-            connectBtn.disabled = false;
+            const ok = await connectAnalog();
+            if (ok && !submitted) activateAnalog();
         }
     });
 }

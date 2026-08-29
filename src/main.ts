@@ -11,6 +11,7 @@ import { showGameScreen, type GameResult, type GameMode } from "./gameScreen";
 import { showResultScreen } from "./resultScreen";
 import { playMainBgm, playTutorialBgm, playResultSEThenBgm, armAutoplayUnlock } from "./bgm";
 import type { Level } from "./sentences";
+import type { NameChar } from "./playerName";
 
 const app = document.getElementById("app") as HTMLDivElement;
 if (!app) throw new Error("App element not found");
@@ -44,12 +45,16 @@ function renderStart(): void {
     showStartScreen(app, {
         connectAnalog: connectAnalogDevice,
         hasAuthorizedDevice,
+        setPressureListener: (cb) => { pressureListener = cb; },
+        clearPressureListener: () => { pressureListener = null; },
+        setRawListener: (cb) => { rawListener = cb; },
+        clearRawListener: () => { rawListener = null; },
         onStart: goToTutorial,
     });
 }
 function goToStart(): void { checkerboardTransition(renderStart); }
 
-function renderTutorial(mode: GameMode): void {
+function renderTutorial(mode: GameMode, name: NameChar[]): void {
     playTutorialBgm();
     showTutorialScreen(app, {
         mode,
@@ -57,13 +62,13 @@ function renderTutorial(mode: GameMode): void {
         clearPressureListener: () => { pressureListener = null; },
         setRawListener: (cb) => { rawListener = cb; },
         clearRawListener: () => { rawListener = null; },
-        onComplete: () => goToLevelSelect(mode),
-        onSkip: () => goToLevelSelect(mode),
+        onComplete: () => goToLevelSelect(mode, name),
+        onSkip: () => goToLevelSelect(mode, name),
     });
 }
-function goToTutorial(mode: GameMode): void { checkerboardTransition(() => renderTutorial(mode)); }
+function goToTutorial(mode: GameMode, name: NameChar[]): void { checkerboardTransition(() => renderTutorial(mode, name)); }
 
-function renderLevelSelect(mode: GameMode): void {
+function renderLevelSelect(mode: GameMode, name: NameChar[]): void {
     playTutorialBgm();
     showLevelSelectScreen(app, {
         mode,
@@ -71,17 +76,18 @@ function renderLevelSelect(mode: GameMode): void {
         clearPressureListener: () => { pressureListener = null; },
         setRawListener: (cb) => { rawListener = cb; },
         clearRawListener: () => { rawListener = null; },
-        onSelect: (level: Level) => goToGame(mode, level),
+        onSelect: (level: Level) => goToGame(mode, name, level),
         onBack: goToStart,
     });
 }
-function goToLevelSelect(mode: GameMode): void { checkerboardTransition(() => renderLevelSelect(mode)); }
+function goToLevelSelect(mode: GameMode, name: NameChar[]): void { checkerboardTransition(() => renderLevelSelect(mode, name)); }
 
-function renderGame(mode: GameMode, level: Level): void {
+function renderGame(mode: GameMode, name: NameChar[], level: Level): void {
     playMainBgm(); // タイトルから続くメインBGMをそのまま継続
     showGameScreen(app, {
         mode,
         level,
+        name,
         setPressureListener: (cb) => { pressureListener = cb; },
         clearPressureListener: () => { pressureListener = null; },
         setRawListener: (cb) => { rawListener = cb; },
@@ -89,7 +95,7 @@ function renderGame(mode: GameMode, level: Level): void {
         onFinish: (result: GameResult) => goToResult(result),
     });
 }
-function goToGame(mode: GameMode, level: Level): void { checkerboardTransition(() => renderGame(mode, level)); }
+function goToGame(mode: GameMode, name: NameChar[], level: Level): void { checkerboardTransition(() => renderGame(mode, name, level)); }
 
 function renderResult(result: GameResult): void {
     playResultSEThenBgm(); // 効果音 → 鳴り終わってからメインBGM

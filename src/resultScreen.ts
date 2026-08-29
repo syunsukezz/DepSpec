@@ -3,6 +3,7 @@ import { normalizeN, pressureLevel, type PressureLevel } from './phrases';
 import { createStage } from './stage';
 import { FONT_DISPLAY, PRESS_LEVEL_COLOR } from './theme';
 import { recordScore, type RankingEntry } from './ranking';
+import { appendStyledName } from './playerName';
 
 // 称号の閾値（調整可能）
 const PRECISION_HIGH = 0.7;  // 追従率がこれ以上 → 精度「高」
@@ -84,6 +85,15 @@ function renderRanking(stage: HTMLDivElement, ranking: RankingEntry[], current: 
         rank.textContent = `${i + 1}`;
         rank.style.cssText = `width:1.6rem; text-align:center; font-family:${FONT_DISPLAY}; color:#0891b2; font-size:0.95rem;`;
 
+        const nm = document.createElement('span');
+        nm.style.cssText = `width:5.5rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:0.85rem; color:${isCurrent ? '#0e7490' : '#334155'};`;
+        if (entry.name.length === 0) {
+            nm.textContent = '名無し';
+            nm.style.fontFamily = 'system-ui, sans-serif';
+        } else {
+            appendStyledName(nm, entry.name);
+        }
+
         const sc = document.createElement('span');
         sc.textContent = `${entry.score} pt`;
         sc.style.cssText = `flex:1; font-size:0.9rem; color:${isCurrent ? '#0e7490' : '#334155'}; font-weight:${isCurrent ? '700' : '400'};`;
@@ -93,6 +103,7 @@ function renderRanking(stage: HTMLDivElement, ranking: RankingEntry[], current: 
         tag.style.cssText = 'font-size:0.75rem; color:#94a3b8;';
 
         row.appendChild(rank);
+        row.appendChild(nm);
         row.appendChild(sc);
         row.appendChild(tag);
         wrap.appendChild(row);
@@ -106,14 +117,14 @@ export function showResultScreen(
     result: GameResult,
     onRestart: () => void,
 ): void {
-    const { mode, level, phrasesCompleted, baseScore, expressionScore } = result;
+    const { mode, level, name, phrasesCompleted, baseScore, expressionScore } = result;
     const score = baseScore + expressionScore;
 
     // アナログモードかつ打鍵データがある場合のみ表現評価を出す
     const showExpression = mode === 'analog' && result.pressures.length > 0;
 
     // 今回のスコアをローカルランキングに記録
-    const currentEntry: RankingEntry = { score, mode, level, date: new Date().toISOString() };
+    const currentEntry: RankingEntry = { score, mode, level, name, date: new Date().toISOString() };
     const ranking = recordScore(currentEntry);
 
     // 割合を一定に保つため等倍スケール（fit）。ランキング欄の分、通常より縦に長め
@@ -126,6 +137,25 @@ export function showResultScreen(
         gap: '1.1rem',
         position: 'relative',
     }, { fit: true, designW: 1000, designH: 580 });
+
+    // プレイヤー名（打鍵圧ごとのフォントを保ったまま表示）
+    const nameEl = document.createElement('div');
+    Object.assign(nameEl.style, {
+        fontSize: '1.2rem',
+        color: '#0891b2',
+        letterSpacing: '0.05em',
+        margin: '0',
+    });
+    if (name.length === 0) {
+        nameEl.textContent = '名無し';
+        nameEl.style.fontFamily = 'system-ui, sans-serif';
+    } else {
+        appendStyledName(nameEl, name);
+    }
+    const nameSuffix = document.createElement('span');
+    nameSuffix.textContent = ' の記録';
+    nameSuffix.style.cssText = 'font-size:0.85rem; color:#94a3b8; font-family:system-ui,sans-serif;';
+    nameEl.appendChild(nameSuffix);
 
     // タイトル
     const heading = document.createElement('h2');
@@ -150,6 +180,7 @@ export function showResultScreen(
         ` ＋ 表現点 <span style="color:#16a34a">${expressionScore}</span>` +
         ` ＝ <span style="color:#ca8a04; font-size:1.3rem;">${score}</span> pt`;
 
+    stage.appendChild(nameEl);
     stage.appendChild(heading);
     stage.appendChild(bigScore);
     stage.appendChild(formula);

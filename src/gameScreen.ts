@@ -17,6 +17,7 @@ import { createPressureGraph, type PressureGraph } from './pressureGraph';
 import { shakeScreen } from './screenShake';
 import { drawFace } from './faceDraw';
 import { FONT_DISPLAY, PRESS_LEVEL_COLOR } from './theme';
+import type { NameChar } from './playerName';
 
 const GAME_DURATION_SEC = 60;
 
@@ -34,6 +35,7 @@ export type GameMode = 'analog' | 'normal';
 export interface GameResult {
     mode: GameMode;
     level: Level;
+    name: NameChar[];
     phrasesCompleted: number;
     pressureClears: number;
     totalTargets: number;      // 完了フレーズ内の指定アイコン総数
@@ -66,6 +68,7 @@ const MAX_COMBO_BONUS_SEC = 0.5;
 export interface GameScreenOptions {
     mode: GameMode;
     level: Level;
+    name: NameChar[];
     setPressureListener: (cb: (code: string, value: number) => void) => void;
     clearPressureListener: () => void;
     setRawListener: (cb: (code: string, value: number) => void) => void;
@@ -80,7 +83,7 @@ export function showGameScreen(
     app: HTMLDivElement,
     options: GameScreenOptions,
 ): void {
-    const { mode, level, setPressureListener, clearPressureListener, setRawListener, clearRawListener, onFinish } = options;
+    const { mode, level, name, setPressureListener, clearPressureListener, setRawListener, clearRawListener, onFinish } = options;
     const isAnalog = mode === 'analog';
 
     // 設計サイズ固定のステージ。中身はここに載せ、ウィンドウに合わせて拡縮する
@@ -568,7 +571,7 @@ export function showGameScreen(
         if (timeLeft <= 0) {
             clearInterval(timerInterval);
             cleanup();
-            onFinish({ mode, level, phrasesCompleted, pressureClears, totalTargets, pressures: sessionPressures, baseScore, expressionScore, maxCombo });
+            onFinish({ mode, level, name, phrasesCompleted, pressureClears, totalTargets, pressures: sessionPressures, baseScore, expressionScore, maxCombo });
         }
     }
 
