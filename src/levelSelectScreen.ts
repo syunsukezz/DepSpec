@@ -1,7 +1,7 @@
 import type { Level } from './sentences';
 import type { GameMode } from './gameScreen';
 import { createStage } from './stage';
-import { FONT_DISPLAY, PRESS_WEAK, PRESS_NORMAL, PRESS_STRONG } from './theme';
+import { FONT_DISPLAY } from './theme';
 import { pressureLevel, type PressureLevel } from './phrases';
 
 export interface LevelSelectOptions {
@@ -26,8 +26,7 @@ interface LevelInfo {
     color: string;
 }
 
-// 配列順は Easy -> Hard。打鍵圧レーンでは弱い(下)〜強い(上)に対応させるため、
-// アナログモード時はこの配列順のまま column-reverse で並べる(index0=Easy が下、index2=Hard が上)。
+// 配列順は Easy -> Hard（打鍵圧レーンでの弱い〜強いの順とも一致させる）
 const LEVELS: LevelInfo[] = [
     { level: 'Easy',   label: 'EASY',   desc: '短い単語',       example: 'いぬ / りんご / まうす',       color: '#22c55e' },
     { level: 'Normal', label: 'NORMAL', desc: '少し長い言葉',   example: 'じゃばすくりぷと / やきにくていしょく', color: '#f59e0b' },
@@ -37,11 +36,107 @@ const LEVELS: LevelInfo[] = [
 // 測定した打鍵圧(弱/普通/強) -> 選ぶ難易度
 const LEVEL_INDEX_BY_PRESSURE: Record<PressureLevel, number> = { weak: 0, normal: 1, strong: 2 };
 
-export function showLevelSelectScreen(app: HTMLDivElement, options: LevelSelectOptions): void {
-    const { mode, setPressureListener, clearPressureListener, setRawListener, clearRawListener, onSelect, onBack } = options;
-    const isAnalog = mode === 'analog';
+// ── レベル確定時のカットイン（通常/アナログ両モード共通） ──────────────
+const CUTIN_MS = 900;
 
-    // タイトル画面と同じく割合固定の等倍スケール（fit）
+function playLevelCutIn(app: HTMLDivElement, info: LevelInfo, onDone: () => void): void {
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes kw-cutin-flash { 0% { opacity: 0.85; } 100% { opacity: 0; } }
+        @keyframes kw-cutin-slide {
+            0%   { transform: translateX(-130%) skewX(-8deg); opacity: 0; }
+            12%  { opacity: 1; }
+            22%  { transform: translateX(0) skewX(-8deg); }
+            78%  { transform: translateX(0) skewX(-8deg); opacity: 1; }
+            100% { transform: translateX(130%) skewX(-8deg); opacity: 0; }
+        }
+    `;
+    document.head.appendChild(style);
+
+    const overlay = document.createElement('div');
+    Object.assign(overlay.style, {
+        position: 'fixed',
+        inset: '0',
+        zIndex: '200',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        pointerEvents: 'none',
+        overflow: 'hidden',
+    });
+
+    const flash = document.createElement('div');
+    Object.assign(flash.style, {
+        position: 'absolute',
+        inset: '0',
+        background: '#ffffff',
+        animation: 'kw-cutin-flash 0.25s ease-out forwards',
+    });
+
+    const banner = document.createElement('div');
+    Object.assign(banner.style, {
+        position: 'relative',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '0.3rem',
+        padding: '1.4rem 4rem',
+        background: info.color,
+        boxShadow: '0 12px 40px rgba(0,0,0,0.35)',
+        borderTop: '4px solid rgba(255,255,255,0.8)',
+        borderBottom: '4px solid rgba(0,0,0,0.25)',
+        animation: `kw-cutin-slide ${CUTIN_MS}ms cubic-bezier(0.2, 0.8, 0.3, 1) forwards`,
+    });
+
+    const label = document.createElement('div');
+    label.textContent = info.label;
+    Object.assign(label.style, {
+        fontFamily: FONT_DISPLAY,
+        fontSize: '4rem',
+        letterSpacing: '0.15em',
+        color: '#ffffff',
+        textShadow: '0 4px 0 rgba(0,0,0,0.25)',
+        transform: 'skewX(8deg)', // banner自体の傾きを打ち消して文字は直立に見せる
+        whiteSpace: 'nowrap',
+    });
+
+    const sub = document.createElement('div');
+    sub.textContent = 'けってい！';
+    Object.assign(sub.style, {
+        fontFamily: FONT_DISPLAY,
+        fontSize: '1.1rem',
+        letterSpacing: '0.3em',
+        color: 'rgba(255,255,255,0.9)',
+        transform: 'skewX(8deg)',
+    });
+
+    banner.appendChild(label);
+    banner.appendChild(sub);
+    overlay.appendChild(flash);
+    overlay.appendChild(banner);
+    app.appendChild(overlay);
+
+    window.setTimeout(() => {
+        overlay.remove();
+        style.remove();
+        onDone();
+    }, CUTIN_MS);
+}
+
+export function showLevelSelectScreen(app: HTMLDivElement, options: LevelSelectOptions): void {
+    if (options.mode === 'analog') {
+        showHammerLevelSelect(app, options);
+    } else {
+        showCardLevelSelect(app, options);
+    }
+}
+
+// -----------------------------------------------------------------------
+// 通常キーボード用: 3枚カードをクリック／矢印+Enterで選ぶ、従来通りのUI
+// -----------------------------------------------------------------------
+function showCardLevelSelect(app: HTMLDivElement, options: LevelSelectOptions): void {
+    const { onSelect, onBack } = options;
+
     const { stage, dispose: disposeStage } = createStage(app, {
         display: 'flex',
         flexDirection: 'column',
@@ -61,17 +156,9 @@ export function showLevelSelectScreen(app: HTMLDivElement, options: LevelSelectO
             transform: translateY(-6px) scale(1.03);
             box-shadow: 0 12px 30px rgba(0,0,0,0.12);
         }
-        .kw-level-card.kw-hit {
-            animation: kw-level-hit 0.3s ease-out;
-        }
-        @keyframes kw-level-hit {
-            0%   { transform: scale(1.1); box-shadow: 0 16px 36px rgba(0,0,0,0.18); }
-            100% { transform: scale(1); box-shadow: none; }
-        }
     `;
     document.head.appendChild(style);
 
-    // 見出し
     const heading = document.createElement('h2');
     heading.textContent = 'レベルをえらぶ';
     Object.assign(heading.style, {
@@ -82,12 +169,11 @@ export function showLevelSelectScreen(app: HTMLDivElement, options: LevelSelectO
         userSelect: 'none',
     });
 
-    // カード群。アナログモードは縦積み(強い/弱いのレーンに揃える)、通常は横並び。
     const cardRow = document.createElement('div');
     Object.assign(cardRow.style, {
         display: 'flex',
-        flexDirection: isAnalog ? 'column-reverse' : 'row',
-        gap: isAnalog ? '1rem' : '1.5rem',
+        flexDirection: 'row',
+        gap: '1.5rem',
         alignItems: 'stretch',
     });
 
@@ -97,31 +183,33 @@ export function showLevelSelectScreen(app: HTMLDivElement, options: LevelSelectO
     function confirmLevel(index: number): void {
         if (busy) return;
         busy = true;
-        cleanup();
-        onSelect(LEVELS[index].level);
+        playLevelCutIn(app, LEVELS[index], () => {
+            cleanup();
+            onSelect(LEVELS[index].level);
+        });
     }
 
     LEVELS.forEach(({ label, desc, example, color }, index) => {
         const card = document.createElement('div');
         card.className = 'kw-level-card';
         Object.assign(card.style, {
-            width: isAnalog ? '420px' : '230px',
-            padding: isAnalog ? '1rem 1.4rem' : '1.8rem 1.4rem',
+            width: '230px',
+            padding: '1.8rem 1.4rem',
             background: '#ffffff',
             border: `2px solid ${color}`,
             borderRadius: '16px',
             display: 'flex',
-            flexDirection: isAnalog ? 'row' : 'column',
+            flexDirection: 'column',
             alignItems: 'center',
-            justifyContent: isAnalog ? 'flex-start' : 'center',
-            gap: isAnalog ? '1.2rem' : '0.9rem',
+            justifyContent: 'center',
+            gap: '0.9rem',
             cursor: 'pointer',
             userSelect: 'none',
         });
 
         const labelEl = document.createElement('div');
         labelEl.textContent = label;
-        labelEl.style.cssText = `font-size:1.8rem; letter-spacing:0.12em; color:${color}; flex-shrink:0;`;
+        labelEl.style.cssText = `font-size:1.8rem; letter-spacing:0.12em; color:${color};`;
 
         const descEl = document.createElement('div');
         descEl.textContent = desc;
@@ -133,7 +221,7 @@ export function showLevelSelectScreen(app: HTMLDivElement, options: LevelSelectO
 
         card.appendChild(labelEl);
         card.appendChild(descEl);
-        if (!isAnalog) card.appendChild(exEl);
+        card.appendChild(exEl);
 
         card.addEventListener('mouseenter', () => applyFocus(index));
         card.addEventListener('click', () => confirmLevel(index));
@@ -142,7 +230,6 @@ export function showLevelSelectScreen(app: HTMLDivElement, options: LevelSelectO
         cardRow.appendChild(card);
     });
 
-    // ── フォーカス（キーボード選択・打鍵圧プレビュー共通）──────────
     let focusIndex = 0;
     function applyFocus(i: number): void {
         focusIndex = (i + cards.length) % cards.length;
@@ -158,37 +245,6 @@ export function showLevelSelectScreen(app: HTMLDivElement, options: LevelSelectO
         });
     }
 
-    // ── 打鍵圧レーン（アナログモードのみ）: 青(弱)→緑(普通)→赤(強)の縦グラデーション ──
-    let pressureLane: HTMLDivElement | null = null;
-    let laneMarker: HTMLDivElement | null = null;
-    if (isAnalog) {
-        pressureLane = document.createElement('div');
-        Object.assign(pressureLane.style, {
-            position: 'relative',
-            width: '36px',
-            alignSelf: 'stretch',
-            borderRadius: '18px',
-            background: `linear-gradient(to top, ${PRESS_WEAK}, ${PRESS_NORMAL}, ${PRESS_STRONG})`,
-            boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.08)',
-            flexShrink: '0',
-        });
-
-        laneMarker = document.createElement('div');
-        Object.assign(laneMarker.style, {
-            position: 'absolute',
-            left: '-6px',
-            right: '-6px',
-            bottom: '0%',
-            height: '6px',
-            borderRadius: '3px',
-            background: '#0f172a',
-            boxShadow: '0 0 0 2px #ffffff',
-            transition: 'bottom 0.05s linear',
-        });
-        pressureLane.appendChild(laneMarker);
-    }
-
-    // 戻るボタン
     const backBtn = document.createElement('button');
     backBtn.textContent = '← もどる';
     Object.assign(backBtn.style, {
@@ -209,11 +265,8 @@ export function showLevelSelectScreen(app: HTMLDivElement, options: LevelSelectO
         onBack();
     });
 
-    // 操作ヒント
     const hint = document.createElement('p');
-    hint.textContent = isAnalog
-        ? 'キーを打った強さで難易度を選び、Enter で決定（弱く=EASY・強く=HARD／打ち直して選び直せます）'
-        : 'Space / Tab で選択・Enter で決定';
+    hint.textContent = 'Space / Tab で選択・Enter で決定';
     Object.assign(hint.style, {
         fontSize: '0.85rem',
         color: '#94a3b8',
@@ -225,25 +278,10 @@ export function showLevelSelectScreen(app: HTMLDivElement, options: LevelSelectO
     });
 
     stage.appendChild(heading);
-    if (isAnalog && pressureLane) {
-        const layoutRow = document.createElement('div');
-        Object.assign(layoutRow.style, {
-            display: 'flex',
-            flexDirection: 'row',
-            alignItems: 'stretch',
-            gap: '1.5rem',
-        });
-        layoutRow.appendChild(cardRow);
-        layoutRow.appendChild(pressureLane);
-        stage.appendChild(layoutRow);
-    } else {
-        stage.appendChild(cardRow);
-    }
+    stage.appendChild(cardRow);
     stage.appendChild(hint);
     app.appendChild(backBtn);
 
-    // ── キーボード操作: Space/Tab/矢印 で移動・Enter で確定 ─────────
-    // アナログの縦レーンは index0(Easy)=下, index2(Hard)=上 なので ↑で index+1, ↓で index-1。
     const keyHandler = (e: KeyboardEvent) => {
         if (busy) return;
         switch (e.key) {
@@ -262,11 +300,11 @@ export function showLevelSelectScreen(app: HTMLDivElement, options: LevelSelectO
                 break;
             case 'ArrowUp':
                 e.preventDefault();
-                applyFocus(focusIndex + (isAnalog ? 1 : -1));
+                applyFocus(focusIndex - 1);
                 break;
             case 'ArrowDown':
                 e.preventDefault();
-                applyFocus(focusIndex + (isAnalog ? -1 : 1));
+                applyFocus(focusIndex + 1);
                 break;
             case 'Enter':
                 e.preventDefault();
@@ -278,33 +316,272 @@ export function showLevelSelectScreen(app: HTMLDivElement, options: LevelSelectO
 
     applyFocus(0); // 初期フォーカスは EASY
 
-    // ── 打鍵圧による難易度選択（アナログモードのみ）──────────────
-    if (isAnalog && pressureLane && laneMarker) {
-        setRawListener((_code: string, value: number) => {
-            const t = Math.min(1, Math.max(0, value));
-            laneMarker!.style.bottom = `${t * 100}%`;
-        });
-
-        setPressureListener((_code: string, value: number) => {
-            if (busy) return;
-            // 打鍵圧はプレビュー(フォーカス移動)のみ。確定は Enter(または既存のクリック)で行う。
-            // 何度でも打ち直して選び直せるようにする。
-            const index = LEVEL_INDEX_BY_PRESSURE[pressureLevel(value)];
-            applyFocus(index);
-            const card = cards[index];
-            card.classList.remove('kw-hit');
-            void card.offsetWidth; // アニメーションを再トリガーするための reflow
-            card.classList.add('kw-hit');
-        });
-    }
-
-    function cleanup() {
+    function cleanup(): void {
         document.removeEventListener('keydown', keyHandler);
         backBtn.remove();
-        if (isAnalog) {
-            clearPressureListener();
-            clearRawListener();
-        }
         disposeStage();
     }
+}
+
+// -----------------------------------------------------------------------
+// アナログキーボード用: ハンマー打撃力測定機風。スペースキーの打鍵圧だけで
+// 難易度を決める。1打鍵ごとに5秒の自動開始カウントダウンをリセットする。
+// -----------------------------------------------------------------------
+const HOLD_MS = 5000;
+const HIT_FLASH_MS = 400;
+const SEGMENTS_PER_BAND = 6;
+
+function showHammerLevelSelect(app: HTMLDivElement, options: LevelSelectOptions): void {
+    const { setPressureListener, clearPressureListener, clearRawListener, onSelect, onBack } = options;
+
+    const { stage, dispose: disposeStage } = createStage(app, {
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontFamily: FONT_DISPLAY,
+        gap: '1.4rem',
+    }, { fit: true, designW: 900, designH: 560 });
+
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes kw-keycap-hit {
+            0%   { transform: translateY(0); }
+            30%  { transform: translateY(6px); }
+            100% { transform: translateY(0); }
+        }
+        .kw-keycap.kw-hit { animation: kw-keycap-hit 0.18s ease-out; }
+        @keyframes kw-band-glow {
+            0%, 100% { filter: brightness(1); }
+            50%      { filter: brightness(1.35); }
+        }
+        .kw-band-label.kw-active { animation: kw-band-glow 0.6s ease-in-out infinite; }
+    `;
+    document.head.appendChild(style);
+
+    const heading = document.createElement('h2');
+    heading.textContent = 'レベルをえらぶ';
+    Object.assign(heading.style, {
+        fontSize: '2rem',
+        letterSpacing: '0.15em',
+        color: '#0891b2',
+        margin: '0',
+        userSelect: 'none',
+    });
+
+    const hint = document.createElement('p');
+    hint.textContent = 'スペースキーを打った強さで難易度が決まります';
+    Object.assign(hint.style, {
+        fontSize: '0.85rem',
+        color: '#94a3b8',
+        margin: '0',
+        fontFamily: 'system-ui, sans-serif',
+        userSelect: 'none',
+    });
+
+    // ── タワー本体: 上からHard/Normal/Easyの3バンド ────────────────
+    const towerRow = document.createElement('div');
+    Object.assign(towerRow.style, {
+        display: 'flex',
+        flexDirection: 'row',
+        alignItems: 'stretch',
+        gap: '1rem',
+        height: '260px',
+    });
+
+    const tower = document.createElement('div');
+    Object.assign(tower.style, {
+        display: 'flex',
+        flexDirection: 'column',
+        width: '90px',
+        borderRadius: '10px',
+        overflow: 'hidden',
+        background: 'rgba(15,23,42,0.05)',
+        padding: '4px',
+        gap: '4px',
+    });
+
+    const labelCol = document.createElement('div');
+    Object.assign(labelCol.style, {
+        display: 'flex',
+        flexDirection: 'column',
+    });
+
+    // 添字は LEVELS 基準(0=Easy, 1=Normal, 2=Hard)。上から Hard->Easy の順に組み立てる。
+    const bandSegments: HTMLDivElement[][] = [[], [], []];
+    const bandLabels: HTMLDivElement[] = [];
+
+    for (let levelIdx = 2; levelIdx >= 0; levelIdx--) {
+        const info = LEVELS[levelIdx];
+
+        const bandWrap = document.createElement('div');
+        Object.assign(bandWrap.style, { display: 'flex', flexDirection: 'column', flex: '1', gap: '2px' });
+        for (let s = 0; s < SEGMENTS_PER_BAND; s++) {
+            const seg = document.createElement('div');
+            Object.assign(seg.style, {
+                flex: '1',
+                borderRadius: '2px',
+                background: '#e2e8f0',
+                transition: 'background 0.15s ease',
+            });
+            bandSegments[levelIdx].push(seg);
+            bandWrap.appendChild(seg);
+        }
+        tower.appendChild(bandWrap);
+
+        const label = document.createElement('div');
+        label.className = 'kw-band-label';
+        label.textContent = info.label;
+        Object.assign(label.style, {
+            flex: '1',
+            display: 'flex',
+            alignItems: 'center',
+            fontSize: '1.1rem',
+            letterSpacing: '0.1em',
+            color: '#cbd5e1',
+            transition: 'color 0.15s ease, transform 0.15s ease',
+        });
+        bandLabels[levelIdx] = label;
+        labelCol.appendChild(label);
+    }
+
+    towerRow.appendChild(tower);
+    towerRow.appendChild(labelCol);
+
+    // ── キーキャップ(正面から見たスペースキー) ─────────────────────
+    const keycap = document.createElement('div');
+    keycap.className = 'kw-keycap';
+    Object.assign(keycap.style, {
+        width: '260px',
+        height: '64px',
+        borderRadius: '10px',
+        background: 'linear-gradient(to bottom, #f1f5f9, #cbd5e1)',
+        boxShadow: '0 6px 0 #94a3b8, inset 0 2px 0 rgba(255,255,255,0.6)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+    });
+    const keycapLabel = document.createElement('div');
+    keycapLabel.textContent = 'SPACE';
+    Object.assign(keycapLabel.style, {
+        fontSize: '1.3rem',
+        letterSpacing: '0.15em',
+        color: '#334155',
+        fontWeight: '700',
+    });
+    keycap.appendChild(keycapLabel);
+
+    // ── カウントダウンバー ──────────────────────────────────────
+    const countdownWrap = document.createElement('div');
+    Object.assign(countdownWrap.style, {
+        width: '420px',
+        height: '10px',
+        background: '#e2e8f0',
+        borderRadius: '5px',
+        overflow: 'hidden',
+        opacity: '0',
+        transition: 'opacity 0.2s',
+    });
+    const countdownFill = document.createElement('div');
+    Object.assign(countdownFill.style, {
+        height: '100%',
+        width: '100%',
+        background: '#0891b2',
+        borderRadius: '5px',
+    });
+    countdownWrap.appendChild(countdownFill);
+
+    const backBtn = document.createElement('button');
+    backBtn.textContent = '← もどる';
+    Object.assign(backBtn.style, {
+        position: 'fixed',
+        bottom: '1.5rem',
+        left: '1.5rem',
+        background: 'transparent',
+        border: 'none',
+        color: '#94a3b8',
+        fontFamily: FONT_DISPLAY,
+        fontSize: '0.85rem',
+        cursor: 'pointer',
+    });
+
+    stage.appendChild(heading);
+    stage.appendChild(towerRow);
+    stage.appendChild(keycap);
+    stage.appendChild(countdownWrap);
+    stage.appendChild(hint);
+    app.appendChild(backBtn);
+
+    // ── 状態 ──────────────────────────────────────────────────
+    let currentLevelIndex = -1; // 未確定(まだ一度も打鍵していない)
+    let busy = false;
+    let rafId: number | null = null;
+    let hitFlashTimer: number | null = null;
+
+    function applyLevel(index: number): void {
+        currentLevelIndex = index;
+        for (let i = 0; i < LEVELS.length; i++) {
+            const lit = i <= index;
+            bandSegments[i].forEach((seg) => { seg.style.background = lit ? LEVELS[i].color : '#e2e8f0'; });
+            bandLabels[i].style.color = lit ? LEVELS[i].color : '#cbd5e1';
+            bandLabels[i].style.transform = i === index ? 'scale(1.15)' : 'scale(1)';
+            bandLabels[i].classList.toggle('kw-active', i === index);
+        }
+    }
+
+    function flashHit(): void {
+        keycapLabel.textContent = 'HIT!!!';
+        keycap.classList.remove('kw-hit');
+        void keycap.offsetWidth; // アニメーション再トリガーのためのreflow
+        keycap.classList.add('kw-hit');
+        if (hitFlashTimer !== null) window.clearTimeout(hitFlashTimer);
+        hitFlashTimer = window.setTimeout(() => { keycapLabel.textContent = 'SPACE'; }, HIT_FLASH_MS);
+    }
+
+    function confirm(): void {
+        if (busy || currentLevelIndex < 0) return;
+        busy = true;
+        playLevelCutIn(app, LEVELS[currentLevelIndex], () => {
+            cleanup();
+            onSelect(LEVELS[currentLevelIndex].level);
+        });
+    }
+
+    function startCountdown(): void {
+        countdownWrap.style.opacity = '1';
+        if (rafId !== null) cancelAnimationFrame(rafId);
+        const start = performance.now();
+        const tick = (now: number) => {
+            const remain = Math.max(0, HOLD_MS - (now - start));
+            countdownFill.style.width = `${(remain / HOLD_MS) * 100}%`;
+            countdownFill.style.background = LEVELS[currentLevelIndex].color;
+            if (remain <= 0) { rafId = null; confirm(); return; }
+            rafId = requestAnimationFrame(tick);
+        };
+        rafId = requestAnimationFrame(tick);
+    }
+
+    function cleanup(): void {
+        if (rafId !== null) cancelAnimationFrame(rafId);
+        if (hitFlashTimer !== null) window.clearTimeout(hitFlashTimer);
+        backBtn.remove();
+        clearPressureListener();
+        clearRawListener();
+        disposeStage();
+    }
+
+    backBtn.addEventListener('click', () => {
+        if (busy) return;
+        busy = true;
+        cleanup();
+        onBack();
+    });
+
+    setPressureListener((code: string, value: number) => {
+        if (busy || code !== 'Space') return;
+        const index = LEVEL_INDEX_BY_PRESSURE[pressureLevel(value)];
+        applyLevel(index);
+        flashHit();
+        startCountdown();
+    });
 }
