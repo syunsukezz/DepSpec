@@ -45,3 +45,12 @@ export function recordScore(entry: RankingEntry): RankingEntry[] {
     saveAll(entries);
     return entries;
 }
+
+/** この端末内のランキングを全て消去する */
+export function clearRanking(): void {
+    try {
+        localStorage.removeItem(STORAGE_KEY);
+    } catch {
+        // プライベートモード等で localStorage が使えない場合は諦める
+    }
+}

@@ -2,7 +2,7 @@ import type { GameResult } from './gameScreen';
 import { normalizeN, pressureLevel, type PressureLevel } from './phrases';
 import { createStage } from './stage';
 import { FONT_DISPLAY, PRESS_LEVEL_COLOR } from './theme';
-import { recordScore, type RankingEntry } from './ranking';
+import { recordScore, clearRanking, type RankingEntry } from './ranking';
 import { appendStyledName } from './playerName';
 
 // 称号の閾値（調整可能）
@@ -68,45 +68,102 @@ function renderRanking(stage: HTMLDivElement, ranking: RankingEntry[], current: 
         fontFamily: 'system-ui, sans-serif',
     });
 
+    const headRow = document.createElement('div');
+    headRow.style.cssText = 'display:flex; align-items:center; justify-content:space-between;';
+
     const head = document.createElement('div');
     head.textContent = 'ランキング（この端末内）';
     head.style.cssText = 'font-size:0.8rem; color:#94a3b8; letter-spacing:0.1em;';
-    wrap.appendChild(head);
 
-    ranking.slice(0, 5).forEach((entry, i) => {
-        const isCurrent = entry === current;
+    // リセットボタン。誤操作防止のため一度押しただけでは消さず、確認状態を経てから実行する
+    // （window.confirm はフルスクリーンを解除してしまうため使わない）
+    const resetBtn = document.createElement('button');
+    resetBtn.textContent = 'リセット';
+    Object.assign(resetBtn.style, {
+        background: 'transparent',
+        border: 'none',
+        color: '#cbd5e1',
+        fontFamily: 'system-ui, sans-serif',
+        fontSize: '0.7rem',
+        cursor: 'pointer',
+        padding: '0.1rem 0.4rem',
+        transition: 'color 0.2s',
+    });
 
-        const row = document.createElement('div');
-        row.style.cssText =
-            'display:flex; align-items:center; gap:0.6rem; padding:0.25rem 0.6rem; border-radius:6px;' +
-            (isCurrent ? 'background:#ecfeff; border:1px solid #0891b2;' : '');
+    headRow.appendChild(head);
+    headRow.appendChild(resetBtn);
+    wrap.appendChild(headRow);
 
-        const rank = document.createElement('span');
-        rank.textContent = `${i + 1}`;
-        rank.style.cssText = `width:1.6rem; text-align:center; font-family:${FONT_DISPLAY}; color:#0891b2; font-size:0.95rem;`;
+    const list = document.createElement('div');
+    list.style.cssText = 'display:flex; flex-direction:column; gap:0.35rem;';
+    wrap.appendChild(list);
 
-        const nm = document.createElement('span');
-        nm.style.cssText = `width:5.5rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:0.85rem; color:${isCurrent ? '#0e7490' : '#334155'};`;
-        if (entry.name.length === 0) {
-            nm.textContent = '名無し';
-            nm.style.fontFamily = 'system-ui, sans-serif';
-        } else {
-            appendStyledName(nm, entry.name);
+    function renderRows(entries: RankingEntry[]): void {
+        list.innerHTML = '';
+        if (entries.length === 0) {
+            const empty = document.createElement('div');
+            empty.textContent = '記録がありません';
+            empty.style.cssText = 'font-size:0.8rem; color:#cbd5e1; padding:0.25rem 0.6rem;';
+            list.appendChild(empty);
+            return;
         }
+        entries.slice(0, 5).forEach((entry, i) => {
+            const isCurrent = entry === current;
 
-        const sc = document.createElement('span');
-        sc.textContent = `${entry.score} pt`;
-        sc.style.cssText = `flex:1; font-size:0.9rem; color:${isCurrent ? '#0e7490' : '#334155'}; font-weight:${isCurrent ? '700' : '400'};`;
+            const row = document.createElement('div');
+            row.style.cssText =
+                'display:flex; align-items:center; gap:0.6rem; padding:0.25rem 0.6rem; border-radius:6px;' +
+                (isCurrent ? 'background:#ecfeff; border:1px solid #0891b2;' : '');
 
-        const tag = document.createElement('span');
-        tag.textContent = `${entry.mode === 'analog' ? 'アナログ' : '通常'} / ${entry.level}`;
-        tag.style.cssText = 'font-size:0.75rem; color:#94a3b8;';
+            const rank = document.createElement('span');
+            rank.textContent = `${i + 1}`;
+            rank.style.cssText = `width:1.6rem; text-align:center; font-family:${FONT_DISPLAY}; color:#0891b2; font-size:0.95rem;`;
 
-        row.appendChild(rank);
-        row.appendChild(nm);
-        row.appendChild(sc);
-        row.appendChild(tag);
-        wrap.appendChild(row);
+            const nm = document.createElement('span');
+            nm.style.cssText = `width:5.5rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:0.85rem; color:${isCurrent ? '#0e7490' : '#334155'};`;
+            if (entry.name.length === 0) {
+                nm.textContent = '名無し';
+                nm.style.fontFamily = 'system-ui, sans-serif';
+            } else {
+                appendStyledName(nm, entry.name);
+            }
+
+            const sc = document.createElement('span');
+            sc.textContent = `${entry.score} pt`;
+            sc.style.cssText = `flex:1; font-size:0.9rem; color:${isCurrent ? '#0e7490' : '#334155'}; font-weight:${isCurrent ? '700' : '400'};`;
+
+            const tag = document.createElement('span');
+            tag.textContent = `${entry.mode === 'analog' ? 'アナログ' : '通常'} / ${entry.level}`;
+            tag.style.cssText = 'font-size:0.75rem; color:#94a3b8;';
+
+            row.appendChild(rank);
+            row.appendChild(nm);
+            row.appendChild(sc);
+            row.appendChild(tag);
+            list.appendChild(row);
+        });
+    }
+    renderRows(ranking);
+
+    let confirming = false;
+    let confirmTimer: ReturnType<typeof setTimeout> | undefined;
+    function resetConfirmState(): void {
+        confirming = false;
+        clearTimeout(confirmTimer);
+        resetBtn.textContent = 'リセット';
+        resetBtn.style.color = '#cbd5e1';
+    }
+    resetBtn.addEventListener('click', () => {
+        if (!confirming) {
+            confirming = true;
+            resetBtn.textContent = '本当に消す？';
+            resetBtn.style.color = PRESS_LEVEL_COLOR.strong;
+            confirmTimer = setTimeout(resetConfirmState, 3000); // 一定時間で確認状態を解除（誤操作防止）
+            return;
+        }
+        resetConfirmState();
+        clearRanking();
+        renderRows([]);
     });
 
     stage.appendChild(wrap);
