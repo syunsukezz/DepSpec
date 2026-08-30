@@ -175,6 +175,9 @@ export function showStartScreen(app: HTMLDivElement, options: StartOptions): voi
         } else {
             document.exitFullscreen().catch(() => {});
         }
+        // クリック後もボタンにフォーカスが残ると、次のEnterキー押下がこのボタンへの
+        // ネイティブclickとして合成され、意図せずtoggleFsが再度呼ばれてしまう
+        fsBtn.blur();
     };
     fsBtn.addEventListener('click', toggleFs);
     document.addEventListener('fullscreenchange', updateFsLabel);

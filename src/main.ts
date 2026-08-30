@@ -16,6 +16,10 @@ import type { NameChar } from "./playerName";
 const app = document.getElementById("app") as HTMLDivElement;
 if (!app) throw new Error("App element not found");
 
+// 右クリック・メニューキーによるブラウザのネイティブコンテキストメニューを
+// 全画面共通で抑制する（誤操作でメニューキーを押しても画面が乱れないように）
+document.addEventListener('contextmenu', (e) => e.preventDefault());
+
 // ── リスナー管理 ─────────────────────────────────────────────────────────
 type KeyListener = (code: string, value: number) => void;
 let pressureListener: KeyListener | null = null;
