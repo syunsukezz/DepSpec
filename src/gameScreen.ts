@@ -584,10 +584,6 @@ export function showGameScreen(
         }
     }
 
-    // コンテキストメニュー抑制
-    const contextMenuHandler = (e: MouseEvent | Event) => e.preventDefault();
-    document.addEventListener('contextmenu', contextMenuHandler);
-
     // ── 入力処理（1打鍵ぶんの判定・フィードバック・表示更新）──
     // key: 小文字1文字, pressure: その打鍵の検圧値
     function processInput(key: string, pressure: number) {
@@ -673,7 +669,6 @@ export function showGameScreen(
     // ── 後片付け ──────────────────────────────────────
     function cleanup() {
         document.removeEventListener('keydown', keydownHandler);
-        document.removeEventListener('contextmenu', contextMenuHandler);
         pressureMeter?.dispose();
         pressureGraph?.dispose();
         disposeStage();
