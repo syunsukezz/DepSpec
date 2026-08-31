@@ -234,7 +234,7 @@ export function showGameScreen(
     // ひらがな表示は廃止したため、これがプレイヤーが読むメインの参照テキストになる。
     // そのため小さな補助表示ではなく、はっきり読める大きさで表示する。
     const sourceTextRow = document.createElement('div');
-    sourceTextRow.style.cssText = 'font-size:2rem; font-weight:600; color:#334155; font-family:system-ui,sans-serif; line-height:1.4;';
+    sourceTextRow.style.cssText = 'display:flex; flex-wrap:wrap; align-items:flex-end; font-size:2rem; font-weight:600; color:#334155; font-family:system-ui,sans-serif; line-height:1.4;';
 
     const romRow = document.createElement('div');
     romRow.style.cssText = "display:flex; align-items:flex-end; flex-wrap:wrap; font-family:'Audiowide',monospace; letter-spacing:0.03em;";
@@ -308,7 +308,33 @@ export function showGameScreen(
 
         // ── 漢字混じりの原文（表示専用・フレーズ全体を静的に出すだけ）──
         // ひらがな表示は廃止したため、これがプレイヤーにとってのメイン参照テキストになる。
-        sourceTextRow.textContent = phrase.displayText;
+        // ローマ字欄と同様、強く(▲)/弱く(▼)の指定文字にはマークを1文字ずつ付ける。
+        sourceTextRow.innerHTML = '';
+        [...phrase.displayText].forEach((ch, i) => {
+            const wrapper = document.createElement('div');
+            wrapper.style.cssText = 'display:flex; flex-direction:column; align-items:center;';
+
+            const instruction = phrase.displayTargets[i];
+            const iconEl = document.createElement('span');
+            if (instruction === 'strong' || instruction === 'weak') {
+                const label = INSTRUCTION_LABEL[instruction];
+                iconEl.textContent = label.symbol;
+                iconEl.style.cssText = `font-size:1.4rem; color:${label.color}; font-weight:bold; line-height:1.2;`;
+            } else {
+                iconEl.innerHTML = '&nbsp;';
+                iconEl.style.cssText = 'font-size:1.4rem; line-height:1.2;';
+            }
+
+            // 文字自体には color を明示しない。flashMiss() が親要素の color を
+            // 赤くフラッシュさせる演出をしており、子要素で色を上書きすると継承が切れて効かなくなる。
+            const charEl = document.createElement('span');
+            charEl.textContent = ch;
+            charEl.style.cssText = 'line-height:1.4;';
+
+            wrapper.appendChild(iconEl);
+            wrapper.appendChild(charEl);
+            sourceTextRow.appendChild(wrapper);
+        });
 
         // ── ローマ字: メインの大きい表示（ターゲットのローマ字にマーク）──
         romRow.innerHTML = '';

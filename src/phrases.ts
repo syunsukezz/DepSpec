@@ -23,14 +23,17 @@ export function pressureLevel(n: number): PressureLevel {
 export interface PhraseData {
     text: string;               // ひらがな(タイピング用)
     displayText: string;        // 漢字混じり文(表示専用。タイピングには使わない)
-    // ローマ字(キー)の位置(0-based) -> 強/普通/弱。sentences.ts の "かな/マーク" 表記
-    // (pressureSpec.ts) をパースしたもの。マークの無い区間は targets に含まれない。
+    // ローマ字(キー)の位置(0-based) -> 強/普通/弱。sentences.json のセグメントを
+    // sentences.ts でパースしたもの。マークの無い区間は targets に含まれない。
     targets: Record<number, PressureInstruction>;
+    // displayText の文字位置(0-based) -> 強/普通/弱。targets と同じセグメントから、
+    // 漢字混じり文の文字位置基準で作ったもの(sourceTextRow のマーク表示用)。
+    displayTargets: Record<number, PressureInstruction>;
     charPressures: Record<number, number>; // ひらがな完了時の打鍵圧 (index -> N)
     keyPressures: Record<number, number>; // ローマ字キー完了時の打鍵圧 (キー番号 -> N。ローマ字表示のフォント切り替え用)
 }
 
-// 台本には場面ごとの流れがあるため、ランダムではなく WORD_LISTS に登録された順番で
+// 台本には場面ごとの流れがあるため、ランダムではなく sentences.json に登録された順番で
 // 出題する。レベルごとに次に出す位置を覚えておき、末尾まで行ったら先頭に戻る。
 const phraseCursor: Record<Level, number> = { Easy: 0, Normal: 0, Hard: 0 };
 
@@ -40,14 +43,21 @@ export function resetPhraseSequence(level: Level): void {
 }
 
 /**
- * @param level 出題するフレーズの難易度（sentences.ts の Easy/Normal/Hard）
- * targets は sentences.ts の WORD_LISTS に埋め込まれた指定をパースしたものをそのまま使う。
+ * @param level 出題するフレーズの難易度（sentences.json の Easy/Normal/Hard）
+ * targets/displayTargets は sentences.json のセグメントを sentences.ts でパースしたものをそのまま使う。
  */
 export function generatePhrase(level: Level = 'Easy'): PhraseData {
     const pool = SENTENCES[level].phrases;
     const seed = pool[phraseCursor[level]];
     phraseCursor[level] = (phraseCursor[level] + 1) % pool.length;
-    return { text: seed.text, displayText: seed.displayText, targets: { ...seed.targets }, charPressures: {}, keyPressures: {} };
+    return {
+        text: seed.text,
+        displayText: seed.displayText,
+        targets: { ...seed.targets },
+        displayTargets: { ...seed.displayTargets },
+        charPressures: {},
+        keyPressures: {},
+    };
 }
 
 /**
