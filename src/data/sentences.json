@@ -1,0 +1,1804 @@
+{
+  "Easy": [
+    {
+      "segments": [
+        {
+          "kanji": "企画部の",
+          "kana": "きかくぶの",
+          "mark": "normal"
+        },
+        {
+          "kanji": "吉田",
+          "kana": "よしだ",
+          "mark": "strong"
+        },
+        {
+          "kanji": "から",
+          "kana": "から",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "仮称記録",
+          "kana": "かしょうきろく",
+          "mark": "normal"
+        },
+        {
+          "kanji": "ペン",
+          "kana": "ぺん",
+          "mark": "strong"
+        },
+        {
+          "kanji": "について",
+          "kana": "について",
+          "mark": "normal"
+        },
+        {
+          "kanji": "説明",
+          "kana": "せつめい",
+          "mark": "weak"
+        },
+        {
+          "kanji": "いたします",
+          "kana": "いたします",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "突然",
+          "kana": "とつぜん",
+          "mark": "strong"
+        },
+        {
+          "kanji": "ですが",
+          "kana": "ですが",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "この中で",
+          "kana": "このなかで",
+          "mark": "normal"
+        },
+        {
+          "kanji": "資格",
+          "kana": "しかく",
+          "mark": "strong"
+        },
+        {
+          "kanji": "勉強を",
+          "kana": "べんきょうを",
+          "mark": "normal"
+        },
+        {
+          "kanji": "始めた",
+          "kana": "はじめた",
+          "mark": "weak"
+        },
+        {
+          "kanji": "よという方",
+          "kana": "よというかた",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "手を",
+          "kana": "てを",
+          "mark": "normal"
+        },
+        {
+          "kanji": "挙げて",
+          "kana": "あげて",
+          "mark": "strong"
+        },
+        {
+          "kanji": "みてください",
+          "kana": "みてください",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "たくさん",
+          "kana": "たくさん",
+          "mark": "strong"
+        },
+        {
+          "kanji": "いらっしゃいますね",
+          "kana": "いらっしゃいますね",
+          "mark": "normal"
+        },
+        {
+          "kanji": "さすが",
+          "kana": "さすが",
+          "mark": "weak"
+        },
+        {
+          "kanji": "です",
+          "kana": "です",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "まだ",
+          "kana": "まだ",
+          "mark": "normal"
+        },
+        {
+          "kanji": "続いて",
+          "kana": "つづいて",
+          "mark": "weak"
+        },
+        {
+          "kanji": "いるよーという方",
+          "kana": "いるよーというかた",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "そうですよね",
+          "kana": "そうですよね",
+          "mark": "normal"
+        },
+        {
+          "kanji": "なかなか",
+          "kana": "なかなか",
+          "mark": "strong"
+        },
+        {
+          "kanji": "続かない",
+          "kana": "つづかない",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "そこで",
+          "kana": "そこで",
+          "mark": "normal"
+        },
+        {
+          "kanji": "我々",
+          "kana": "われわれ",
+          "mark": "strong"
+        },
+        {
+          "kanji": "が",
+          "kana": "が",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "提案",
+          "kana": "ていあん",
+          "mark": "strong"
+        },
+        {
+          "kanji": "したいのがこの",
+          "kana": "したいのがこの",
+          "mark": "normal"
+        },
+        {
+          "kanji": "ペン",
+          "kana": "ぺん",
+          "mark": "strong"
+        },
+        {
+          "kanji": "です",
+          "kana": "です",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "この",
+          "kana": "この",
+          "mark": "normal"
+        },
+        {
+          "kanji": "ペンは",
+          "kana": "ぺんは",
+          "mark": "strong"
+        },
+        {
+          "kanji": "内蔵のIMUから",
+          "kana": "ないぞうのimuから",
+          "mark": "normal"
+        },
+        {
+          "kanji": "勉強",
+          "kana": "べんきょう",
+          "mark": "strong"
+        },
+        {
+          "kanji": "時間や",
+          "kana": "じかんや",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "書いた",
+          "kana": "かいた",
+          "mark": "normal"
+        },
+        {
+          "kanji": "内容",
+          "kana": "ないよう",
+          "mark": "weak"
+        },
+        {
+          "kanji": "をログに起こし",
+          "kana": "をろぐにおこし",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "クラウドに",
+          "kana": "くらうどに",
+          "mark": "normal"
+        },
+        {
+          "kanji": "保存",
+          "kana": "ほぞん",
+          "mark": "strong"
+        },
+        {
+          "kanji": "できます",
+          "kana": "できます",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "この機能で毎日の",
+          "kana": "このきのうでまいにちの",
+          "mark": "normal"
+        },
+        {
+          "kanji": "勉強",
+          "kana": "べんきょう",
+          "mark": "strong"
+        },
+        {
+          "kanji": "量を",
+          "kana": "りょうを",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "見える化",
+          "kana": "みえるか",
+          "mark": "strong"
+        },
+        {
+          "kanji": "できます",
+          "kana": "できます",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "これによって",
+          "kana": "これによって",
+          "mark": "normal"
+        },
+        {
+          "kanji": "勉強",
+          "kana": "べんきょう",
+          "mark": "strong"
+        },
+        {
+          "kanji": "を",
+          "kana": "を",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "習慣",
+          "kana": "しゅうかん",
+          "mark": "strong"
+        },
+        {
+          "kanji": "づけできるというのが",
+          "kana": "づけできるというのが",
+          "mark": "normal"
+        },
+        {
+          "kanji": "狙い",
+          "kana": "ねらい",
+          "mark": "weak"
+        },
+        {
+          "kanji": "です",
+          "kana": "です",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "当店はこの夏",
+          "kana": "とうてんはこのなつ",
+          "mark": "normal"
+        },
+        {
+          "kanji": "エアコン",
+          "kana": "えあこん",
+          "mark": "strong"
+        },
+        {
+          "kanji": "が",
+          "kana": "が",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "20",
+          "kana": "20",
+          "mark": "normal"
+        },
+        {
+          "kanji": "%",
+          "kana": "ぱーせんと",
+          "mark": "strong"
+        },
+        {
+          "kanji": "オフ",
+          "kana": "おふ",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "20%",
+          "kana": "20ぱーせんと",
+          "mark": "normal"
+        },
+        {
+          "kanji": "オフ",
+          "kana": "おふ",
+          "mark": "weak"
+        },
+        {
+          "kanji": "でございます",
+          "kana": "でございます",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "エアフィール",
+          "kana": "えあふぃーる",
+          "mark": "strong"
+        },
+        {
+          "kanji": "は45000円で",
+          "kana": "は45000えんで",
+          "mark": "normal"
+        },
+        {
+          "kanji": "工事",
+          "kana": "こうじ",
+          "mark": "strong"
+        },
+        {
+          "kanji": "まで行えます",
+          "kana": "までおこなえます",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "今だけの",
+          "kana": "いまだけの",
+          "mark": "normal"
+        },
+        {
+          "kanji": "特別",
+          "kana": "とくべつ",
+          "mark": "strong"
+        },
+        {
+          "kanji": "価格",
+          "kana": "かかく",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "売り切れ",
+          "kana": "うりきれ",
+          "mark": "strong"
+        },
+        {
+          "kanji": "次第終了です",
+          "kana": "しだいしゅうりょうです",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "お急ぎ",
+          "kana": "おいそぎ",
+          "mark": "strong"
+        },
+        {
+          "kanji": "ください",
+          "kana": "ください",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "そこの",
+          "kana": "そこの",
+          "mark": "normal"
+        },
+        {
+          "kanji": "お客様",
+          "kana": "おきゃくさま",
+          "mark": "strong"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "なんですか",
+          "kana": "なんですか",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "この",
+          "kana": "この",
+          "mark": "normal"
+        },
+        {
+          "kanji": "商品",
+          "kana": "しょうひん",
+          "mark": "strong"
+        },
+        {
+          "kanji": "でしたら向かいの",
+          "kana": "でしたらむかいの",
+          "mark": "normal"
+        },
+        {
+          "kanji": "催事場",
+          "kana": "さいじじょう",
+          "mark": "weak"
+        },
+        {
+          "kanji": "で",
+          "kana": "で",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "お見積り",
+          "kana": "おみつもり",
+          "mark": "strong"
+        },
+        {
+          "kanji": "が可能です",
+          "kana": "がかのうです",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "すいません",
+          "kana": "すいません",
+          "mark": "weak"
+        },
+        {
+          "kanji": "見てるだけなのでちょっと",
+          "kana": "みてるだけなのでちょっと",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "そうでしたか",
+          "kana": "そうでしたか",
+          "mark": "normal"
+        },
+        {
+          "kanji": "ごゆっくり",
+          "kana": "ごゆっくり",
+          "mark": "weak"
+        },
+        {
+          "kanji": "どうぞ",
+          "kana": "どうぞ",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "ナポレオン",
+          "kana": "なぽれおん",
+          "mark": "strong"
+        },
+        {
+          "kanji": "が島流しになった後各国では",
+          "kana": "がしまながしになったあとかっこくでは",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "ナポレオン",
+          "kana": "なぽれおん",
+          "mark": "normal"
+        },
+        {
+          "kanji": "以前",
+          "kana": "いぜん",
+          "mark": "strong"
+        },
+        {
+          "kanji": "の政治体制に",
+          "kana": "のせいじたいせいに",
+          "mark": "normal"
+        },
+        {
+          "kanji": "回帰",
+          "kana": "かいき",
+          "mark": "strong"
+        },
+        {
+          "kanji": "する動きがありました",
+          "kana": "するうごきがありました",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "フランス",
+          "kana": "ふらんす",
+          "mark": "strong"
+        },
+        {
+          "kanji": "はどんな政治体制になったか",
+          "kana": "はどんなせいじたいせいになったか",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "先週",
+          "kana": "せんしゅう",
+          "mark": "strong"
+        },
+        {
+          "kanji": "の授業をちゃんと聞いていればわかるはずです",
+          "kana": "のじゅぎょうをちゃんときいていればわかるはずです",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "わかった",
+          "kana": "わかった",
+          "mark": "weak"
+        },
+        {
+          "kanji": "人は手を挙げて",
+          "kana": "ひとはてをあげて",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "そうです",
+          "kana": "そうです",
+          "mark": "normal"
+        },
+        {
+          "kanji": "王政復古",
+          "kana": "おうせいふっこ",
+          "mark": "strong"
+        },
+        {
+          "kanji": "ですね",
+          "kana": "ですね",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "よく",
+          "kana": "よく",
+          "mark": "normal"
+        },
+        {
+          "kanji": "覚えて",
+          "kana": "おぼえて",
+          "mark": "weak"
+        },
+        {
+          "kanji": "いました",
+          "kana": "いました",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "ウィーン",
+          "kana": "うぃーん",
+          "mark": "strong"
+        },
+        {
+          "kanji": "会議を経てヨーロッパの",
+          "kana": "かいぎをへてよーろっぱの",
+          "mark": "normal"
+        },
+        {
+          "kanji": "国境",
+          "kana": "こっきょう",
+          "mark": "strong"
+        },
+        {
+          "kanji": "は大きく",
+          "kana": "はおおきく",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "塗り替え",
+          "kana": "ぬりかえ",
+          "mark": "strong"
+        },
+        {
+          "kanji": "られました",
+          "kana": "られました",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "ではこの",
+          "kana": "ではこの",
+          "mark": "normal"
+        },
+        {
+          "kanji": "地図",
+          "kana": "ちず",
+          "mark": "strong"
+        },
+        {
+          "kanji": "を見てください",
+          "kana": "をみてください",
+          "mark": null
+        }
+      ]
+    }
+  ],
+  "Normal": [
+    {
+      "segments": [
+        {
+          "kanji": "本日は",
+          "kana": "ほんじつは",
+          "mark": "normal"
+        },
+        {
+          "kanji": "お時間",
+          "kana": "おじかん",
+          "mark": "weak"
+        },
+        {
+          "kanji": "をいただきありがとうございます",
+          "kana": "をいただきありがとうございます",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "現在御社ではどのような",
+          "kana": "げんざいおんしゃではどのような",
+          "mark": "normal"
+        },
+        {
+          "kanji": "課題",
+          "kana": "かだい",
+          "mark": "strong"
+        },
+        {
+          "kanji": "をお持ちでしょうか",
+          "kana": "をおもちでしょうか",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "なるほど",
+          "kana": "なるほど",
+          "mark": "normal"
+        },
+        {
+          "kanji": "人手不足",
+          "kana": "ひとでぶそく",
+          "mark": "strong"
+        },
+        {
+          "kanji": "と業務の属人化が",
+          "kana": "とぎょうむのぞくじんかが",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "問題",
+          "kana": "もんだい",
+          "mark": "weak"
+        },
+        {
+          "kanji": "なんですね",
+          "kana": "なんですね",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "実はそこに弊社の",
+          "kana": "じつはそこにへいしゃの",
+          "mark": "normal"
+        },
+        {
+          "kanji": "サービス",
+          "kana": "さーびす",
+          "mark": "strong"
+        },
+        {
+          "kanji": "がぴったりはまります",
+          "kana": "がぴったりはまります",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "導入後3ヶ月で",
+          "kana": "どうにゅうご3かげつで",
+          "mark": "normal"
+        },
+        {
+          "kanji": "業務工数",
+          "kana": "ぎょうむこうすう",
+          "mark": "strong"
+        },
+        {
+          "kanji": "を",
+          "kana": "を",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "平均40%",
+          "kana": "へいきん40ぱーせんと",
+          "mark": "normal"
+        },
+        {
+          "kanji": "削減",
+          "kana": "さくげん",
+          "mark": "strong"
+        },
+        {
+          "kanji": "した",
+          "kana": "した",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "実績",
+          "kana": "じっせき",
+          "mark": "strong"
+        },
+        {
+          "kanji": "があります",
+          "kana": "があります",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "今が導入の",
+          "kana": "いまがどうにゅうの",
+          "mark": "normal"
+        },
+        {
+          "kanji": "ベストタイミング",
+          "kana": "べすとたいみんぐ",
+          "mark": "strong"
+        },
+        {
+          "kanji": "ですぜひ",
+          "kana": "ですぜひ",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "ご",
+          "kana": "ご",
+          "mark": "normal"
+        },
+        {
+          "kanji": "検討",
+          "kana": "けんとう",
+          "mark": "strong"
+        },
+        {
+          "kanji": "ください",
+          "kana": "ください",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "ご不明点",
+          "kana": "ごふめいてん",
+          "mark": "weak"
+        },
+        {
+          "kanji": "はいつでもご連絡ください",
+          "kana": "はいつでもごれんらくください",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "本研究では",
+          "kana": "ほんけんきゅうでは",
+          "mark": "normal"
+        },
+        {
+          "kanji": "打鍵圧",
+          "kana": "だけんあつ",
+          "mark": "strong"
+        },
+        {
+          "kanji": "データを用いた",
+          "kana": "でーたをもちいた",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "ユーザ",
+          "kana": "ゆーざ",
+          "mark": "normal"
+        },
+        {
+          "kanji": "特性",
+          "kana": "とくせい",
+          "mark": "strong"
+        },
+        {
+          "kanji": "の分析を行いました",
+          "kana": "のぶんせきをおこないました",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "既存のキーボードは",
+          "kana": "きぞんのきーぼーどは",
+          "mark": "normal"
+        },
+        {
+          "kanji": "打鍵",
+          "kana": "だけん",
+          "mark": "strong"
+        },
+        {
+          "kanji": "の有無しか検出できず",
+          "kana": "のうむしかけんしゅつできず",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "圧力",
+          "kana": "あつりょく",
+          "mark": "weak"
+        },
+        {
+          "kanji": "情報は捨てられていました",
+          "kana": "じょうほうはすてられていました",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "そこで本研究では",
+          "kana": "そこでほんけんきゅうでは",
+          "mark": "normal"
+        },
+        {
+          "kanji": "打鍵圧",
+          "kana": "だけんあつ",
+          "mark": "strong"
+        },
+        {
+          "kanji": "をリアルタイムで",
+          "kana": "をりあるたいむで",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "取得・活用するシステムを",
+          "kana": "しゅとくかつようするしすてむを",
+          "mark": "normal"
+        },
+        {
+          "kanji": "提案",
+          "kana": "ていあん",
+          "mark": "strong"
+        },
+        {
+          "kanji": "します",
+          "kana": "します",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "実験では",
+          "kana": "じっけんでは",
+          "mark": "normal"
+        },
+        {
+          "kanji": "被験者",
+          "kana": "ひけんしゃ",
+          "mark": "strong"
+        },
+        {
+          "kanji": "20名に様々な",
+          "kana": "20めいにさまざまな",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "タイピング",
+          "kana": "たいぴんぐ",
+          "mark": "strong"
+        },
+        {
+          "kanji": "タスクを実施しました",
+          "kana": "たすくをじっししました",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "結果として打鍵圧の",
+          "kana": "けっかとしてだけんあつの",
+          "mark": "normal"
+        },
+        {
+          "kanji": "強弱",
+          "kana": "きょうじゃく",
+          "mark": "strong"
+        },
+        {
+          "kanji": "は",
+          "kana": "は",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "感情",
+          "kana": "かんじょう",
+          "mark": "strong"
+        },
+        {
+          "kanji": "状態や集中度と有意な相関を",
+          "kana": "じょうたいやしゅうちゅうどとゆういなそうかんを",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "示し",
+          "kana": "しめし",
+          "mark": "weak"
+        },
+        {
+          "kanji": "ました",
+          "kana": "ました",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "この知見は次世代の",
+          "kana": "このちけんはじせだいの",
+          "mark": "normal"
+        },
+        {
+          "kanji": "インタラクション",
+          "kana": "いんたらくしょん",
+          "mark": "strong"
+        },
+        {
+          "kanji": "設計に大きく",
+          "kana": "せっけいにおおきく",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "貢献",
+          "kana": "こうけん",
+          "mark": "strong"
+        },
+        {
+          "kanji": "できると考えています",
+          "kana": "できるとかんがえています",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "以上で",
+          "kana": "いじょうで",
+          "mark": "normal"
+        },
+        {
+          "kanji": "発表",
+          "kana": "はっぴょう",
+          "mark": "weak"
+        },
+        {
+          "kanji": "を終わりますご清聴",
+          "kana": "をおわりますごせいちょう",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "ありがとう",
+          "kana": "ありがとう",
+          "mark": "weak"
+        },
+        {
+          "kanji": "ございました",
+          "kana": "ございました",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "はーい",
+          "kana": "はーい",
+          "mark": "strong"
+        },
+        {
+          "kanji": "どうもーチャンネル登録者100万人記念",
+          "kana": "どうもーちゃんねるとうろくしゃ100まんにんきねん",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "やっていく",
+          "kana": "やっていく",
+          "mark": "strong"
+        },
+        {
+          "kanji": "ぞー",
+          "kana": "ぞー",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "チャンネル登録と",
+          "kana": "ちゃんねるとうろくと",
+          "mark": "normal"
+        },
+        {
+          "kanji": "高評価",
+          "kana": "こうひょうか",
+          "mark": "strong"
+        },
+        {
+          "kanji": "ボタン",
+          "kana": "ぼたん",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "よろしくお願いします",
+          "kana": "よろしくおねがいします",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "じゃあ",
+          "kana": "じゃあ",
+          "mark": "normal"
+        },
+        {
+          "kanji": "早速",
+          "kana": "さっそく",
+          "mark": "strong"
+        },
+        {
+          "kanji": "今日はこれをやりますどうですか",
+          "kana": "きょうはこれをやりますどうですか",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "やばく",
+          "kana": "やばく",
+          "mark": "strong"
+        },
+        {
+          "kanji": "ないですか",
+          "kana": "ないですか",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "えちょっと待ってこれ",
+          "kana": "えちょっとまってこれ",
+          "mark": "normal"
+        },
+        {
+          "kanji": "すごく",
+          "kana": "すごく",
+          "mark": "weak"
+        },
+        {
+          "kanji": "ない",
+          "kana": "ない",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "ということで今回は",
+          "kana": "ということでこんかいは",
+          "mark": "normal"
+        },
+        {
+          "kanji": "全力",
+          "kana": "ぜんりょく",
+          "mark": "strong"
+        },
+        {
+          "kanji": "でやっていきます",
+          "kana": "でやっていきます",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "最後まで見てくれて",
+          "kana": "さいごまでみてくれて",
+          "mark": "normal"
+        },
+        {
+          "kanji": "ありがとう",
+          "kana": "ありがとう",
+          "mark": "weak"
+        },
+        {
+          "kanji": "また次の動画で",
+          "kana": "またつぎのどうがで",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "お会い",
+          "kana": "おあい",
+          "mark": "weak"
+        },
+        {
+          "kanji": "しましょう",
+          "kana": "しましょう",
+          "mark": null
+        }
+      ]
+    }
+  ],
+  "Hard": [
+    {
+      "segments": [
+        {
+          "kanji": "皆さん",
+          "kana": "みなさん",
+          "mark": "weak"
+        },
+        {
+          "kanji": "今日はここに集まっていただきありがとうございます",
+          "kana": "きょうはここにあつまっていただきありがとうございます",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "私がお伝えしたいことは",
+          "kana": "わたしがおつたえしたいことは",
+          "mark": "normal"
+        },
+        {
+          "kanji": "たったひとつ",
+          "kana": "たったひとつ",
+          "mark": "strong"
+        },
+        {
+          "kanji": "です",
+          "kana": "です",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "変わらなければ",
+          "kana": "かわらなければ",
+          "mark": "strong"
+        },
+        {
+          "kanji": "ならない今すぐ",
+          "kana": "ならないいますぐ",
+          "mark": "strong"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "このままで",
+          "kana": "このままで",
+          "mark": "strong"
+        },
+        {
+          "kanji": "いいわけがない10年前と何が",
+          "kana": "いいわけがない10ねんまえとなにが",
+          "mark": "normal"
+        },
+        {
+          "kanji": "変わりましたか",
+          "kana": "かわりましたか",
+          "mark": "weak"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "変えたくても",
+          "kana": "かえたくても",
+          "mark": "normal"
+        },
+        {
+          "kanji": "変えられなかった",
+          "kana": "かえられなかった",
+          "mark": "weak"
+        },
+        {
+          "kanji": "そう感じている人もいるでしょう",
+          "kana": "そうかんじているひともいるでしょう",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "でも",
+          "kana": "でも",
+          "mark": "normal"
+        },
+        {
+          "kanji": "変えられます",
+          "kana": "かえられます",
+          "mark": "strong"
+        },
+        {
+          "kanji": "ここにいる皆さんがいるからです",
+          "kana": "ここにいるみなさんがいるからです",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "立ち上がって",
+          "kana": "たちあがって",
+          "mark": "strong"
+        },
+        {
+          "kanji": "ください今がその時です私たちが",
+          "kana": "くださいいまがそのときですわたしたちが",
+          "mark": "normal"
+        },
+        {
+          "kanji": "歴史を",
+          "kana": "れきしを",
+          "mark": "strong"
+        },
+        {
+          "kanji": "作るんです",
+          "kana": "つくるんです",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "ありがとう",
+          "kana": "ありがとう",
+          "mark": "weak"
+        },
+        {
+          "kanji": "ございます",
+          "kana": "ございます",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "お父さん",
+          "kana": "おとうさん",
+          "mark": "weak"
+        },
+        {
+          "kanji": "少し聞いてください",
+          "kana": "すこしきいてください",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "反対したい",
+          "kana": "はんたいしたい",
+          "mark": "normal"
+        },
+        {
+          "kanji": "気持ちはわかります",
+          "kana": "きもちはわかります",
+          "mark": "normal"
+        },
+        {
+          "kanji": "心配して",
+          "kana": "しんぱいして",
+          "mark": "weak"
+        },
+        {
+          "kanji": "くれてるんですよね",
+          "kana": "くれてるんですよね",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "でも私には",
+          "kana": "でもわたしには",
+          "mark": "normal"
+        },
+        {
+          "kanji": "東京",
+          "kana": "とうきょう",
+          "mark": "strong"
+        },
+        {
+          "kanji": "でやりたいことがあるんです",
+          "kana": "でやりたいことがあるんです",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "ここじゃ",
+          "kana": "ここじゃ",
+          "mark": "normal"
+        },
+        {
+          "kanji": "絶対に",
+          "kana": "ぜったいに",
+          "mark": "strong"
+        },
+        {
+          "kanji": "できないことがある",
+          "kana": "できないことがある",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "失敗",
+          "kana": "しっぱい",
+          "mark": "weak"
+        },
+        {
+          "kanji": "するかもしれないそれはわかってます",
+          "kana": "するかもしれないそれはわかってます",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "でも",
+          "kana": "でも",
+          "mark": "normal"
+        },
+        {
+          "kanji": "自分で",
+          "kana": "じぶんで",
+          "mark": "strong"
+        },
+        {
+          "kanji": "決めた道で失敗するほうがやらずに",
+          "kana": "きめたみちでしっぱいするほうがやらずに",
+          "mark": "normal"
+        },
+        {
+          "kanji": "後悔",
+          "kana": "こうかい",
+          "mark": "weak"
+        },
+        {
+          "kanji": "するよりずっといい",
+          "kana": "するよりずっといい",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "お父さんだって",
+          "kana": "おとうさんだって",
+          "mark": "normal"
+        },
+        {
+          "kanji": "若いころ",
+          "kana": "わかいころ",
+          "mark": "strong"
+        },
+        {
+          "kanji": "そう思ったことがあるんじゃないですか",
+          "kana": "そうおもったことがあるんじゃないですか",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "信じて",
+          "kana": "しんじて",
+          "mark": "weak"
+        },
+        {
+          "kanji": "みてください",
+          "kana": "みてください",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "ねえ",
+          "kana": "ねえ",
+          "mark": "normal"
+        },
+        {
+          "kanji": "ちょっと",
+          "kana": "ちょっと",
+          "mark": "strong"
+        },
+        {
+          "kanji": "待って話を聞いてほしいんだ",
+          "kana": "まってはなしをきいてほしいんだ",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "ごめんあのとき",
+          "kana": "ごめんあのとき",
+          "mark": "normal"
+        },
+        {
+          "kanji": "ひどい",
+          "kana": "ひどい",
+          "mark": "weak"
+        },
+        {
+          "kanji": "ことを言った",
+          "kana": "ことをいった",
+          "mark": "normal"
+        },
+        {
+          "kanji": "本当に",
+          "kana": "ほんとうに",
+          "mark": "strong"
+        },
+        {
+          "kanji": "悪かったと思ってる",
+          "kana": "わるかったとおもってる",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "でも俺はお前のことが",
+          "kana": "でもおれはおまえのことが",
+          "mark": "strong"
+        },
+        {
+          "kanji": "心配だったんだよ",
+          "kana": "しんぱいだったんだよ",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "怒鳴って",
+          "kana": "どなって",
+          "mark": "weak"
+        },
+        {
+          "kanji": "ごめん",
+          "kana": "ごめん",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "頼む",
+          "kana": "たのむ",
+          "mark": "normal"
+        },
+        {
+          "kanji": "もう一度",
+          "kana": "もういちど",
+          "mark": "strong"
+        },
+        {
+          "kanji": "だけチャンスをくれお前なしじゃこのチームは",
+          "kana": "だけちゃんすをくれおまえなしじゃこのちーむは",
+          "mark": "normal"
+        },
+        {
+          "kanji": "動かない",
+          "kana": "うごかない",
+          "mark": "weak"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "わかった",
+          "kana": "わかった",
+          "mark": "normal"
+        },
+        {
+          "kanji": "信じる",
+          "kana": "しんじる",
+          "mark": "strong"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "よし",
+          "kana": "よし",
+          "mark": "strong"
+        },
+        {
+          "kanji": "行くぞ",
+          "kana": "いくぞ",
+          "mark": null
+        }
+      ]
+    }
+  ]
+}
