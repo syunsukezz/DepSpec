@@ -192,8 +192,9 @@ export function showResultScreen(
         justifyContent: 'center',
         fontFamily: FONT_DISPLAY,
         gap: '1.1rem',
+        padding: '1.5rem 0 5rem',
         position: 'relative',
-    }, { fit: true, designW: 1000, designH: 580 });
+    }, { fit: true, designW: 1000, designH: 580, autoHeight: true });
 
     // プレイヤー名（打鍵圧ごとのフォントを保ったまま表示）
     const nameEl = document.createElement('div');
