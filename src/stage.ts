@@ -20,9 +20,16 @@ export interface Stage {
 export interface StageOptions {
     /** true で等倍スケール（割合固定）。既定は false（フルウィンドウ） */
     fit?: boolean;
-    /** fit 時の設計サイズ */
+    /** fit 時の設計サイズ（横幅はスケール計算に使用。高さは autoHeight 時は目安値） */
     designW?: number;
     designH?: number;
+    /**
+     * true にすると stage の高さを中身に合わせて可変にする（designH は使わない）。
+     * ランキング表示など中身の高さが実行時に変動する画面向け。中身が designH を
+     * 超えても overflow:hidden で上下からクリップされず、はみ出た分は app 側の
+     * overflowY:auto でスクロールできる。
+     */
+    autoHeight?: boolean;
     /** 画面遷移時の入場アニメーションを無効にする（既定は有効） */
     noTransition?: boolean;
 }
@@ -76,9 +83,11 @@ export function createStage(
         Object.assign(stage.style, {
             ...common,
             width: `${W}px`,
-            height: `${H}px`,
+            height: opts.autoHeight ? 'auto' : `${H}px`,
+            minHeight: opts.autoHeight ? `${H}px` : undefined,
+            overflow: opts.autoHeight ? 'visible' : common.overflow,
             flexShrink: '0',
-            transformOrigin: 'center center',
+            transformOrigin: opts.autoHeight ? 'top center' : 'center center',
             ...layout,
         });
         app.appendChild(stage);
