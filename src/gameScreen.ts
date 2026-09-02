@@ -5,6 +5,7 @@ import {
     resetPhraseSequence,
     type PhraseData,
     type PressureInstruction,
+    type PressureLevel,
     normalizeN,
     pressureLevel,
 } from './phrases';
@@ -301,6 +302,12 @@ export function showGameScreen(
         }
     }
 
+    // 指定文字のフォントレベルを決定する。強く/弱くの指定はそのまま、
+    // 普通指定・無指定はどちらも「普通」フォントとして扱う（アイコン表示の分岐と揃える）。
+    function fontLevelForInstruction(instruction: PressureInstruction | undefined): PressureLevel {
+        return instruction === 'strong' || instruction === 'weak' ? instruction : 'normal';
+    }
+
     function updateTypingDisplay() {
         const romDone = keygraph.key_done();
         const romCandidate = [...keygraph.key_candidate()];
@@ -327,9 +334,11 @@ export function showGameScreen(
 
             // 文字自体には color を明示しない。flashMiss() が親要素の color を
             // 赤くフラッシュさせる演出をしており、子要素で色を上書きすると継承が切れて効かなくなる。
+            // font-family/font-weight は打鍵圧指定に応じて切り替える（タイプ前から見た目でヒントを出すため）。
+            const displayFont = FONT_LEVEL[fontLevelForInstruction(instruction)];
             const charEl = document.createElement('span');
             charEl.textContent = ch;
-            charEl.style.cssText = 'line-height:1.4;';
+            charEl.style.cssText = `line-height:1.4; font-family:${displayFont.family}; font-weight:${displayFont.weight};`;
 
             wrapper.appendChild(iconEl);
             wrapper.appendChild(charEl);
@@ -390,12 +399,14 @@ export function showGameScreen(
                 iconEl.style.cssText = 'font-size:1.4rem; line-height:1.2;';
             }
 
+            // font-family/font-weight は打鍵圧指定に応じて切り替える（タイプ前から見た目でヒントを出すため）。
+            const candidateFont = FONT_LEVEL[fontLevelForInstruction(instruction)];
             const isCurrent = i === 0; // 今まさに打つ文字
             const keysEl = document.createElement('span');
             keysEl.textContent = ch;
             keysEl.style.cssText = isCurrent
-                ? `font-size:${ROMAJI_CURRENT_SIZE}; color:#0e7490; font-weight:bold; line-height:1; text-shadow:0 2px 8px rgba(8,145,178,0.35);`
-                : `font-size:${ROMAJI_SIZE}; color:#0891b2; line-height:1;`;
+                ? `font-size:${ROMAJI_CURRENT_SIZE}; color:#0e7490; line-height:1; text-shadow:0 2px 8px rgba(8,145,178,0.35); font-family:${candidateFont.family}; font-weight:${candidateFont.weight};`
+                : `font-size:${ROMAJI_SIZE}; color:#0891b2; line-height:1; font-family:${candidateFont.family}; font-weight:${candidateFont.weight};`;
 
             wrapper.appendChild(iconEl);
             wrapper.appendChild(keysEl);
