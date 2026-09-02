@@ -48,11 +48,6 @@
           "kanji": "例えば",
           "kana": "たとえば",
           "mark": null
-        },
-        {
-          "kanji": "",
-          "kana": "",
-          "mark": null
         }
       ]
     },
@@ -113,6 +108,68 @@
         {
           "kanji": "ことか",
           "kana": "ことか",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "こんなかんじで",
+          "kana": "こんなかんじで",
+          "mark": null
+        },
+        {
+          "kanji": "打鍵圧",
+          "kana": "だけんあつ",
+          "mark": "strong"
+        },
+        {
+          "kanji": "を",
+          "kana": "を",
+          "mark": null
+        },
+        {
+          "kanji": "語感",
+          "kana": "ごかん",
+          "mark": "strong"
+        },
+        {
+          "kanji": "に",
+          "kana": "に",
+          "mark": null
+        },
+        {
+          "kanji": "合わせ",
+          "kana": "あわせ",
+          "mark": "weak"
+        },
+        {
+          "kanji": "れば",
+          "kana": "れば",
+          "mark": null
+        },
+        {
+          "kanji": "",
+          "kana": "",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "スムーズに打てる",
+          "kana": "すむーずにうてる",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "kanji": "はず",
+          "kana": "はず",
           "mark": null
         }
       ]
