@@ -687,7 +687,7 @@ export function showGameScreen(
             drawFace(faceCanvas, value, { showLabel: true });
             playFormant(value);
             // 打鍵圧の強さに応じた画面揺れ・擬音エフェクト
-            shakeScreen(app, normalizeN(value));
+            shakeScreen(app, normalizeN(value), [sourceTextRow, romRow]);
             triggerPressureBurst(value);
             // ライブグラフは calcPressure の結果(底打ち毎のNewton相当値)をそのまま渡す
             pressureGraph?.push(value);
